@@ -24,8 +24,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
     <style>
-      button, [role="button"] { min-height: 2.25rem; }
+      button, [role="button"] { min-height: 2.25rem; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
       * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+      /* Play is all press-and-hold on buttons: text selection, the
+         long-press callout and drag-highlighting must never start
+         mid-game — a selection gesture steals the pointer stream, so a
+         held direction's release is never seen and its auto-repeat runs
+         on by itself. The champion-name input stays editable/selectable. */
+      .app{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+      .app input{ -webkit-user-select:text; user-select:text; -webkit-touch-callout:default; }
+      ::selection{ background:transparent; }
       :root{
         --bg:#fff6ec; --bg-soft:#ffeef3; --panel:#ffffff; --panel-edge:#f3ddd2;
         --ink:#46302c; --muted:#97776d; --accent:#ff7d9c; --accent-deep:#e7547c;
@@ -143,7 +151,7 @@
         border:2px solid var(--panel-edge); background:var(--panel); color:var(--ink);
         box-shadow:var(--shadow); padding:0;
         display:flex; align-items:center; justify-content:center;
-        font-size:1.15rem; line-height:1;
+        font-size:1.15rem; line-height:1; touch-action:none;
       }
       .icon-sound-btn.on{ background:var(--accent); border-color:var(--accent-deep); color:#fff; }
       .icon-sound-btn:not(.on){ opacity:.55; filter:grayscale(.6); }
@@ -213,6 +221,7 @@
       /* ---------- controller-style controls — BIG touch targets ---------- */
       .controller{
         display:flex; align-items:center; justify-content:space-between; gap:8px;
+        touch-action:none;
         background:var(--panel);
         border:2px solid var(--panel-edge); border-radius:24px; box-shadow:var(--shadow);
         padding:16px 14px;
@@ -1550,32 +1559,67 @@ document.addEventListener("keyup", function(e){
       softDropping = false; break;
   }
 });
-window.addEventListener("blur", function(){ if (state === "playing") togglePause(true); });
-document.addEventListener("visibilitychange", function(){ if (document.hidden && state === "playing") togglePause(true); });
+window.addEventListener("blur", function(){ releaseAllInputs(); if (state === "playing") togglePause(true); });
+document.addEventListener("visibilitychange", function(){ if (document.hidden){ releaseAllInputs(); if (state === "playing") togglePause(true); } });
 
-/* ================= input — touch buttons (with DAS repeat) ================= */
-function bindHoldButton(id, onTap, repeatable){
-  var el = $(id), t1 = null, t2 = null;
+/* ================= input — touch buttons (with DAS repeat) =================
+   Hardened against the runaway D-pad: a press that turns into a text
+   selection / long-press callout, a finger sliding off the button, or a
+   second finger landing used to swallow the pointerup — the repeat
+   timer then kept driving the piece in one direction on its own.
+   Defences:
+   • every button captures its pointer, so its pointerup/pointercancel
+     always arrives at that same button wherever the finger has slid;
+   • only the first pointer on a button counts — extra fingers are
+     ignored instead of starting a second, competing repeat;
+   • the three direction buttons are mutually exclusive: starting one
+     force-releases the others, so left/right/down can never stack;
+   • releaseAllInputs() (window blur / page hide) stops every repeat
+     and clears soft-drop and keyboard DAS, whatever was held. */
+var allHoldReleasers = [], dirHoldReleasers = [];
+function releaseAllInputs(){
+  allHoldReleasers.slice().forEach(function(fn){ fn(); });
+  softDropping = false;
+  keysHeld.left = false; keysHeld.right = false;
+  setDas(0);
+}
+function bindHoldButton(id, onTap, repeatable, onRelease, isDir){
+  var el = $(id), t1 = null, t2 = null, activePointer = null;
+  function release(){
+    if (activePointer === null) return;
+    activePointer = null;
+    if (t1){ clearTimeout(t1); t1 = null; }
+    if (t2){ clearInterval(t2); t2 = null; }
+    el.classList.remove("pressed");
+    if (onRelease) onRelease();
+  }
+  allHoldReleasers.push(release);
+  if (isDir) dirHoldReleasers.push(release);
   function start(e){
     e.preventDefault();
+    if (activePointer !== null) return; /* one finger per button — ignore the rest */
+    activePointer = (e.pointerId !== undefined) ? e.pointerId : -1;
+    if (isDir) dirHoldReleasers.forEach(function(fn){ if (fn !== release) fn(); });
+    try{ if (e.pointerId !== undefined && el.setPointerCapture) el.setPointerCapture(e.pointerId); }catch(err){}
     el.classList.add("pressed");
     onTap();
     if (repeatable){
-      t1 = setTimeout(function(){ t2 = setInterval(onTap, ARR + 30); }, DAS);
+      t1 = setTimeout(function(){ t1 = null; t2 = setInterval(onTap, ARR + 30); }, DAS);
     }
   }
-  function end(){ el.classList.remove("pressed"); clearTimeout(t1); clearInterval(t2); t1 = t2 = null; }
+  function end(e){
+    if (e && e.pointerId !== undefined && activePointer !== null && e.pointerId !== activePointer) return;
+    release();
+  }
   el.addEventListener("pointerdown", start);
   el.addEventListener("pointerup", end);
-  el.addEventListener("pointerleave", end);
   el.addEventListener("pointercancel", end);
+  el.addEventListener("lostpointercapture", function(){ release(); });
   el.addEventListener("contextmenu", function(e){ e.preventDefault(); });
 }
-bindHoldButton("tcLeft",  function(){ if (tryMove(-1)) sfx.move(); }, true);
-bindHoldButton("tcRight", function(){ if (tryMove(1)) sfx.move(); }, true);
-bindHoldButton("tcDown",  function(){ softDropping = true; softDropStep(); }, false);
-$("tcDown").addEventListener("pointerup", function(){ softDropping = false; });
-$("tcDown").addEventListener("pointerleave", function(){ softDropping = false; });
+bindHoldButton("tcLeft",  function(){ if (tryMove(-1)) sfx.move(); }, true, null, true);
+bindHoldButton("tcRight", function(){ if (tryMove(1)) sfx.move(); }, true, null, true);
+bindHoldButton("tcDown",  function(){ softDropping = true; softDropStep(); }, false, function(){ softDropping = false; }, true);
 bindHoldButton("tcRotate",    function(){ tryRotate(1); }, false);
 bindHoldButton("tcDrop",  function(){ hardDrop(); }, false);
 bindHoldButton("tcHold",  function(){ doHold(); }, false);
@@ -1587,6 +1631,9 @@ bindHoldButton("tcHold",  function(){ doHold(); }, false);
   inner.addEventListener("pointerdown", function(e){
     tracking = true; moved = false; hardDropped = false;
     sx = lastX = e.clientX; sy = lastY = e.clientY; st = performance.now();
+    /* capture so the matching pointerup is seen even if the finger
+       slides off the board — otherwise tracking sticks on */
+    try{ if (e.pointerId !== undefined && inner.setPointerCapture) inner.setPointerCapture(e.pointerId); }catch(err){}
   });
   inner.addEventListener("pointermove", function(e){
     if (!tracking || state !== "playing") return;
@@ -1682,6 +1729,22 @@ if (holdSectionEl){
 document.addEventListener("click", function(e){
   var b = e.target && e.target.closest ? e.target.closest("button") : null;
   if (b) b.blur();
+});
+
+/* No text selection, drag or long-press menu anywhere on the game
+   surface: starting one mid-press steals the pointer stream from the
+   held button, which is how a direction used to keep repeating after
+   the finger let go. The champion-name input is exempt — it is a real
+   text field. */
+document.addEventListener("selectstart", function(e){
+  if (e.target && e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") e.preventDefault();
+});
+document.addEventListener("contextmenu", function(e){
+  if (!e.target || e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+  if (e.target.closest && e.target.closest(".app")) e.preventDefault();
+});
+document.addEventListener("dragstart", function(e){
+  if (e.target && e.target.tagName !== "INPUT") e.preventDefault();
 });
 
 /* ================= first-time tutorial ================= */
