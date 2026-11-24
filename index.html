@@ -169,6 +169,13 @@
       /* tappable Hold grid */
       .hold-tap{ cursor:pointer; }
       .hold-tap:active .mini-canvas{ filter:brightness(1.08); }
+      /* Hold locked out — already used for this falling piece. The held
+         piece greys out so the lockout is visible at a glance, until the
+         next piece spawns and Hold becomes available again. */
+      .hold-tap.hold-locked{ cursor:not-allowed; }
+      .hold-tap.hold-locked .mini-canvas{ filter:grayscale(1) opacity(.45); }
+      .hold-tap.hold-locked h3{ opacity:.55; }
+      .b-btn.hold-locked{ filter:grayscale(.9); opacity:.55; }
 
       /* ---------- board ---------- */
       .board-wrap{
@@ -542,6 +549,7 @@ function gravityMs(level){
 
 /* ---------- state ---------- */
 var board, queue, holdType, current;
+var holdUsed = false; /* standard rule: Hold once per falling piece */
 var score, lines, level, combo, b2b;
 var localBest = 0;            /* this device's own hi score */
 var globalBest = 0;           /* the global hi score… */
@@ -901,11 +909,16 @@ function makePiece(type){
   sinkIntoView(p);
   return p;
 }
-function spawn(fromHold){
+function spawn(fromHold, viaHold){
   var type = fromHold || queue.shift();
   while (queue.length < 7) refillQueue();
   current = makePiece(type);
-  /* hold / swap is always available — pressing hold again swaps back */
+  /* Standard Tetris rule: Hold is available once per falling piece.
+     A piece that arrived via Hold (viaHold) starts with Hold already
+     spent, so the same two pieces cannot be swapped back and forth.
+     A fresh piece from the queue after a lock (or at game start)
+     starts with Hold available again. */
+  holdUsed = !!viaHold;
   dropCounter = 0; lockCounter = 0; lockResets = 0;
   lastMoveWasRotate = false; lastKickIndex = 0;
   if (collides(current, 0, 0)){
@@ -969,16 +982,21 @@ function hardDrop(){
 }
 function doHold(){
   if (state !== "playing" || !current || clearingRows) return;
+  /* Once-per-piece lockout: after one hold/swap, Hold is locked until
+     the current piece locks and the next new piece spawns. This blocks
+     swapping the same two pieces back and forth repeatedly. Every entry
+     point funnels through here — B button, C key and tapping the Hold
+     grid — so the lockout applies to all of them. */
+  if (holdUsed) return;
   var cur = current.type;
   if (holdType){
-    /* swap — works every press, no once-per-piece lockout */
     var swap = holdType; holdType = cur;
     sfx.swap();
-    spawn(swap);
+    spawn(swap, true);
     flash("SWAP!");
   } else {
     sfx.hold();
-    holdType = cur; spawn(null);
+    holdType = cur; spawn(null, true);
     flash("HOLD");
   }
   drawSide();
@@ -1321,6 +1339,18 @@ function drawMini(ctx, cv, type, cell){
 }
 function drawSide(){
   drawMini(hctx, holdCv, holdType, 52);
+  /* Greyed / locked look while Hold is spent for this piece */
+  var holdLocked = !!holdUsed;
+  var holdSec = $("holdSection");
+  if (holdSec){
+    holdSec.classList.toggle("hold-locked", holdLocked);
+    holdSec.setAttribute("aria-disabled", holdLocked ? "true" : "false");
+  }
+  var holdBtn = $("tcHold");
+  if (holdBtn){
+    holdBtn.classList.toggle("hold-locked", holdLocked);
+    holdBtn.setAttribute("aria-disabled", holdLocked ? "true" : "false");
+  }
   /* Next: show only the single next shape — and only once a game has
      actually started. Before the first Start (state "ready") the Next
      box stays empty, so no shape is given away ahead of the game. */
@@ -1339,7 +1369,7 @@ function updateHUD(){
 function resetGame(){
   board = emptyBoard();
   queue = []; refillQueue(); refillQueue();
-  holdType = null; current = null;
+  holdType = null; current = null; holdUsed = false;
   score = 0; lines = 0; level = 1;
   combo = -1; b2b = false;
   clearingRows = null; clearTimer = 0;
@@ -1772,7 +1802,7 @@ var TUTORIAL_STEPS = [
       '<li><span class="tut-icon">Local</span><span><b>Local Hi Score</b> — the best score on this device.</span></li>' +
       '<li><span class="tut-icon">Score</span><span><b>Score</b> — your score in the game you are playing now.</span></li>' +
       '<li><span class="tut-icon">Next</span><span><b>Next</b> — the piece that will fall after this one, so you can plan ahead.</span></li>' +
-      '<li><span class="tut-icon">Hold</span><span><b>Hold</b> — the piece you have saved for later. If you are playing with swipe &amp; tap controls, tap this box to hold the current piece or swap it back in.</span></li>' +
+      '<li><span class="tut-icon">Hold</span><span><b>Hold</b> — the piece you have saved for later. You can hold or swap once per falling piece — after that it greys out until the next piece falls. If you are playing with swipe &amp; tap controls, tap this box to hold or swap.</span></li>' +
       '<li><span class="tut-icon">Lv</span><span><b>Level &amp; Lines</b> — lines you have cleared. Every 10 lines the level rises and pieces fall faster.</span></li>' +
       '</ul>'
   },
@@ -1797,7 +1827,7 @@ var TUTORIAL_STEPS = [
       '<li><span class="tut-icon">◀ ▶</span><span><b>D-pad left / right</b> — move the piece sideways.</span></li>' +
       '<li><span class="tut-icon">▼</span><span><b>D-pad down</b> — soft drop: bring the piece down faster.</span></li>' +
       '<li><span class="tut-icon">▲</span><span><b>D-pad up</b> — hard drop: drop the piece straight down instantly.</span></li>' +
-      '<li><span class="tut-icon">B</span><span><b>B · Hold</b> — hold the current piece, or swap it with the one in Hold.</span></li>' +
+      '<li><span class="tut-icon">B</span><span><b>B · Hold</b> — hold the current piece, or swap it with the one in Hold. Once per piece only — it locks until the next piece falls.</span></li>' +
       '<li><span class="tut-icon">A</span><span><b>A · Rotate</b> — rotate the piece.</span></li>' +
       '<li><span class="tut-icon">⏯</span><span><b>Start / Pause &amp; Reset</b> — in the middle: start or pause the game, or reset to start again.</span></li>' +
       '</ul><p style="margin-top:8px">That\u2019s it — tap Start on the board when you\u2019re ready. Have fun!</p>'
