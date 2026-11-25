@@ -96,6 +96,11 @@
       .score-cell.hero .v{ color:var(--accent-deep); font-size:1.60rem; }
       .score-cell.global .v{ color:var(--accent2); font-size:1.45rem; }
       .score-cell .by{ font-size:.62rem; font-weight:800; color:var(--muted); line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px; }
+      /* the global cell is the leaderboard door — still tappable, but the
+         hint line is gone: the tutorial's info-bar step now teaches that
+         tapping it opens the Top 15 leaderboard */
+      .score-cell.global.tappable{ cursor:pointer; border-radius:10px; }
+      .score-cell.global.tappable:active{ transform:scale(.96); }
       .score-divider{ height:2px; background:var(--panel-edge); border-radius:2px; margin:4px 10px; flex:0 0 auto; }
 
       /* ---------- new global champion name prompt (in the game-over overlay) ---------- */
@@ -202,20 +207,50 @@
       @media (prefers-reduced-motion: reduce){ .action-flash.pop{ animation-duration:.01s; } }
 
       .overlay{
-        position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+        position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
         gap:10px; text-align:center; padding:18px; background:rgba(30,16,24,.72); color:#fff;
-        backdrop-filter:blur(2px);
+        backdrop-filter:blur(2px); overflow-y:auto;
       }
+      /* auto margins centre the stack when it fits and let it scroll
+         cleanly from the top when it doesn't (game-over stats + the
+         champion prompt can exceed a short board) */
+      .overlay > *:first-child{ margin-top:auto; }
+      .overlay > *:last-child{ margin-bottom:auto; }
       .overlay[hidden]{ display:none; }
       .overlay .big{ font-family:"Baloo 2",sans-serif; font-size:1.9rem; font-weight:800; line-height:1.1; }
       .overlay .sub{ font-weight:700; font-size:.92rem; color:#ffd9e2; max-width:250px; line-height:1.45; }
-      .overlay .final{ font-family:"Baloo 2",sans-serif; font-size:1.15rem; font-weight:800; }
+      /* ---------- game-over stats ---------- */
+      .final-score{ display:flex; flex-direction:column; align-items:center; line-height:1; }
+      .final-score .fs-k{ font-size:.62rem; font-weight:900; letter-spacing:.16em; text-transform:uppercase; color:#ffd9e2; }
+      .final-score .fs-v{ font-family:"Baloo 2",sans-serif; font-size:2.1rem; font-weight:800; color:#ffe27a; margin-top:2px; }
+      .stats-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; width:100%; max-width:284px; }
+      .stats-grid .sg{ background:rgba(255,255,255,.10); border-radius:10px; padding:6px 4px 7px; }
+      .stats-grid .sg .k{ font-size:.54rem; font-weight:900; letter-spacing:.11em; text-transform:uppercase; color:#ffd9e2; }
+      .stats-grid .sg .v{ font-family:"Baloo 2",sans-serif; font-weight:800; font-size:1.08rem; line-height:1.15; }
+      .compare-line{ font-size:.78rem; font-weight:800; color:#ffd9e2; line-height:1.4; }
+      /* ---------- new champion celebration banner ---------- */
+      .champion-banner{
+        background:linear-gradient(135deg,#ffd93d,#ffb52e); color:#5b3a00;
+        font-family:"Baloo 2",sans-serif; font-weight:800; font-size:1.3rem; line-height:1.15;
+        border-radius:14px; padding:10px 18px; box-shadow:0 6px 24px rgba(255,185,46,.45);
+      }
+      .champion-banner[hidden]{ display:none; }
+      .champion-banner .cb-sub{ font-family:"Nunito",sans-serif; font-size:.78rem; font-weight:800; margin-top:2px; }
+      .champion-banner.celebrate{ animation:bannerPop .55s ease-out; }
+      @keyframes bannerPop{ 0%{ transform:scale(.6); opacity:0; } 60%{ transform:scale(1.08); opacity:1; } 100%{ transform:scale(1); } }
+      @media (prefers-reduced-motion: reduce){ .champion-banner.celebrate{ animation-duration:.01s; } }
       .bigbtn{
         font-family:"Baloo 2",sans-serif; font-weight:800; font-size:1.15rem; cursor:pointer;
         background:var(--accent); color:#fff; border:none; border-bottom:5px solid var(--accent-deep);
         border-radius:999px; padding:12px 34px; min-height:52px;
       }
       .bigbtn:active{ transform:translateY(2px); border-bottom-width:2px; }
+      .bigbtn.alt{
+        font-size:.95rem; padding:9px 22px; min-height:42px;
+        background:rgba(255,255,255,.13); color:#fff;
+        border:2px solid rgba(255,255,255,.55); border-bottom-width:4px;
+      }
+      .bigbtn.alt:active{ transform:translateY(2px); border-bottom-width:2px; }
 
       /* ---------- sticky dock: controller bar ----------
          The dock carries the sticky positioning for the controller bar,
@@ -352,6 +387,81 @@
         .tutorial-list li, .tutorial-card p{ font-size:.86rem; }
       }
 
+      /* ---------- leaderboard panel ---------- */
+      .lb-backdrop{ position:fixed; inset:0; background:rgba(28,12,22,.55); z-index:99; }
+      .lb-backdrop[hidden]{ display:none; }
+      .lb-panel{
+        position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index:100;
+        width:min(430px, calc(100vw - 24px)); max-height:min(84dvh, 660px);
+        display:flex; flex-direction:column;
+        background:var(--panel); color:var(--ink); border:2px solid var(--panel-edge);
+        border-radius:20px; box-shadow:0 18px 44px rgba(0,0,0,.32); padding:16px;
+      }
+      .lb-panel[hidden]{ display:none; }
+      .lb-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; }
+      .lb-head h2{ font-family:"Baloo 2",sans-serif; font-size:1.3rem; line-height:1.1; margin:0; }
+      .lb-close{
+        width:38px; height:38px; min-height:38px; border-radius:50%; cursor:pointer; flex:0 0 auto;
+        border:2px solid var(--panel-edge); background:var(--chip); color:var(--ink); font-size:1rem; line-height:1;
+        margin:0;
+      }
+      .lb-close:active{ transform:scale(.93); }
+      .lb-sub{ color:var(--muted); font-weight:800; font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; margin:3px 0 10px; }
+      /* board switcher: This Week / Past Winners / All Time */
+      .lb-tabs{ display:flex; gap:6px; margin:0 0 10px; }
+      .lb-tab{
+        flex:1 1 0; font-family:"Baloo 2",sans-serif; font-weight:800; font-size:.82rem; cursor:pointer;
+        border:2px solid var(--panel-edge); background:var(--chip); color:var(--muted);
+        border-radius:999px; padding:7px 4px; min-height:38px;
+      }
+      .lb-tab.on{ background:var(--accent); border-color:var(--accent-deep); color:#fff; }
+      .lb-tab:active{ transform:scale(.97); }
+      /* Past Winners week cycler: one archived week at a time, stepped
+         through with the ‹ › arrows */
+      .lb-week-nav{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin:0 0 8px; }
+      .lb-week-nav[hidden]{ display:none; }
+      .lb-week-label{ flex:1 1 auto; text-align:center; font-family:"Baloo 2",sans-serif; font-weight:800; font-size:.95rem; line-height:1.2; }
+      .lb-week-label .wk-count{ display:block; font-family:"Nunito",sans-serif; font-size:.66rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-top:1px; }
+      .lb-week-arrow{
+        width:40px; height:40px; min-height:40px; border-radius:50%; cursor:pointer; flex:0 0 auto;
+        border:2px solid var(--panel-edge); background:var(--chip); color:var(--ink);
+        font-family:"Baloo 2",sans-serif; font-weight:800; font-size:1.3rem; line-height:1;
+        display:flex; align-items:center; justify-content:center; padding:0 0 2px;
+      }
+      .lb-week-arrow:active{ transform:scale(.93); }
+      .lb-week-arrow:disabled{ opacity:.32; cursor:default; }
+      .lb-week-arrow:disabled:active{ transform:none; }
+      .lb-list{ list-style:none; margin:0; padding:0; overflow-y:auto; display:flex; flex-direction:column; gap:5px; }
+      .lb-row{ display:flex; align-items:center; gap:10px; padding:7px 10px; border-radius:10px; background:var(--chip); border:1.5px solid transparent; }
+      .lb-row .lb-rank{ font-family:"Baloo 2",sans-serif; font-weight:800; min-width:36px; text-align:center; flex:0 0 auto; }
+      .lb-row .lb-name{ flex:1 1 auto; min-width:0; font-weight:800; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      .lb-row .lb-score{ font-family:"Baloo 2",sans-serif; font-weight:800; flex:0 0 auto; }
+      /* podium: gold #1, silver #2, bronze #3 — ranks 4–15 stay plain */
+      .lb-row.r1{ background:linear-gradient(135deg, rgba(255,217,61,.55), rgba(255,181,46,.32)); border-color:#d9a812; }
+      .lb-row.r2{ background:rgba(176,186,200,.38); border-color:#9aa5b1; }
+      .lb-row.r3{ background:rgba(205,127,50,.30); border-color:#b06a28; }
+      .lb-row.mine{ outline:2px solid var(--accent); outline-offset:-2px; }
+      .lb-row .you-tag{
+        display:inline-block; font-size:.58rem; font-weight:900; letter-spacing:.06em;
+        background:var(--accent); color:#fff; border-radius:999px; padding:1px 6px; margin-left:6px; vertical-align:2px;
+      }
+      .lb-empty{ text-align:center; color:var(--muted); font-weight:800; padding:18px 8px; }
+      .lb-you{
+        margin-top:10px; padding:8px 10px; border-radius:10px; border:2px dashed var(--panel-edge);
+        font-weight:800; font-size:.85rem; display:flex; justify-content:space-between; gap:8px;
+      }
+      .lb-you[hidden]{ display:none; }
+      .lb-note{ margin-top:8px; font-size:.72rem; color:var(--muted); font-weight:700; text-align:center; }
+      .lb-note[hidden]{ display:none; }
+
+      /* ---------- confetti (champion celebration) ---------- */
+      #confettiBox{ position:fixed; inset:0; z-index:120; pointer-events:none; overflow:hidden; }
+      #confettiBox i{
+        position:absolute; top:-4vh; display:block; border-radius:2px;
+        animation-name:confettiFall; animation-timing-function:linear; animation-fill-mode:forwards;
+      }
+      @keyframes confettiFall{ to{ transform:translateY(112vh) rotate(680deg); } }
+
       /* ---------- responsive ---------- */
       @media (max-width:760px){
         body{ padding:8px 6px calc(10px + env(safe-area-inset-bottom)); }
@@ -404,6 +514,7 @@
           <button class="icon-sound-btn on" id="bgmBtn" type="button" aria-pressed="true" aria-label="Toggle background music" title="Background music">♪</button>
           <button class="icon-sound-btn on" id="sideSoundBtn" type="button" aria-pressed="true" aria-label="Toggle all sound" title="All sound">🔊</button>
           <button class="icon-sound-btn on" id="ctrlToggleBtn" type="button" aria-pressed="true" aria-label="Hide on-screen controls" title="Hide controls — play with swipes &amp; taps">🎮</button>
+          <button class="icon-sound-btn on" id="hapticsBtn" type="button" aria-pressed="true" aria-label="Toggle haptics" title="Haptics">📳</button>
           <button class="icon-sound-btn on" id="tutorialBtn" type="button" aria-label="Show how to play tutorial" title="How to play — show tutorial">?</button>
         </div>
         <!-- board -->
@@ -414,6 +525,7 @@
             <div class="overlay" id="startOverlay">
               <div class="big">Ready to play?</div>
               <button class="bigbtn" id="startBtn" type="button">▶ Start</button>
+              <button class="bigbtn alt" id="boardBtnStart" type="button">🏆 Leaderboard</button>
             </div>
             <div class="overlay" id="pauseOverlay" hidden>
               <div class="big">Paused</div>
@@ -422,19 +534,30 @@
             </div>
             <div class="overlay" id="overOverlay" hidden>
               <div class="big">Game Over</div>
+              <div class="champion-banner" id="championBanner" hidden>👑 New Champion!<div class="cb-sub" id="championBannerSub"></div></div>
               <div class="sub" id="overMsg">You did great — the tower just got a little too tall.</div>
-              <div class="final" id="overStats"></div>
+              <div class="final-score"><span class="fs-k">Final Score</span><span class="fs-v" id="ovScore">0</span></div>
+              <div class="stats-grid" aria-label="Game stats">
+                <div class="sg"><div class="k">Lines</div><div class="v" id="ovLines">0</div></div>
+                <div class="sg"><div class="k">Level</div><div class="v" id="ovLevel">1</div></div>
+                <div class="sg"><div class="k">Time</div><div class="v" id="ovTime">0:00</div></div>
+                <div class="sg"><div class="k">Best Combo</div><div class="v" id="ovCombo">—</div></div>
+                <div class="sg"><div class="k">T-Spins</div><div class="v" id="ovTspin">0</div></div>
+                <div class="sg"><div class="k">Pieces</div><div class="v" id="ovPieces">0</div></div>
+              </div>
+              <div class="compare-line" id="overCompare"></div>
               <div class="champion-prompt" id="championPrompt" hidden>
-                <div class="cp-title">★ New Global Hi Score! ★</div>
-                <div class="cp-sub">You beat the global best — enter your name to take the crown.</div>
+                <div class="cp-title" id="cpTitle">★ New Global Hi Score! ★</div>
+                <div class="cp-sub" id="cpSub">You beat the global best — enter your name to take the crown.</div>
                 <div class="cp-row" id="championForm">
-                  <input id="championName" type="text" maxlength="16" autocomplete="off" placeholder="Your name" aria-label="Your name for the global hi score" />
+                  <input id="championName" type="text" maxlength="16" autocomplete="off" placeholder="Your name" aria-label="Your name for the global leaderboard" />
                   <button class="cp-save" id="championSave" type="button">Save</button>
                 </div>
                 <button class="cp-skip" id="championSkip" type="button">Skip — don't record it</button>
                 <div class="cp-done" id="championDone" hidden></div>
               </div>
               <button class="bigbtn" id="againBtn" type="button">↻ Play again</button>
+              <button class="bigbtn alt" id="boardBtnOver" type="button">🏆 Leaderboard</button>
             </div>
           </div>
         </div>
@@ -443,7 +566,7 @@
         <aside class="panel" aria-label="Global hi score, local hi score, score, next, hold, level and lines">
           <div class="side-section">
             <div class="score-box" role="group" aria-label="Scores">
-              <div class="score-cell global"><div class="k">Global Hi Score</div><div class="v" id="uiGlobal">0</div><div class="by" id="uiGlobalName">No champion yet</div></div>
+              <div class="score-cell global tappable" id="globalCell" role="button" tabindex="0" aria-label="Global hi score — open the leaderboard" title="Open the leaderboard"><div class="k">Global Hi Score</div><div class="v" id="uiGlobal">0</div><div class="by" id="uiGlobalName">No champion yet</div></div>
               <div class="score-divider" aria-hidden="true"></div>
               <div class="score-cell"><div class="k">Local Hi Score</div><div class="v" id="uiLocal">0</div></div>
               <div class="score-divider" aria-hidden="true"></div>
@@ -496,6 +619,33 @@
       </div><!-- /controls-dock -->
 
     </main>
+
+    <!-- confetti layer for the new-champion celebration -->
+    <div id="confettiBox" aria-hidden="true"></div>
+
+    <!-- leaderboard panel — three shared boards: this week's top 15,
+         past weekly winners, and the all-time top 3 -->
+    <div class="lb-backdrop" id="lbBackdrop" hidden></div>
+    <section class="lb-panel" id="lbPanel" hidden role="dialog" aria-modal="true" aria-labelledby="lbTitle">
+      <div class="lb-head">
+        <h2 id="lbTitle">🏆 Leaderboard</h2>
+        <button class="lb-close" id="lbClose" type="button" aria-label="Close leaderboard">✕</button>
+      </div>
+      <div class="lb-tabs" role="tablist" aria-label="Choose a board">
+        <button class="lb-tab on" id="lbTabWeek" type="button" role="tab" aria-selected="true">This Week</button>
+        <button class="lb-tab" id="lbTabPast" type="button" role="tab" aria-selected="false">Past Winners</button>
+        <button class="lb-tab" id="lbTabAll" type="button" role="tab" aria-selected="false">All Time</button>
+      </div>
+      <div class="lb-sub" id="lbSub">Top 15 · This week</div>
+      <div class="lb-week-nav" id="lbWeekNav" hidden>
+        <button class="lb-week-arrow" id="lbWeekOlder" type="button" aria-label="Older week">‹</button>
+        <div class="lb-week-label"><span id="lbWeekLabel"></span><span class="wk-count" id="lbWeekCount"></span></div>
+        <button class="lb-week-arrow" id="lbWeekNewer" type="button" aria-label="Newer week">›</button>
+      </div>
+      <ol class="lb-list" id="lbList"></ol>
+      <div class="lb-you" id="lbYou" hidden></div>
+      <div class="lb-note" id="lbNote" hidden>Couldn't refresh just now — showing the last known board.</div>
+    </section>
 
     <!-- first-time tutorial -->
     <div class="tutorial-backdrop" id="tutorialBackdrop" hidden></div>
@@ -554,7 +704,15 @@ var score, lines, level, combo, b2b;
 var localBest = 0;            /* this device's own hi score */
 var globalBest = 0;           /* the global hi score… */
 var globalName = "";          /* …and who set it */
-var pendingGlobalScore = 0;   /* a game-over score waiting on a champion name */
+var pendingBoardScore = 0;    /* a game-over score waiting on a leaderboard name */
+var pendingIsChampion = false;
+var globalBoard = [];         /* the shared top-15 board: [{name, score}, …] best first */
+var boardStale = false;       /* true when the stores couldn't be reached — board is last known */
+var boardWeek = "";           /* ISO week id ("2026-W48") the live board belongs to — it resets every Monday */
+var weeklyWinners = [];       /* past weeks' podiums: [{week, top:[{name, score} ×3]}], newest week first */
+var allTimeTop = [];          /* the all-time top 3 — never resets */
+var myName = "";              /* this player's last claimed leaderboard name (this device) */
+var maxCombo = 0, tspinCount = 0, piecesPlaced = 0, playMs = 0; /* per-game stats for the game-over screen */
 var state = "ready"; /* ready | playing | paused | over */
 var dropCounter, lockCounter, lockResets, lastMoveWasRotate, lastKickIndex;
 var clearingRows = null, clearTimer = 0;
@@ -562,15 +720,27 @@ var softDropping = false;
 
 /* ---------- hi-score storage ----------
    Local hi score: this device only (localStorage).
-   Global hi score: ONE shared record in free cross-device JSON stores —
-   every device reads and writes the same record, so the champion crown is
+   Global scores: ONE shared record in free cross-device JSON stores —
+   every device reads and writes the same record, so the boards are
    genuinely shared. Primary: a restful-api.dev object; mirror: an
-   extendsclass JSON bin. Reads take the higher of the two and writes go to
-   both, so the crown survives either store having a bad day. The last
-   record fetched is cached on-device purely as an offline fallback: if the
-   stores are unreachable the game shows that last known global score — it
-   never promotes a local score into the global slot. */
-var LS_LOCAL = "tetoris_local_hi", LS_GCACHE = "tetoris_global_cache";
+   extendsclass JSON bin. Reads merge both stores (plus this device's
+   last known record) and writes go to both, so the boards survive
+   either store having a bad day. The last record fetched is cached
+   on-device purely as an offline fallback: if the stores are
+   unreachable the game shows that last known board — it never promotes
+   a local score into a global slot.
+   The record carries three boards:
+   • "board" — this week's top 15, with "week" naming its ISO week.
+     Every Monday the week rolls over: the finished week's top 3 are
+     archived into "winners" and the live board starts empty.
+   • "winners" — past weeks' podiums: [{w, top:[{n, s} ×3]}].
+   • "alltime" — the all-time top 3, which never resets.
+   The champion fields (score/player) mirror board #1, so older builds
+   keep working; a record with no "week" predates weekly boards and is
+   adopted into the current week, its scores seeding the all-time top 3. */
+var LS_LOCAL = "tetoris_local_hi", LS_GCACHE = "tetoris_global_cache", LS_MYNAME = "tetoris_my_name";
+var BOARD_SIZE = 15; /* the shared weekly leaderboard keeps the top 15 scores */
+var WINNERS_KEEP = 26; /* past weekly podiums kept in the record — about half a year */
 var GLOBAL_PRIMARY_URL = "https://api.restful-api.dev/objects/ff808181a09d98f701a20e073d133770";
 var GLOBAL_MIRROR_URL = "https://extendsclass.com/api/json-storage/bin/fbbabad";
 var claimSaving = false, championChecked = false;
@@ -588,6 +758,92 @@ function cleanScore(v){
 function cleanChampionName(v){
   return String(v == null ? "" : v).replace(/[<>"'`]/g, "").replace(/[\u0000-\u001f\u007f]/g, "").replace(/\s+/g, " ").trim().slice(0, 16);
 }
+/* ---------- week helpers — the live board is weekly, resetting Monday ---------- */
+function currentWeekId(){
+  var now = new Date();
+  var d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var dow = (d.getDay() + 6) % 7; /* Mon = 0 */
+  var thu = new Date(d.getFullYear(), d.getMonth(), d.getDate() - dow + 3);
+  var y = thu.getFullYear();
+  var jan4 = new Date(y, 0, 4);
+  var jdow = (jan4.getDay() + 6) % 7;
+  var firstThu = new Date(y, 0, 4 - jdow + 3);
+  var wk = 1 + Math.round((thu - firstThu) / 604800000);
+  return y + "-W" + ("0" + wk).slice(-2);
+}
+function mondayOfWeekId(id){
+  var m = /^(\d{4})-W(\d{2})$/.exec(id || "");
+  if (!m) return new Date();
+  var y = parseInt(m[1], 10), w = parseInt(m[2], 10);
+  var jan4 = new Date(y, 0, 4);
+  var dow = (jan4.getDay() + 6) % 7;
+  return new Date(y, 0, 4 - dow + (w - 1) * 7);
+}
+var MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function weekLabel(id){
+  var d = mondayOfWeekId(id);
+  return "Week of " + d.getDate() + " " + MONTHS_SHORT[d.getMonth()];
+}
+/* clean + dedupe + sort a short list of {name, score} entries (lenient
+   keys, like normalizeBoard) and cap it — used for the all-time top 3
+   and for each archived week's podium */
+function normalizeTopList(list, cap){
+  var out = [], seen = {};
+  if (Array.isArray(list)) list.forEach(function(e){
+    if (!e) return;
+    var s = cleanScore(e.s != null ? e.s : e.score);
+    var n = cleanChampionName(e.n != null ? e.n : (e.name != null ? e.name : e.player));
+    if (s <= 0) return;
+    var key = n + "|" + s;
+    if (seen[key]) return;
+    seen[key] = 1;
+    out.push({ name:n, score:s });
+  });
+  out.sort(function(a, b){ return b.score - a.score; });
+  return out.slice(0, cap);
+}
+/* past weeks' podiums, newest week first: [{week, top:[{name, score} ×3]}].
+   The same week arriving from two stores is unioned, so no champion is
+   lost to a store that missed a write. */
+function normalizeWinners(list){
+  var byWeek = {};
+  if (Array.isArray(list)) list.forEach(function(w){
+    if (!w) return;
+    var wk = typeof w.w === "string" ? w.w : (typeof w.week === "string" ? w.week : "");
+    if (!/^\d{4}-W\d{2}$/.test(wk)) return;
+    var top = normalizeTopList(w.top != null ? w.top : w.entries, 3);
+    if (!top.length) return;
+    if (byWeek[wk]) top = normalizeTopList(byWeek[wk].top.concat(top), 3);
+    byWeek[wk] = { week:wk, top:top };
+  });
+  return Object.keys(byWeek).sort().reverse().slice(0, WINNERS_KEEP).map(function(k){ return byWeek[k]; });
+}
+/* archive a finished week's board into the winners list as its top 3 */
+function archiveWeekInto(winners, weekId, board){
+  if (!weekId || !board || !board.length) return winners;
+  var top = normalizeTopList(board, 3);
+  if (!top.length) return winners;
+  return normalizeWinners(winners.concat([{ week:weekId, top:top }]));
+}
+/* settle the on-device record into the current week: a legacy record
+   (no week) is adopted into this week; a record from a finished week
+   has its top 3 archived and its board emptied, so the Monday reset
+   shows correctly even before — or without — reaching the stores.
+   The all-time top 3 is seeded from every score this device has seen. */
+function settleWeekLocal(){
+  var cur = currentWeekId();
+  if (!boardWeek) boardWeek = cur;
+  else if (boardWeek < cur){
+    if (globalBoard.length) weeklyWinners = archiveWeekInto(weeklyWinners, boardWeek, globalBoard);
+    globalBoard = [];
+    globalBest = 0; globalName = "";
+    boardWeek = cur;
+  }
+  var pool = allTimeTop.concat(globalBoard);
+  if (globalBest > 0) pool.push({ name:globalName, score:globalBest });
+  weeklyWinners.forEach(function(w){ pool = pool.concat(w.top); });
+  allTimeTop = normalizeTopList(pool, 3);
+}
 function loadScores(){
   try{
     localBest = parseInt(localStorage.getItem(LS_LOCAL), 10) || 0;
@@ -596,18 +852,25 @@ function loadScores(){
     if (cache){
       globalBest = cleanScore(cache.score);
       globalName = cleanChampionName(cache.name);
+      globalBoard = normalizeBoard(cache.board, cache.score, cache.name);
+      boardWeek = typeof cache.week === "string" ? cache.week : "";
+      weeklyWinners = normalizeWinners(cache.winners);
+      allTimeTop = normalizeTopList(cache.alltime, 3);
     } else {
       /* one-time migration from the old on-device-only record */
       globalBest = cleanScore(localStorage.getItem("tetoris_global_hi"));
       globalName = cleanChampionName(localStorage.getItem("tetoris_global_name"));
+      globalBoard = normalizeBoard(null, globalBest, globalName);
     }
+    myName = cleanChampionName(localStorage.getItem(LS_MYNAME));
   }catch(e){ /* storage unavailable — scores still work for this session */ }
+  settleWeekLocal();
 }
 function saveLocalScore(){
   try{ localStorage.setItem(LS_LOCAL, String(localBest)); }catch(e){}
 }
 function saveGlobalCache(){
-  try{ localStorage.setItem(LS_GCACHE, JSON.stringify({ score:globalBest, name:globalName })); }catch(e){}
+  try{ localStorage.setItem(LS_GCACHE, JSON.stringify({ score:globalBest, name:globalName, board:globalBoard, week:boardWeek, winners:weeklyWinners, alltime:allTimeTop })); }catch(e){}
 }
 /* the mirror appends junk markup after its JSON — pull out the first
    balanced {...} object (string-aware) and parse just that */
@@ -634,6 +897,30 @@ function extractJsonObject(text){
   }
   return null;
 }
+/* a board read back from a store or the on-device cache is untrusted:
+   clean every entry, drop junk and duplicates, sort best-first and cap
+   at BOARD_SIZE. The single champion fields are folded in, so records
+   written by older builds (champion only, no board) still show. Entry
+   keys are read leniently: {n, s} or {name/player, score}. */
+function normalizeBoard(list, champScore, champName){
+  var out = [], seen = {};
+  function add(n, s){
+    s = cleanScore(s); n = cleanChampionName(n);
+    if (s <= 0) return;
+    var key = n + "|" + s;
+    if (seen[key]) return;
+    seen[key] = 1;
+    out.push({ name:n, score:s });
+  }
+  if (Array.isArray(list)) list.forEach(function(e){
+    if (!e) return;
+    add(e.n != null ? e.n : (e.name != null ? e.name : e.player),
+        e.s != null ? e.s : e.score);
+  });
+  add(champName, champScore);
+  out.sort(function(a, b){ return b.score - a.score; });
+  return out.slice(0, BOARD_SIZE);
+}
 function readGlobalPrimary(){
   if (typeof fetch !== "function") return Promise.resolve(null);
   return fetch(GLOBAL_PRIMARY_URL, { cache:"no-store" }).then(function(r){
@@ -641,7 +928,7 @@ function readGlobalPrimary(){
     return r.json();
   }).then(function(j){
     if (!j || !j.data) return null;
-    return { score: cleanScore(j.data.score), name: cleanChampionName(j.data.player) };
+    return { score: cleanScore(j.data.score), name: cleanChampionName(j.data.player), board: normalizeBoard(j.data.board, j.data.score, j.data.player), week: typeof j.data.week === "string" ? j.data.week : "", winners: normalizeWinners(j.data.winners), alltime: normalizeTopList(j.data.alltime, 3) };
   }).catch(function(){ return null; });
 }
 function readGlobalMirror(){
@@ -652,39 +939,97 @@ function readGlobalMirror(){
   }).then(function(text){
     var j = extractJsonObject(text);
     if (!j) return null;
-    return { score: cleanScore(j.score), name: cleanChampionName(j.name) };
+    return { score: cleanScore(j.score), name: cleanChampionName(j.name), board: normalizeBoard(j.board, j.score, j.name), week: typeof j.week === "string" ? j.week : "", winners: normalizeWinners(j.winners), alltime: normalizeTopList(j.alltime, 3) };
   }).catch(function(){ return null; });
 }
-/* pull the shared champion; resolves true if any store answered. The crown
-   only ever moves up from what the stores report (plus the last known
-   record), so a store that lost the record can't dethrone the champion. */
+function stateAsRecord(){
+  return { score:globalBest, name:globalName, board:globalBoard, week:boardWeek, winners:weeklyWinners, alltime:allTimeTop };
+}
+/* pull the shared record; resolves true if any store answered. The two
+   stores' records are merged with this device's last known record:
+   • winners lists are unioned week by week;
+   • every score seen feeds the all-time top 3;
+   • boards from the current week are unioned (exact name+score
+     duplicates collapse) into the live top 15;
+   • a board from a finished week is archived — its top 3 join the
+     winners — and the live board starts the new week empty;
+   • a record with no week (written by an older build) is adopted
+     into the current week.
+   When a merge adopted or archived anything, the merged record is
+   written back so both stores converge on the weekly format. If no
+   store answers, the last known boards stay on screen, flagged stale
+   for the leaderboard panel. */
 function fetchGlobal(){
   return Promise.all([readGlobalPrimary(), readGlobalMirror()]).then(function(records){
-    var best = null, reached = false;
-    records.forEach(function(r){
-      if (!r) return;
-      reached = true;
-      if (!best || r.score > best.score) best = r;
-    });
-    if (reached && best && (best.score > globalBest || (best.score === globalBest && best.name !== globalName))){
-      globalBest = best.score;
-      globalName = best.name;
-      saveGlobalCache();
+    var reached = false;
+    var candidates = [];
+    records.forEach(function(r){ if (r){ reached = true; candidates.push(r); } });
+    if (!reached){
+      boardStale = true;
+      if (lbOpen) renderBoard();
+      return false;
     }
-    if (reached) updateHUD();
-    return reached;
+    candidates.push(stateAsRecord()); /* this device's last known record joins the merge */
+    var curWeek = currentWeekId();
+    var winners = [];
+    var pool = [];
+    var live = [], liveSeen = {};
+    var dirty = false; /* a legacy record or a week rollover — write the merged record back */
+    candidates.forEach(function(r){
+      winners = normalizeWinners(winners.concat(r.winners || []));
+      pool = pool.concat(r.alltime || [], r.board || []);
+      (r.winners || []).forEach(function(w){ pool = pool.concat(w.top || []); });
+      if (r.score > 0) pool.push({ name:r.name, score:r.score });
+      var w = r.week || curWeek; /* no week = pre-weekly record: adopt into this week */
+      if (!r.week) dirty = true;
+      if (w < curWeek){
+        if (r.board && r.board.length){ winners = archiveWeekInto(winners, w, r.board); dirty = true; }
+      } else if (w === curWeek){
+        (r.board || []).forEach(function(e){
+          var key = e.name + "|" + e.score;
+          if (liveSeen[key]) return;
+          liveSeen[key] = 1;
+          live.push(e);
+        });
+      }
+      /* a record from a future week (clock skew) lends its scores to the all-time pool only */
+    });
+    live.sort(function(a, b){ return b.score - a.score; });
+    globalBoard = live.slice(0, BOARD_SIZE);
+    boardWeek = curWeek;
+    weeklyWinners = winners;
+    allTimeTop = normalizeTopList(pool, 3);
+    if (globalBoard.length){
+      globalBest = globalBoard[0].score;
+      globalName = globalBoard[0].name;
+    } else { globalBest = 0; globalName = ""; }
+    boardStale = false;
+    saveGlobalCache();
+    updateHUD();
+    if (dirty) pushBoard(globalBoard, allTimeTop); /* converge the stores — best effort */
+    if (lbOpen) renderBoard();
+    return true;
   });
 }
-/* write a new champion to both stores; resolves true if either accepted it */
-function pushGlobal(newScore, newName){
+/* write the whole record — this week's board, past winners and the
+   all-time top 3 (champion fields included, so older builds still read
+   the crown) — to both stores; resolves true if either store accepted it */
+function pushBoard(boardToPush, allTimeToPush){
   if (typeof fetch !== "function") return Promise.resolve(false);
+  var champ = boardToPush.length ? boardToPush[0] : { name:"", score:0 };
+  var payload = boardToPush.map(function(e){ return { n:e.name, s:e.score }; });
+  var winnersPayload = weeklyWinners.map(function(w){
+    return { w:w.week, top:w.top.map(function(e){ return { n:e.name, s:e.score }; }) };
+  });
+  var allPayload = (allTimeToPush || allTimeTop).map(function(e){ return { n:e.name, s:e.score }; });
+  var wk = currentWeekId();
   var primary = fetch(GLOBAL_PRIMARY_URL, {
     method:"PUT", headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ name:"tetoris-global", data:{ score:newScore, player:newName } })
+    body: JSON.stringify({ name:"tetoris-global", data:{ score:champ.score, player:champ.name, board:payload, week:wk, winners:winnersPayload, alltime:allPayload } })
   }).then(function(r){ return !!r.ok; }).catch(function(){ return false; });
   var mirror = fetch(GLOBAL_MIRROR_URL, {
     method:"PUT", headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ score:newScore, name:newName })
+    body: JSON.stringify({ score:champ.score, name:champ.name, board:payload, week:wk, winners:winnersPayload, alltime:allPayload })
   }).then(function(r){ return !!r.ok; }).catch(function(){ return false; });
   return Promise.all([primary, mirror]).then(function(res){ return !!(res[0] || res[1]); });
 }
@@ -728,8 +1073,45 @@ var sfx = {
   tetris:function(){ [523,659,784,1046,1318].forEach(function(f,i){ beep(f, .12, "triangle", .06, i*.06); }); },
   tspin: function(){ [784,988,1174,1568].forEach(function(f,i){ beep(f, .11, "triangle", .06, i*.05); }); },
   level: function(){ [392,523,659,784].forEach(function(f,i){ beep(f, .1, "sine", .05, i*.06); }); },
-  over:  function(){ [392,330,262,196].forEach(function(f,i){ beep(f, .16, "sine", .05, i*.13); }); }
+  over:  function(){ [392,330,262,196].forEach(function(f,i){ beep(f, .16, "sine", .05, i*.13); }); },
+  fanfare: function(){
+    /* a short brassy fanfare for a new champion: a rising arpeggio into
+       a held chord, then one final sparkle note */
+    [[523,0],[659,.12],[784,.24],[1047,.36]].forEach(function(n, i){
+      beep(n[0], i === 3 ? .5 : .13, "triangle", .07, n[1]);
+      beep(n[0] / 2, i === 3 ? .5 : .13, "sine", .035, n[1]);
+    });
+    [784, 988, 1175].forEach(function(f){ beep(f, .55, "triangle", .04, .36); });
+    beep(1319, .65, "triangle", .055, .64);
+    beep(659, .65, "sine", .03, .64);
+  }
 };
+
+/* ---------- haptics — navigator.vibrate ----------
+   A small buzz when a piece locks, a stronger one on line clears and
+   Tetrises, and a double-pulse on level up. Android browsers expose
+   navigator.vibrate; iOS Safari gives web pages no vibration API at
+   all, so every call there simply does nothing. On by default where
+   the device supports it; the rail toggle remembers its setting on
+   this device, like the other preferences. */
+var LS_HAPTICS = "tetoris_haptics";
+var hapticsSupported = typeof navigator !== "undefined" && typeof navigator.vibrate === "function";
+var hapticsOn = hapticsSupported;
+try{
+  var savedHaptics = localStorage.getItem(LS_HAPTICS);
+  if (savedHaptics !== null) hapticsOn = savedHaptics === "1";
+}catch(e){}
+function buzz(pattern){
+  if (!hapticsOn) return;
+  try{ if (navigator.vibrate) navigator.vibrate(pattern); }catch(e){ /* no haptics — fine */ }
+}
+function updateHapticsBtn(){
+  var b = $("hapticsBtn");
+  if (!b) return;
+  b.classList.toggle("on", hapticsOn);
+  b.setAttribute("aria-pressed", hapticsOn ? "true" : "false");
+  b.title = "Haptics " + (hapticsOn ? "on" : "off") + (hapticsSupported ? "" : " — not supported on this device");
+}
 
 /* ---------- BGM: Korobeiniki (traditional / public domain) — music-box rendition ----------
    The same Tetris melody, re-voiced as a gentle music box and synthesised
@@ -1027,10 +1409,13 @@ function detectTSpin(){
 /* ---------- locking & scoring ---------- */
 function lockPiece(){
   var tspin = detectTSpin();
+  piecesPlaced++;
+  if (tspin) tspinCount++;
   cellsOf(current).forEach(function(pt){
     if (pt[1] >= 0) board[pt[1]][pt[0]] = current.type;
   });
   sfx.lock();
+  buzz(12); /* a small thud as the piece settles */
   var full = [];
   for (var r = 0; r < TOTAL; r++){
     var ok = true;
@@ -1079,6 +1464,7 @@ function scoreClear(n, tspin){
   score += pts;
 
   combo++;
+  if (combo > maxCombo) maxCombo = combo;
   if (combo >= 1){
     score += 50 * combo;
     flash(label + (label ? " · " : "") + "COMBO x" + combo + "  +" + pts);
@@ -1088,6 +1474,10 @@ function scoreClear(n, tspin){
   if (n === 4){ sfx.tetris(); }
   else if (tspin){ sfx.tspin(); }
   else { sfx.clear(n); }
+  /* clears buzz harder than a plain lock; a Tetris hardest of all */
+  if (n === 4) buzz([35, 45, 35, 45, 70]);
+  else if (tspin) buzz(50);
+  else buzz(28);
 
   lines += n;
   var newLevel = Math.floor(lines / 10) + 1;
@@ -1097,6 +1487,7 @@ function scoreClear(n, tspin){
     var wrapEl = document.querySelector(".board-wrap");
     if (wrapEl){ wrapEl.classList.remove("level-up"); void wrapEl.offsetWidth; wrapEl.classList.add("level-up"); }
     sfx.level();
+    buzz([18, 55, 18, 55, 32]); /* level up: a little double-pulse */
     setTimeout(function(){ flash("LEVEL " + level); }, 350);
   }
   updateHUD();
@@ -1358,6 +1749,16 @@ function drawSide(){
 }
 
 /* ================= HUD & flow ================= */
+function formatPlayTime(ms){
+  var s = Math.floor(ms / 1000);
+  return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+}
+/* the game-over comparison line: this device's best vs the global best */
+function renderOverCompare(){
+  var el = $("overCompare");
+  if (!el) return;
+  el.textContent = "Local best " + localBest.toLocaleString("en-US") + " · Global best " + globalBest.toLocaleString("en-US") + (globalBest > 0 ? " · " + (globalName || "Anonymous") : "");
+}
 function updateHUD(){
   $("uiScore").textContent = score.toLocaleString("en-US");
   $("uiLocal").textContent = localBest.toLocaleString("en-US");
@@ -1375,7 +1776,8 @@ function resetGame(){
   clearingRows = null; clearTimer = 0;
   dropCounter = 0; lockCounter = 0; lockResets = 0;
   applyLevelTheme(1);
-  pendingGlobalScore = 0;
+  pendingBoardScore = 0; pendingIsChampion = false;
+  maxCombo = 0; tspinCount = 0; piecesPlaced = 0; playMs = 0;
   dasDir = 0; dasActive = false; softDropping = false;
 }
 function startGame(){
@@ -1384,6 +1786,7 @@ function startGame(){
   fetchGlobal(); /* refresh the shared crown for this run */
   state = "playing";
   var cp = $("championPrompt"); if (cp) cp.hidden = true;
+  var cb = $("championBanner"); if (cb) cb.hidden = true;
   $("startOverlay").hidden = true;
   $("overOverlay").hidden = true;
   $("pauseOverlay").hidden = true;
@@ -1399,81 +1802,146 @@ function gameOver(){
   /* this device's own hi score always updates silently */
   if (score > localBest){ localBest = score; saveLocalScore(); }
   sfx.over();
-  $("overStats").textContent = "Score " + score.toLocaleString("en-US") + " · Level " + level + " · " + lines + " lines";
+  /* the stats screen: this run's numbers, with both hi scores to
+     compare against */
+  $("ovScore").textContent = score.toLocaleString("en-US");
+  $("ovLines").textContent = lines;
+  $("ovLevel").textContent = level;
+  $("ovTime").textContent = formatPlayTime(playMs);
+  $("ovCombo").textContent = maxCombo >= 1 ? "x" + maxCombo : "—";
+  $("ovTspin").textContent = tspinCount;
+  $("ovPieces").textContent = piecesPlaced;
+  renderOverCompare();
   $("overMsg").textContent = lines >= 40 ? "Wow, what a tower-builder! The little ones are impressed." :
     lines >= 15 ? "So close! A few more lines and you'd have flown." :
     "You did great — the tower just got a little too tall.";
+  var cbanner = $("championBanner"); if (cbanner) cbanner.hidden = true;
   $("overOverlay").hidden = false;
   /* beat the global best? Refresh the shared record first, then ask for a
      name before the crown changes hands */
   var cp = $("championPrompt");
   cp.hidden = true;
-  pendingGlobalScore = 0;
+  pendingBoardScore = 0;
+  pendingIsChampion = false;
   championChecked = false;
   updateHUD();
   var settled = false;
   function settleChampion(){
     if (settled) return;
     settled = true;
-    checkChampionPrompt();
+    checkBoardPrompt();
   }
   setTimeout(settleChampion, 1800); /* stores unreachable — judge on last known */
   fetchGlobal().then(function(){ settleChampion(); });
 }
-function checkChampionPrompt(){
+/* after the shared board settles, decide what this score earned:
+   beating the champion gets the full celebration — confetti, fanfare
+   and the New Champion banner — then the name prompt to claim the
+   crown. A score that only reaches the top 15 gets the same prompt,
+   without the fireworks. Anything else gets no prompt. */
+function checkBoardPrompt(){
   if (championChecked || state !== "over") return;
   championChecked = true;
   var cp = $("championPrompt");
+  pendingBoardScore = 0;
+  pendingIsChampion = false;
   if (score > 0 && score > globalBest){
-    pendingGlobalScore = score;
-    $("championForm").hidden = false;
-    $("championSkip").hidden = false;
-    $("championDone").hidden = true;
-    $("championName").value = "";
-    cp.hidden = false;
-    setTimeout(function(){ try{ $("championName").focus(); }catch(e){} }, 60);
+    pendingBoardScore = score;
+    pendingIsChampion = true;
+    $("cpTitle").textContent = "★ Claim the crown ★";
+    $("cpSub").textContent = "Enter your name to take the top spot on this week's board.";
+    showChampionCelebration();
+    showNamePrompt();
+  } else if (score > 0 && (globalBoard.length < BOARD_SIZE || score > globalBoard[globalBoard.length - 1].score)){
+    pendingBoardScore = score;
+    var rank = 1;
+    globalBoard.forEach(function(e){ if (e.score > score) rank++; });
+    $("cpTitle").textContent = "🏆 You made this week's Top 15!";
+    $("cpSub").textContent = "You placed #" + rank + " on this week's board — enter your name to be listed.";
+    showNamePrompt();
   } else {
     cp.hidden = true;
   }
+  renderOverCompare();
   updateHUD();
 }
-/* the player claimed the global crown — write score + name to the shared
-   stores, replacing the old champion on every device */
+function showNamePrompt(){
+  $("championForm").hidden = false;
+  $("championSkip").hidden = false;
+  $("championDone").hidden = true;
+  $("championName").value = myName || "";
+  $("championPrompt").hidden = false;
+  setTimeout(function(){ try{ $("championName").focus(); }catch(e){} }, 60);
+}
+function showChampionCelebration(){
+  var banner = $("championBanner");
+  $("championBannerSub").textContent = globalBest > 0
+    ? "You beat " + (globalName || "Anonymous") + "'s " + globalBest.toLocaleString("en-US") + "!"
+    : "The first champion score on the board!";
+  banner.hidden = false;
+  banner.classList.remove("celebrate"); void banner.offsetWidth; banner.classList.add("celebrate");
+  if (soundOn) sfx.fanfare();
+  launchConfetti();
+}
+/* the player claimed their place — insert the score into the board and
+   write the whole top 15 to the shared stores. The new board only
+   becomes the game's board once a store accepts the write, so a failed
+   save changes nothing and the claim stays open for a retry. */
 function claimGlobal(){
-  if (!pendingGlobalScore || claimSaving) return;
+  if (!pendingBoardScore || claimSaving) return;
   var name = cleanChampionName($("championName").value);
   if (!name) name = "Anonymous";
-  var claimedScore = pendingGlobalScore;
+  var entry = { name:name, score:pendingBoardScore };
+  var wasChampion = pendingIsChampion;
+  var newBoard = globalBoard.slice();
+  newBoard.push(entry);
+  newBoard.sort(function(a, b){ return b.score - a.score; });
+  newBoard = newBoard.slice(0, BOARD_SIZE);
+  var rank = newBoard.indexOf(entry) + 1;
+  /* the claimed score also takes its shot at the all-time top 3 */
+  var newAllTime = normalizeTopList(allTimeTop.concat([entry]), 3);
   claimSaving = true;
   var saveBtn = $("championSave");
   saveBtn.disabled = true;
   saveBtn.textContent = "Saving…";
   var done = $("championDone");
   done.hidden = true;
-  pushGlobal(claimedScore, name).then(function(ok){
+  pushBoard(newBoard, newAllTime).then(function(ok){
     claimSaving = false;
     saveBtn.disabled = false;
     saveBtn.textContent = "Save";
     if (ok){
-      globalBest = claimedScore;
-      globalName = name;
-      pendingGlobalScore = 0;
+      globalBoard = newBoard;
+      allTimeTop = newAllTime;
+      if (globalBoard.length){
+        globalBest = globalBoard[0].score;
+        globalName = globalBoard[0].name;
+      }
+      pendingBoardScore = 0;
+      pendingIsChampion = false;
+      myName = name;
+      try{ localStorage.setItem(LS_MYNAME, name); }catch(e){}
       saveGlobalCache();
       $("championForm").hidden = true;
       $("championSkip").hidden = true;
-      done.textContent = "👑 Global champion: " + globalName + " · " + globalBest.toLocaleString("en-US");
+      done.textContent = wasChampion
+        ? "👑 Global champion: " + name + " · " + entry.score.toLocaleString("en-US")
+        : "🏆 You're #" + rank + " on the global board!";
       done.hidden = false;
       if (soundOn) sfx.level();
+      if (lbOpen) renderBoard();
     } else {
       /* nothing was written anywhere — keep the claim open for a retry */
       done.textContent = "Couldn't reach the shared board — check your connection and tap Save to try again.";
       done.hidden = false;
     }
+    renderOverCompare();
     updateHUD();
   });
 }
 function skipGlobal(){
-  pendingGlobalScore = 0;
+  pendingBoardScore = 0;
+  pendingIsChampion = false;
   $("championPrompt").hidden = true;
 }
 function togglePause(force){
@@ -1498,6 +1966,7 @@ function loop(ts){
   requestAnimationFrame(loop);
   var dt = Math.min(100, ts - (lastTs || ts));
   lastTs = ts;
+  if (state === "playing") playMs += dt; /* game-over "time played" — pauses don't count */
   if (state === "playing" && current){
     /* DAS / ARR auto-shift */
     if (dasActive && dasDir !== 0){
@@ -1548,6 +2017,8 @@ document.addEventListener("keydown", function(e){
   if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
   /* the tutorial owns the keyboard while it is open */
   if (typeof tutorialOpen !== "undefined" && tutorialOpen) return;
+  /* …and so does the leaderboard panel */
+  if (typeof lbOpen !== "undefined" && lbOpen) return;
   var k = e.key;
   if (["ArrowLeft","ArrowRight","ArrowDown","ArrowUp"," "].indexOf(k) !== -1) e.preventDefault();
   if (k === "p" || k === "P" || k === "Escape"){ if (state === "playing" || state === "paused") togglePause(); return; }
@@ -1736,6 +2207,17 @@ if (ctrlToggleBtnEl) ctrlToggleBtnEl.addEventListener("click", function(){
   ctrlToggleBtnEl.title = controlsHidden ? "Show controls" : "Hide controls — play with swipes & taps";
   if (soundOn) sfx.ui();
 });
+/* haptics toggle — feel a piece lock and a line clear on Android.
+   On iPhone the button still flips and remembers, but Safari gives web
+   pages no vibration to trigger, so nothing buzzes there. */
+var hapticsBtnEl = $("hapticsBtn");
+if (hapticsBtnEl) hapticsBtnEl.addEventListener("click", function(){
+  hapticsOn = !hapticsOn;
+  try{ localStorage.setItem(LS_HAPTICS, hapticsOn ? "1" : "0"); }catch(e){}
+  updateHapticsBtn();
+  if (hapticsOn) buzz(18); /* feel the setting you just switched on */
+  else if (soundOn) sfx.ui();
+});
 /* ? button — replay the tutorial any time (it only auto-shows once):
    the yellow ? in the top-left rail. */
 function replayTutorial(){
@@ -1777,6 +2259,198 @@ document.addEventListener("dragstart", function(e){
   if (e.target && e.target.tagName !== "INPUT") e.preventDefault();
 });
 
+/* ================= confetti celebration ================= */
+function launchConfetti(){
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  var box = $("confettiBox");
+  if (!box) return;
+  box.innerHTML = "";
+  var colors = ["#ff7d9c", "#ffd93d", "#57c7e8", "#7bc96f", "#b892e0", "#ff9f45", "#ffffff"];
+  for (var i = 0; i < 80; i++){
+    var p = document.createElement("i");
+    var sz = 6 + Math.random() * 7;
+    p.style.left = (Math.random() * 100) + "vw";
+    p.style.width = sz + "px";
+    p.style.height = (sz * (0.5 + Math.random() * 0.9)) + "px";
+    p.style.background = colors[i % colors.length];
+    if (Math.random() < 0.3) p.style.borderRadius = "50%";
+    p.style.animationDuration = (2.2 + Math.random() * 1.8) + "s";
+    p.style.animationDelay = (Math.random() * 0.45) + "s";
+    box.appendChild(p);
+  }
+  setTimeout(function(){ box.innerHTML = ""; }, 5200);
+}
+
+/* ================= leaderboard panel =================
+   Opened by tapping the Global Hi Score cell in the right bar, or the
+   Leaderboard buttons on the start and game-over screens. Three tabs:
+   This Week (the live top 15, resetting every Monday), Past Winners
+   (each finished week's top 3, archived at the rollover) and All Time
+   (the top 3, never resetting). Rows are built with textContent only —
+   names from the shared stores are untrusted input. #1 wears the crown
+   on a gold row, #2 silver, #3 bronze; the player's own rows are
+   outlined, and on the weekly tab a footer row shows where their best
+   would rank if it isn't on the board. */
+var lbOpen = false;
+var lbTab = "week"; /* week | past | all */
+var lbPastIdx = 0;  /* which archived week the Past Winners tab is showing — 0 = newest */
+function openLeaderboard(){
+  if (lbOpen) return;
+  lbOpen = true;
+  if (state === "playing") togglePause(true);
+  renderBoard();
+  $("lbBackdrop").hidden = false;
+  $("lbPanel").hidden = false;
+  fetchGlobal(); /* refresh — fetchGlobal re-renders when it lands */
+  if (soundOn) sfx.ui();
+}
+function closeLeaderboard(){
+  if (!lbOpen) return;
+  lbOpen = false;
+  $("lbBackdrop").hidden = true;
+  $("lbPanel").hidden = true;
+}
+/* one leaderboard row: podium classes for the top 3, crown on #1,
+   the player's own rows outlined with a YOU tag */
+function buildLbRow(e, i){
+  var li = document.createElement("li");
+  var mine = !!myName && e.name === myName;
+  li.className = "lb-row" + (i === 0 ? " r1" : i === 1 ? " r2" : i === 2 ? " r3" : "") + (mine ? " mine" : "");
+  var rank = document.createElement("span");
+  rank.className = "lb-rank";
+  rank.textContent = (i === 0 ? "👑 " : "") + (i + 1);
+  var nm = document.createElement("span");
+  nm.className = "lb-name";
+  nm.textContent = e.name || "Anonymous";
+  if (mine){
+    var tag = document.createElement("span");
+    tag.className = "you-tag";
+    tag.textContent = "YOU";
+    nm.appendChild(tag);
+  }
+  var sc = document.createElement("span");
+  sc.className = "lb-score";
+  sc.textContent = e.score.toLocaleString("en-US");
+  li.appendChild(rank); li.appendChild(nm); li.appendChild(sc);
+  return li;
+}
+function renderBoard(){
+  var list = $("lbList");
+  if (!list) return;
+  [["lbTabWeek", "week"], ["lbTabPast", "past"], ["lbTabAll", "all"]].forEach(function(pair){
+    var btn = $(pair[0]);
+    if (!btn) return;
+    var on = lbTab === pair[1];
+    btn.classList.toggle("on", on);
+    btn.setAttribute("aria-selected", on ? "true" : "false");
+  });
+  var sub = $("lbSub");
+  var you = $("lbYou");
+  var weekNav = $("lbWeekNav");
+  list.innerHTML = "";
+  you.innerHTML = "";
+  you.hidden = true;
+  if (weekNav) weekNav.hidden = lbTab !== "past";
+  if (lbTab === "past"){
+    if (sub) sub.textContent = "Past weekly winners · Top 3 each week";
+    if (!weeklyWinners.length){
+      if (weekNav) weekNav.hidden = true;
+      var pe = document.createElement("li");
+      pe.className = "lb-empty";
+      pe.textContent = "No past winners yet — every Monday, the week just ended has its top 3 saved here for good.";
+      list.appendChild(pe);
+    } else {
+      /* one week at a time, newest first — the ‹ › arrows step through
+         the archived weeks; the index is clamped because a refresh can
+         land while the panel is open and change the list */
+      if (lbPastIdx < 0) lbPastIdx = 0;
+      if (lbPastIdx > weeklyWinners.length - 1) lbPastIdx = weeklyWinners.length - 1;
+      var w = weeklyWinners[lbPastIdx];
+      $("lbWeekLabel").textContent = weekLabel(w.week);
+      $("lbWeekCount").textContent = "Week " + (lbPastIdx + 1) + " of " + weeklyWinners.length;
+      $("lbWeekOlder").disabled = lbPastIdx >= weeklyWinners.length - 1;
+      $("lbWeekNewer").disabled = lbPastIdx <= 0;
+      w.top.forEach(function(e, i){ list.appendChild(buildLbRow(e, i)); });
+    }
+  } else if (lbTab === "all"){
+    if (sub) sub.textContent = "All-time Top 3 · Never resets";
+    if (!allTimeTop.length){
+      var ae = document.createElement("li");
+      ae.className = "lb-empty";
+      ae.textContent = "No scores yet — the first champions will live here forever.";
+      list.appendChild(ae);
+    } else {
+      allTimeTop.forEach(function(e, i){ list.appendChild(buildLbRow(e, i)); });
+    }
+  } else {
+    if (sub) sub.textContent = "Top 15 · " + weekLabel(boardWeek || currentWeekId()) + " · Resets Monday";
+    if (!globalBoard.length){
+      var empty = document.createElement("li");
+      empty.className = "lb-empty";
+      empty.textContent = "No scores this week yet — be the first champion!";
+      list.appendChild(empty);
+    } else {
+      globalBoard.forEach(function(e, i){ list.appendChild(buildLbRow(e, i)); });
+    }
+    /* the player's own standing, when their best isn't on the board:
+       the rank it would hold against the stored top 15 — beyond a full
+       board that can only be stated as "#16+", since lower scores are
+       not kept */
+    var onBoard = !!myName && globalBoard.some(function(e){ return e.name === myName && e.score === localBest; });
+    if (localBest > 0 && !onBoard){
+      var rank = 1;
+      globalBoard.forEach(function(e){ if (e.score > localBest) rank++; });
+      var rankTxt = rank > BOARD_SIZE ? "#" + (BOARD_SIZE + 1) + "+" : "#" + rank;
+      var yl = document.createElement("span"); yl.textContent = "Your best";
+      var yr = document.createElement("span");
+      yr.textContent = localBest.toLocaleString("en-US") + " · Rank " + rankTxt;
+      you.appendChild(yl); you.appendChild(yr);
+      you.hidden = false;
+    } else if (localBest <= 0){
+      var ym = document.createElement("span");
+      ym.textContent = "Play a game to earn your place on the board!";
+      you.appendChild(ym);
+      you.hidden = false;
+    }
+  }
+  $("lbNote").hidden = !boardStale;
+}
+var globalCellEl = $("globalCell");
+if (globalCellEl){
+  globalCellEl.addEventListener("click", openLeaderboard);
+  globalCellEl.addEventListener("keydown", function(e){
+    if (e.key === "Enter" || e.key === " "){ e.preventDefault(); openLeaderboard(); }
+  });
+}
+var boardBtnStartEl = $("boardBtnStart");
+if (boardBtnStartEl) boardBtnStartEl.addEventListener("click", openLeaderboard);
+var boardBtnOverEl = $("boardBtnOver");
+if (boardBtnOverEl) boardBtnOverEl.addEventListener("click", openLeaderboard);
+$("lbClose").addEventListener("click", closeLeaderboard);
+$("lbBackdrop").addEventListener("click", closeLeaderboard);
+/* board tabs: This Week / Past Winners / All Time */
+[["lbTabWeek", "week"], ["lbTabPast", "past"], ["lbTabAll", "all"]].forEach(function(pair){
+  var btn = $(pair[0]);
+  if (btn) btn.addEventListener("click", function(){
+    if (lbTab === pair[1]) return;
+    lbTab = pair[1];
+    if (lbTab === "past") lbPastIdx = 0; /* always land on the newest archived week */
+    renderBoard();
+    if (soundOn) sfx.ui();
+  });
+});
+/* Past Winners week cycler: ‹ steps to older weeks, › back to newer
+   ones; renderBoard disables each arrow at its end of the archive */
+$("lbWeekOlder").addEventListener("click", function(){
+  if (lbPastIdx < weeklyWinners.length - 1){ lbPastIdx++; renderBoard(); if (soundOn) sfx.ui(); }
+});
+$("lbWeekNewer").addEventListener("click", function(){
+  if (lbPastIdx > 0){ lbPastIdx--; renderBoard(); if (soundOn) sfx.ui(); }
+});
+document.addEventListener("keydown", function(e){
+  if (lbOpen && e.key === "Escape"){ e.preventDefault(); closeLeaderboard(); }
+});
+
 /* ================= first-time tutorial ================= */
 var LS_TUTORIAL = "tetoris_tutorial_seen_v1";
 var TUTORIAL_STEPS = [
@@ -1789,6 +2463,7 @@ var TUTORIAL_STEPS = [
       '<li><span class="tut-icon">♪</span><span><b>Music</b> — tap to turn the background music on or off.</span></li>' +
       '<li><span class="tut-icon">🔊</span><span><b>All sound</b> — tap to mute or unmute everything: music and sound effects together.</span></li>' +
       '<li><span class="tut-icon">🎮</span><span><b>Hide controller</b> — tap to hide the buttons at the bottom if you prefer swiping &amp; tapping on the board. Tap it again to bring them back.</span></li>' +
+      '<li><span class="tut-icon">📳</span><span><b>Haptics</b> — a little buzz when a piece locks, a stronger one when lines clear, and a pulse on level up. Tap to turn it on or off. Android phones only — iPhones don\u2019t let web pages vibrate.</span></li>' +
       '<li><span class="tut-icon">?</span><span><b>Help</b> — tap this yellow ? button any time to see this tour again.</span></li>' +
       '</ul>'
   },
@@ -1798,7 +2473,8 @@ var TUTORIAL_STEPS = [
     title: "Scores, next piece & hold",
     atTop: false,
     html: '<ul class="tutorial-list">' +
-      '<li><span class="tut-icon">Global</span><span><b>Global Hi Score</b> — the all-time highest score across everyone, and who holds it.</span></li>' +
+      '<li><span class="tut-icon">Global</span><span><b>Global Hi Score</b> — the highest score this week across everyone, and who holds it. The board resets every Monday, and each week\u2019s top 3 are kept forever on the Past Winners board.</span></li>' +
+      '<li><span class="tut-icon">🏆</span><span><b>Leaderboard</b> — tap the Global Hi Score any time to open it. It has three boards: This Week\u2019s Top 15, Past Winners (every week\u2019s top 3) and the All-Time Top 3. Number 1 wears the crown on gold, number 2 is silver and number 3 is bronze.</span></li>' +
       '<li><span class="tut-icon">Local</span><span><b>Local Hi Score</b> — the best score on this device.</span></li>' +
       '<li><span class="tut-icon">Score</span><span><b>Score</b> — your score in the game you are playing now.</span></li>' +
       '<li><span class="tut-icon">Next</span><span><b>Next</b> — the piece that will fall after this one, so you can plan ahead.</span></li>' +
@@ -1936,6 +2612,7 @@ fetchGlobal(); /* pull the shared champion from the stores */
 resetGame();
 drawSide();
 updateHUD();
+updateHapticsBtn();
 /* first-time players get the guided tour — shown once, then remembered on this device */
 if (!tutorialWasSeen()){
   setTimeout(function(){ if (!tutorialOpen && state === "ready") openTutorial(); }, 400);
