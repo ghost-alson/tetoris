@@ -192,6 +192,20 @@
       .icon-sound-btn svg{ display:block; }
       .icon-sound-btn:not(.on){ opacity:.5; filter:saturate(.35); }
       .icon-sound-btn:active{ transform:scale(.93); }
+      /* duel button — same white-on-pink silhouette family as the rail,
+         but when the weekend duel is live (Fri 00:00 – Sun 23:59) it
+         turns battle orange and pulses, so the state reads at a glance */
+      .duel-btn{ font-size:1.05rem; }
+      .duel-btn.live{
+        background:#f06423; border-color:#c24a12;
+        animation:duelPulse 1.6s ease-in-out infinite;
+      }
+      @keyframes duelPulse{
+        0%{ box-shadow:0 0 0 0 rgba(240,100,35,.55), var(--shadow); transform:scale(1); }
+        50%{ box-shadow:0 0 0 9px rgba(240,100,35,0), 0 0 22px rgba(240,100,35,.65), var(--shadow); transform:scale(1.10); }
+        100%{ box-shadow:0 0 0 0 rgba(240,100,35,0), var(--shadow); transform:scale(1); }
+      }
+      @media (prefers-reduced-motion: reduce){ .duel-btn.live{ animation:none; } }
       /* the ? help button wears the same white-on-pink look as the rest
          of the rail; it is not a toggle, so it keeps its permanent "on"
          class and always stays at full strength */
@@ -389,7 +403,7 @@
       .tutorial-card h2{ font-family:"Baloo 2",sans-serif; font-size:1.35rem; line-height:1.15; margin:5px 0 8px; }
       .tutorial-card p{ margin:0 0 8px; font-size:.92rem; line-height:1.5; font-weight:700; color:var(--ink); }
       .tutorial-list{ margin:6px 0 4px; padding:0; list-style:none; display:grid; gap:7px; }
-      .tutorial-list li{ display:flex; gap:9px; align-items:flex-start; font-size:.9rem; line-height:1.45; font-weight:700; }
+      .tutorial-list li{ display:flex; gap:9px; align-items:center; font-size:.9rem; line-height:1.45; font-weight:700; }
       .tutorial-list .tut-icon{
         flex:0 0 auto; min-width:34px; height:28px; padding:2px 6px; border-radius:999px;
         background:var(--chip); border:1.5px solid var(--panel-edge);
@@ -403,7 +417,7 @@
       .tutorial-list .tut-icon.rail-icon{
         width:30px; height:30px; min-width:30px; border-radius:50%;
         background:var(--accent); border:2px solid var(--accent-deep); color:#fff;
-        padding:0; margin-top:1px;
+        padding:0;
       }
       .tutorial-list .tut-icon.rail-icon svg{ display:block; }
       .tutorial-list .tut-icon.rail-icon.music{ font-size:1.3rem; line-height:1; }
@@ -567,6 +581,83 @@
       .lb-note{ margin-top:8px; font-size:.72rem; color:var(--muted); font-weight:700; text-align:center; }
       .lb-note[hidden]{ display:none; }
 
+      /* ---------- weekend duel panel ----------
+         Same top-anchored shell as the leaderboard (the .lb-panel
+         classes carry the frame); everything below is duel-specific:
+         the live banner, the team picker and the team standings. */
+      .duel-status{
+        font-family:"Baloo 2",sans-serif; font-weight:800; font-size:1.02rem; line-height:1.3;
+        border-radius:12px; padding:9px 12px; margin-bottom:10px; text-align:center;
+        background:var(--chip); border:2px solid var(--panel-edge);
+      }
+      .duel-status.live{ background:rgba(240,100,35,.16); border-color:#f06423; color:#c24a12; }
+      @media (prefers-color-scheme: dark){ .duel-status.live{ color:#ffb287; } }
+      .duel-note{ font-size:.84rem; font-weight:700; color:var(--muted); line-height:1.45; margin:0 0 10px; }
+      /* live countdown to the next duel, directly under the
+         "Next duel: …" line — d:hh:mm:ss, ticking every second */
+      .duel-countdown{
+        text-align:center; border:2px solid var(--panel-edge); background:var(--chip);
+        border-radius:14px; padding:9px 12px 11px; margin:-2px 0 12px;
+      }
+      .duel-countdown-label{
+        font-size:.62rem; font-weight:900; letter-spacing:.13em; text-transform:uppercase;
+        color:var(--muted); margin-bottom:2px;
+      }
+      .duel-countdown-value{
+        font-family:"Baloo 2",sans-serif; font-weight:800; font-size:1.85rem; line-height:1.1;
+        color:#c24a12; font-variant-numeric:tabular-nums; letter-spacing:.03em; white-space:nowrap;
+      }
+      @media (prefers-color-scheme: dark){ .duel-countdown-value{ color:#ffb287; } }
+      .duel-countdown-units{
+        margin-top:2px; text-align:center;
+        font-size:.60rem; font-weight:900; letter-spacing:.1em; text-transform:uppercase; color:var(--muted);
+      }
+      .duel-name-row{ display:flex; gap:6px; margin:0 0 10px; }
+      .duel-name-row input{
+        flex:1 1 auto; min-width:0; font-family:"Nunito",sans-serif; font-weight:800; font-size:.9rem;
+        color:var(--ink); background:var(--panel); border:2px solid var(--panel-edge); border-radius:999px;
+        padding:8px 12px; min-height:40px; outline:none;
+      }
+      .duel-name-row input:focus{ border-color:var(--accent); }
+      .duel-as{ font-size:.86rem; font-weight:800; margin:0 0 10px; }
+      .duel-teams{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:0 0 10px; }
+      .duel-team-btn{
+        font-family:"Baloo 2",sans-serif; font-weight:800; font-size:1rem; cursor:pointer;
+        border:2px solid var(--panel-edge); background:var(--chip); color:var(--ink);
+        border-radius:14px; padding:10px 6px; min-height:52px; line-height:1.2;
+      }
+      .duel-team-btn small{ display:block; font-family:"Nunito",sans-serif; font-size:.68rem; font-weight:800; color:var(--muted); margin-top:2px; }
+      .duel-team-btn.on{ background:var(--accent); border-color:var(--accent-deep); color:#fff; }
+      .duel-team-btn.on small{ color:#ffe3ec; }
+      .duel-team-btn:active{ transform:scale(.97); }
+      .duel-start{
+        display:block; width:100%; font-family:"Baloo 2",sans-serif; font-weight:800; font-size:1.05rem; cursor:pointer;
+        background:#f06423; color:#fff; border:none; border-bottom:4px solid #c24a12;
+        border-radius:999px; padding:11px 20px; min-height:48px; margin:0 0 6px;
+      }
+      .duel-start:active{ transform:translateY(2px); border-bottom-width:2px; }
+      .duel-start:disabled{ opacity:.45; cursor:default; }
+      .duel-start:disabled:active{ transform:none; }
+      .duel-recorded{
+        text-align:center; border:2px solid #d9a812; border-radius:14px; padding:12px;
+        background:linear-gradient(135deg, rgba(255,217,61,.30), rgba(255,181,46,.14)); margin-bottom:10px;
+      }
+      .duel-recorded .dr-big{ font-family:"Baloo 2",sans-serif; font-weight:800; font-size:1.15rem; line-height:1.25; }
+      .duel-recorded .dr-score{ font-family:"Baloo 2",sans-serif; font-weight:800; font-size:1.7rem; color:var(--accent-deep); line-height:1.15; }
+      @media (prefers-color-scheme: dark){ .duel-recorded .dr-score{ color:var(--accent); } }
+      .duel-team-head{
+        display:flex; align-items:baseline; justify-content:space-between; gap:8px;
+        margin:12px 0 6px; font-family:"Baloo 2",sans-serif; font-weight:800; font-size:1rem;
+      }
+      .duel-team-head .avg{ color:var(--accent-deep); white-space:nowrap; }
+      @media (prefers-color-scheme: dark){ .duel-team-head .avg{ color:var(--accent); } }
+      .duel-team-head .win-tag{
+        font-size:.6rem; font-weight:900; letter-spacing:.06em; background:#d9a812; color:#5b3a00;
+        border-radius:999px; padding:2px 8px; white-space:nowrap;
+      }
+      .duel-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:5px; }
+      .duel-none{ font-size:.82rem; font-weight:700; color:var(--muted); padding:2px 2px 4px; }
+
       /* ---------- confetti (champion celebration) ---------- */
       #confettiBox{ position:fixed; inset:0; z-index:120; pointer-events:none; overflow:hidden; }
       #confettiBox i{
@@ -605,12 +696,24 @@
         border:3px solid #d9a812; outline:2px solid #ffe27a; outline-offset:3px;
         box-shadow:0 0 18px rgba(217,168,18,.50), inset 0 0 14px rgba(217,168,18,.35);
       }
+      .frame-layer.frame-silver{
+        border:3px solid #aeb9c4; outline:2px solid #eef3f8; outline-offset:3px;
+        box-shadow:0 0 16px rgba(190,205,220,.55), inset 0 0 12px rgba(220,232,244,.40);
+      }
+      .frame-layer.frame-crystal{
+        border:3px solid #a9def2; outline:2px solid #eafcff; outline-offset:3px;
+        box-shadow:0 0 16px rgba(140,210,245,.55), inset 0 0 14px rgba(190,235,255,.50);
+      }
 
-      /* ---------- style wardrobe ---------- */
+      /* ---------- Me — the player's profile hub ---------- */
       .wd-backdrop{ position:fixed; inset:0; background:rgba(28,12,22,.55); z-index:109; }
       .wd-backdrop[hidden]{ display:none; }
       .wd-panel{
-        position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index:110;
+        /* anchored near the top of the screen, like the leaderboard:
+           the panel keeps a fixed top edge and expands downwards as
+           its content grows, instead of growing both ways around the
+           middle */
+        position:fixed; left:50%; top:calc(12px + env(safe-area-inset-top)); transform:translateX(-50%); z-index:110;
         width:min(480px, calc(100vw - 20px)); max-height:min(88dvh, 730px);
         display:flex; flex-direction:column;
         background:var(--panel); color:var(--ink); border:2px solid var(--panel-edge);
@@ -619,8 +722,45 @@
       .wd-panel[hidden]{ display:none; }
       .wd-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; }
       .wd-head h2{ font-family:"Baloo 2",sans-serif; font-size:1.3rem; line-height:1.1; margin:0; }
-      .wd-tabs{ margin:0 0 12px; }
-      .wd-tabs .lb-tab{ font-size:.78rem; }
+      /* identity header card: animal, name, current look, best score
+         and board rank — the at-a-glance summary above the sections */
+      .wd-id{
+        display:flex; align-items:center; gap:12px; margin-bottom:12px;
+        border:2px solid var(--panel-edge); background:var(--chip);
+        border-radius:16px; padding:10px 12px;
+      }
+      .wd-id-avatar{
+        width:56px; height:56px; min-height:56px; border-radius:50%; flex:0 0 auto; cursor:pointer;
+        border:2.5px solid var(--accent); background:var(--panel); margin:0; padding:0;
+        font-size:1.9rem; line-height:1; display:flex; align-items:center; justify-content:center;
+      }
+      .wd-id-avatar:active{ transform:scale(.94); }
+      .wd-id-main{ flex:1 1 auto; min-width:0; text-align:left; }
+      .wd-id-name{ font-family:"Baloo 2",sans-serif; font-weight:800; font-size:1.15rem; line-height:1.15; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      .wd-id-look{ font-size:.74rem; font-weight:700; color:var(--muted); line-height:1.35; margin-top:2px; }
+      .wd-id-side{ flex:0 0 auto; text-align:right; }
+      .wd-id-best{ font-family:"Baloo 2",sans-serif; font-weight:800; font-size:1.3rem; line-height:1.05; color:var(--accent-deep); }
+      @media (prefers-color-scheme: dark){ .wd-id-best{ color:var(--accent); } }
+      .wd-id-bestk{ font-size:.58rem; font-weight:900; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); }
+      .wd-id-rank{ font-size:.72rem; font-weight:800; margin-top:3px; }
+      /* the three main sections, then the smaller Style sub-tabs */
+      .wd-main-tabs{ margin:0 0 10px; }
+      .wd-main-tabs .lb-tab{ font-size:.92rem; padding:9px 4px; min-height:42px; }
+      /* Style sub-tabs are plain text with an underline marking the
+         active one — deliberately not pills, so this second level
+         reads clearly differently from the section pills above it */
+      .wd-tabs{ margin:0 0 12px; gap:2px; border-bottom:2px solid var(--panel-edge); }
+      .wd-tabs[hidden]{ display:none; }
+      .wd-tabs .lb-tab{
+        font-size:.82rem; flex:1 1 0; padding:8px 2px 9px; min-height:40px;
+        background:transparent; border:none; border-bottom:3px solid transparent;
+        border-radius:0; color:var(--muted); margin-bottom:-2px;
+      }
+      .wd-tabs .lb-tab.on{
+        background:transparent; border-color:transparent; border-bottom-color:var(--accent);
+        color:var(--accent-deep);
+      }
+      @media (prefers-color-scheme: dark){ .wd-tabs .lb-tab.on{ color:var(--accent); } }
       .wd-body{ overflow-y:auto; padding:2px; }
       .wd-note{ margin:0 0 10px; font-size:.82rem; font-weight:700; color:var(--muted); line-height:1.45; }
       .wd-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
@@ -658,6 +798,35 @@
       .wd-prog i{ display:block; height:100%; background:var(--accent); border-radius:3px; }
       .wd-animal{ font-size:1.9rem; line-height:1.25; }
       .wd-foot{ margin-top:12px; font-size:.72rem; color:var(--muted); font-weight:700; text-align:center; line-height:1.4; }
+
+      /* ---------- achievements & lifetime stats (Me sections) ---------- */
+      .ach-list{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+      .ach-card{
+        border:2px solid var(--panel-edge); background:var(--chip);
+        border-radius:14px; padding:12px 10px; text-align:center;
+        display:flex; flex-direction:column; align-items:center;
+      }
+      .ach-card.earned{ border-color:#d9a812; box-shadow:inset 0 0 0 1px #ffe27a; }
+      .ach-card:not(.earned){ color:var(--muted); }
+      .ach-medal{ font-size:1.9rem; line-height:1.15; }
+      .ach-card:not(.earned) .ach-medal{ filter:grayscale(1); opacity:.45; }
+      .ach-name{ font-family:"Baloo 2",sans-serif; font-weight:800; font-size:.95rem; line-height:1.15; margin-top:4px; }
+      .ach-done{ color:#b8860b; font-size:.7rem; font-weight:900; white-space:nowrap; }
+      @media (prefers-color-scheme: dark){ .ach-done{ color:#ffe27a; } }
+      .ach-desc{ font-size:.76rem; font-weight:700; color:var(--muted); line-height:1.35; margin-top:2px; }
+      .ach-reward{ font-size:.76rem; font-weight:800; margin-top:5px; }
+      .ach-reward .rw{ color:var(--accent); }
+      .ach-card:not(.earned) .ach-reward .rw{ color:var(--muted); }
+      .ach-prog{ display:flex; align-items:center; gap:8px; margin-top:7px; width:100%; }
+      .ach-prog .wd-prog{ flex:1 1 auto; margin:0; }
+      .ach-count{ font-size:.7rem; font-weight:800; color:var(--muted); white-space:nowrap; }
+      .stat-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+      .stat-tile{
+        border:2px solid var(--panel-edge); background:var(--chip);
+        border-radius:14px; padding:12px 10px; text-align:center;
+      }
+      .stat-v{ font-family:"Baloo 2",sans-serif; font-weight:800; font-size:1.35rem; line-height:1.1; }
+      .stat-k{ font-size:.7rem; font-weight:800; letter-spacing:.04em; color:var(--muted); margin-top:3px; text-transform:uppercase; }
 
       /* ---------- unlock toast ---------- */
       .unlock-toast{
@@ -731,12 +900,13 @@
       <div class="stage">
         <!-- sound icon buttons — top left, beside the playing field -->
         <div class="sound-rail">
-          <button class="profile-avatar-btn is-empty" id="profileAvatarBtn" type="button" aria-label="No profile animal picked yet — open Style wardrobe on Profile tab" title="Pick your profile animal"><span id="profileAvatarEmoji" aria-hidden="true">👤</span></button>
+          <button class="profile-avatar-btn is-empty" id="profileAvatarBtn" type="button" aria-label="No profile animal picked yet — open Me to pick one" title="Pick your profile animal"><span id="profileAvatarEmoji" aria-hidden="true">👤</span></button>
           <button class="icon-sound-btn on" id="bgmBtn" type="button" aria-pressed="true" aria-label="Toggle background music" title="Background music">♪</button>
           <button class="icon-sound-btn on" id="sideSoundBtn" type="button" aria-pressed="true" aria-label="Toggle sound effects" title="Sound effects"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></button>
           <button class="icon-sound-btn on" id="ctrlToggleBtn" type="button" aria-pressed="true" aria-label="Hide on-screen controls" title="Hide controls — play with swipes &amp; taps"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true" focusable="false"><path d="M7.6 5.5h8.8c3.1 0 5.6 2.6 5.6 5.9 0 .9-.2 1.7-.5 2.5l-1.1 3.4c-.4 1.2-1.9 1.6-2.9.8l-2.3-1.9c-.3-.3-.7-.4-1.1-.4h-4.2c-.4 0-.8.1-1.1.4l-2.3 1.9c-1 .8-2.5.4-2.9-.8L2.5 13.9C2.2 13.1 2 12.3 2 11.4 2 8.1 4.5 5.5 7.6 5.5zM6.9 8.2h1.8v1.9h1.4v1.8H8.7v1.9H6.9v-1.9H5.5v-1.8h1.4V8.2zm9.3.35a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1zm2.1 2.3a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1z"/></svg></button>
           <button class="icon-sound-btn on" id="hapticsBtn" type="button" aria-pressed="true" aria-label="Toggle haptics" title="Haptics"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="10.2" y="6.5" width="3.6" height="11" rx="0.9" fill="currentColor" stroke="none"/><path d="M6.6 5 L4.2 8.5 L6.6 12 L4.2 15.5 L6.6 19"/><path d="M17.4 5 L19.8 8.5 L17.4 12 L19.8 15.5 L17.4 19"/></svg></button>
           <button class="icon-sound-btn on" id="tutorialBtn" type="button" aria-label="Show how to play tutorial" title="How to play — show tutorial">?</button>
+          <button class="icon-sound-btn on duel-btn" id="duelBtn" type="button" aria-label="Weekend duel" title="Weekend duel"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M5 3 L14.5 12.5"/><path d="M13 14 L17 10"/><path d="M15.5 13.5 L19 17"/><circle cx="20" cy="18" r="1.1" fill="currentColor" stroke="none"/><path d="M19 3 L9.5 12.5"/><path d="M7 10 L11 14"/><path d="M8.5 13.5 L5 17"/><circle cx="4" cy="18" r="1.1" fill="currentColor" stroke="none"/></svg></button>
         </div>
         <!-- board -->
         <div class="board-wrap">
@@ -767,6 +937,7 @@
                 <div class="sg"><div class="k">Pieces</div><div class="v" id="ovPieces">0</div></div>
               </div>
               <div class="compare-line" id="overCompare"></div>
+              <div class="compare-line" id="ovDuel" hidden></div>
               <div class="champion-prompt" id="championPrompt" hidden>
                 <div class="cp-title" id="cpTitle">★ New Global Hi Score! ★</div>
                 <div class="cp-sub" id="cpSub">You beat the global best — enter your name to take the crown.</div>
@@ -849,25 +1020,46 @@
     <!-- unlock toast — announces a newly earned wardrobe item -->
     <div class="unlock-toast" id="unlockToast" hidden role="status"></div>
 
-    <!-- style wardrobe — piece materials, background silhouette
-         overlays, board frames and the profile animal. Nothing is
-         owned at the start beyond the base look: every item is locked
-         until it is earned by playing (profile animals excepted —
-         all sixteen are available from the get-go). -->
+    <!-- Me — the player's profile hub, anchored near the top like
+         the leaderboard so it expands downwards. An identity header
+         card (animal, name, best score, board rank) sits above three
+         sections: Style (piece materials, background silhouettes,
+         board frames and the profile animal, as sub-tabs),
+         Achievements and Stats. Nothing is owned at the start beyond
+         the base look: every item is locked until it is earned by
+         playing (profile animals excepted — all sixteen are
+         available from the get-go). -->
     <div class="wd-backdrop" id="wdBackdrop" hidden></div>
     <section class="wd-panel" id="wdPanel" hidden role="dialog" aria-modal="true" aria-labelledby="wdTitle">
       <div class="wd-head">
-        <h2 id="wdTitle">🎨 Style</h2>
-        <button class="lb-close" id="wdClose" type="button" aria-label="Close style wardrobe">✕</button>
+        <h2 id="wdTitle">Me</h2>
+        <button class="lb-close" id="wdClose" type="button" aria-label="Close Me">✕</button>
       </div>
-      <div class="lb-tabs wd-tabs" role="tablist" aria-label="Choose what to style">
+      <div class="wd-id">
+        <button class="wd-id-avatar" id="wdIdAvatar" type="button" aria-label="Change your profile animal" title="Change your profile animal">👤</button>
+        <div class="wd-id-main">
+          <div class="wd-id-name" id="wdIdName">You</div>
+          <div class="wd-id-look" id="wdIdLook"></div>
+        </div>
+        <div class="wd-id-side">
+          <div class="wd-id-best" id="wdIdBest">—</div>
+          <div class="wd-id-bestk">Best score</div>
+          <div class="wd-id-rank" id="wdIdRank"></div>
+        </div>
+      </div>
+      <div class="lb-tabs wd-main-tabs" role="tablist" aria-label="Me sections">
+        <button class="lb-tab on" id="wdSecStyle" type="button" role="tab" aria-selected="true">Style</button>
+        <button class="lb-tab" id="wdSecAch" type="button" role="tab" aria-selected="false">Achievements</button>
+        <button class="lb-tab" id="wdSecStats" type="button" role="tab" aria-selected="false">Stats</button>
+      </div>
+      <div class="lb-tabs wd-tabs" id="wdSubTabs" role="tablist" aria-label="Style categories">
         <button class="lb-tab on" id="wdTabPieces" type="button" role="tab" aria-selected="true">Pieces</button>
         <button class="lb-tab" id="wdTabBg" type="button" role="tab" aria-selected="false">Background</button>
         <button class="lb-tab" id="wdTabFrame" type="button" role="tab" aria-selected="false">Frame</button>
-        <button class="lb-tab" id="wdTabProfile" type="button" role="tab" aria-selected="false">Profile</button>
+        <button class="lb-tab" id="wdTabProfile" type="button" role="tab" aria-selected="false">Animal</button>
       </div>
       <div class="wd-body" id="wdBody"></div>
-      <div class="wd-foot">New looks unlock as you play — your style and progress are kept on this device.</div>
+      <div class="wd-foot">New looks unlock as you play — everything on this page is kept on this device.</div>
     </section>
 
     <!-- leaderboard panel — two shared boards: the weekly board (this
@@ -893,6 +1085,22 @@
       <ol class="lb-list" id="lbList"></ol>
       <div class="lb-you" id="lbYou" hidden></div>
       <div class="lb-note" id="lbNote" hidden>Couldn't refresh just now — showing the last known board.</div>
+    </section>
+
+    <!-- weekend duel panel — top-anchored like the leaderboard.
+         Live every Friday 00:00 to Sunday 23:59 (device time): pick a
+         team, play ONE run on the weekend's shared piece sequence, and
+         the run is recorded to the shared store. Outside the window it
+         shows the last finished duel's winning team, its average and
+         every player's score. The body is rendered by renderDuel(). -->
+    <div class="lb-backdrop" id="duelBackdrop" hidden></div>
+    <section class="lb-panel" id="duelPanel" hidden role="dialog" aria-modal="true" aria-labelledby="duelTitle">
+      <div class="lb-head">
+        <h2 id="duelTitle">⚔ Weekend Duel</h2>
+        <button class="lb-close" id="duelClose" type="button" aria-label="Close weekend duel">✕</button>
+      </div>
+      <div id="duelBody"></div>
+      <div class="lb-note" id="duelNote" hidden>Couldn't refresh just now — showing the last known duel.</div>
     </section>
 
     <!-- first-time tutorial -->
@@ -982,7 +1190,8 @@ var boardWeek = "";           /* ISO week id ("2026-W48") the live board belongs
 var weeklyWinners = [];       /* past weeks' podiums: [{week, top:[{name, score} ×3]}], newest week first */
 var allTimeTop = [];          /* the all-time top 3 — never resets */
 var myName = "";              /* this player's last claimed leaderboard name (this device) */
-var maxCombo = 0, tspinCount = 0, piecesPlaced = 0, playMs = 0, tetrisGame = 0; /* per-game stats for the game-over screen (tetrisGame also feeds the wardrobe unlocks) */
+var maxCombo = 0, tspinCount = 0, piecesPlaced = 0, playMs = 0, tetrisGame = 0, perfectClearGame = 0; /* per-game stats for the game-over screen (tetrisGame & perfectClearGame also feed the wardrobe unlocks) */
+var tetrisRun = 0, tetrisRunBest = 0, lateLinesGame = 0; /* per-game trackers for the Back-to-Back (consecutive Tetrises) and Comeback Kid (lines cleared at level 8+) achievements */
 var state = "ready"; /* ready | playing | paused | over */
 var dropCounter, lockCounter, lockResets, lastMoveWasRotate, lastKickIndex;
 var clearingRows = null, clearTimer = 0;
@@ -1039,6 +1248,143 @@ function cleanChampionName(v){
 }
 function cleanWeekId(v){
   return (typeof v === "string" && /^\d{4}-W\d{2}$/.test(v)) ? v : "";
+}
+/* ---------- weekend duel helpers ----------
+   The duel runs every Friday 00:00 to Sunday 23:59, device local
+   time — no server clock, every device judges the window from its
+   own Friday. A duel weekend is named by its Friday's date
+   ("2026-11-27"), which is also the seed for that weekend's shared
+   piece sequence, so everyone who plays that weekend gets the exact
+   same pieces in the same order. Duel entries live in the same
+   shared record as the leaderboard boards (a "duel" list of
+   {w, n, s, t, a}), merged and written back by the same code. */
+var LS_DUEL_MY = "tetoris_duel_my";
+var duelEntries = [];   /* every recorded duel run this device knows of: [{w, name, score, team, a?}] */
+var duelMy = null;      /* this device's own recorded run: {w, team, score, name} */
+var duelMode = false;   /* the game currently running is a duel run */
+var duelTeamPick = "";  /* team chosen in the duel panel, before the run starts */
+var duelRunTeam = "";   /* team of the run in progress */
+var duelRunName = "";   /* name the run in progress will be recorded under */
+var duelStartPending = false; /* startGame() keeps duelMode when this is set */
+var duelRng = null;     /* the seeded RNG driving a duel run's piece queue */
+var duelOpen = false;
+function duelDateStr(d){
+  return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+}
+/* the Friday of the weekend containing (or most recently before) a date */
+function duelFridayOf(date){
+  var d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  var sinceFriday = (d.getDay() + 2) % 7; /* Fri=0, Sat=1, Sun=2, Mon=3 … Thu=6 */
+  d.setDate(d.getDate() - sinceFriday);
+  return d;
+}
+function isDuelLive(now){
+  var dow = (now || new Date()).getDay();
+  return dow === 5 || dow === 6 || dow === 0; /* Fri, Sat, Sun — 00:00 Fri to 23:59 Sun */
+}
+function currentDuelWeekendId(){ return duelDateStr(duelFridayOf(new Date())); }
+function lastDuelWeekendId(){
+  var f = duelFridayOf(new Date());
+  if (isDuelLive()) f.setDate(f.getDate() - 7); /* live now — the last FINISHED duel is the week before */
+  return duelDateStr(f);
+}
+function nextDuelFriday(){
+  var f = duelFridayOf(new Date());
+  if (isDuelLive()) f.setDate(f.getDate() + 7);
+  else f.setDate(f.getDate() + 7); /* Mon–Thu: fridayOf is last week's Friday, so +7 is the coming one */
+  return f;
+}
+function duelWeekendLabel(w){
+  var p = String(w || "").split("-");
+  if (p.length !== 3) return "";
+  var d = new Date(+p[0], +p[1] - 1, +p[2]);
+  var sun = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 2);
+  return "Fri " + d.getDate() + " " + MONTHS_SHORT[d.getMonth()] + " – Sun " + sun.getDate() + " " + MONTHS_SHORT[sun.getMonth()];
+}
+/* duel entries read back from the shared stores are untrusted, like
+   leaderboard entries: clean every field, keep only Team A / B,
+   dedupe by weekend + name (the higher score wins a collision —
+   there should only ever be one run per player per weekend), and
+   keep just the two most recent weekends, newest first */
+function normalizeDuel(list){
+  var byKey = {};
+  if (Array.isArray(list)) list.forEach(function(e){
+    if (!e) return;
+    var w = typeof (e.w != null ? e.w : e.weekend) === "string" ? (e.w != null ? e.w : e.weekend) : "";
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(w)) return;
+    var team = (e.t != null ? e.t : e.team);
+    if (team !== "A" && team !== "B") return;
+    var s = cleanScore(e.s != null ? e.s : e.score);
+    if (s <= 0) return;
+    var n = cleanChampionName(e.n != null ? e.n : (e.name != null ? e.name : e.player));
+    if (!n) return;
+    var key = w + "|" + n;
+    var prev = byKey[key];
+    if (prev && prev.score >= s) return;
+    var o = { w:w, name:n, score:s, team:team };
+    var av = cleanAnimal(e.a);
+    if (av) o.a = av;
+    byKey[key] = o;
+  });
+  var all = Object.keys(byKey).map(function(k){ return byKey[k]; });
+  var weeks = [];
+  all.forEach(function(e){ if (weeks.indexOf(e.w) === -1) weeks.push(e.w); });
+  weeks.sort().reverse();
+  var keep = weeks.slice(0, 2);
+  return all.filter(function(e){ return keep.indexOf(e.w) !== -1; })
+    .sort(function(a, b){ return a.w < b.w ? 1 : a.w > b.w ? -1 : b.score - a.score; })
+    .slice(0, 80);
+}
+function duelEntriesFor(w){
+  return duelEntries.filter(function(e){ return e.w === w; });
+}
+function duelTeamAvg(entries, team){
+  var mine = entries.filter(function(e){ return e.team === team; });
+  if (!mine.length) return null;
+  var sum = 0;
+  mine.forEach(function(e){ sum += e.score; });
+  return Math.round(sum / mine.length);
+}
+/* this player's recorded run for a weekend: the on-device record
+   first (it is written the moment the run ends, before the shared
+   store answers), then any shared entry under their name */
+function myDuelRun(w){
+  if (duelMy && duelMy.w === w) return duelMy;
+  if (myName){
+    var found = null;
+    duelEntries.forEach(function(e){ if (e.w === w && e.name === myName) found = e; });
+    if (found) return { w:w, team:found.team, score:found.score, name:found.name };
+  }
+  return null;
+}
+function loadDuelMy(){
+  try{
+    var d = JSON.parse(localStorage.getItem(LS_DUEL_MY) || "null");
+    if (d && /^\d{4}-\d{2}-\d{2}$/.test(d.w || "") && (d.team === "A" || d.team === "B")){
+      duelMy = { w:d.w, team:d.team, score:cleanScore(d.score), name:cleanChampionName(d.name) };
+    }
+  }catch(e){ /* no local record — the shared entries still count */ }
+}
+function saveDuelMy(){
+  try{ if (duelMy) localStorage.setItem(LS_DUEL_MY, JSON.stringify(duelMy)); }catch(e){}
+}
+/* ---------- seeded pieces for duel runs ----------
+   A tiny deterministic RNG (mulberry32) seeded from the weekend id:
+   the same seed on every device deals the same 7-bags in the same
+   order, so a duel is a fair race on identical pieces. Normal games
+   keep using Math.random. */
+function duelHashSeed(str){
+  var h = 2166136261;
+  for (var i = 0; i < str.length; i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function duelMulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
 }
 /* ---------- week helpers — the live board is weekly, resetting Monday ---------- */
 function currentWeekId(){
@@ -1141,6 +1487,7 @@ function loadScores(){
       boardWeek = cleanWeekId(cache.week);
       weeklyWinners = normalizeWinners(cache.winners);
       allTimeTop = normalizeTopList(cache.alltime, 3);
+      duelEntries = normalizeDuel(cache.duel);
     } else {
       /* one-time migration from the old on-device-only record */
       globalBest = cleanScore(localStorage.getItem("tetoris_global_hi"));
@@ -1156,7 +1503,7 @@ function saveLocalScore(){
   try{ localStorage.setItem(LS_LOCAL, String(localBest)); }catch(e){}
 }
 function saveGlobalCache(){
-  try{ localStorage.setItem(LS_GCACHE, JSON.stringify({ score:globalBest, name:globalName, board:globalBoard, week:boardWeek, winners:weeklyWinners, alltime:allTimeTop })); }catch(e){}
+  try{ localStorage.setItem(LS_GCACHE, JSON.stringify({ score:globalBest, name:globalName, board:globalBoard, week:boardWeek, winners:weeklyWinners, alltime:allTimeTop, duel:duelEntries })); }catch(e){}
 }
 /* the mirror appends junk markup after its JSON — pull out the first
    balanced {...} object (string-aware) and parse just that */
@@ -1217,7 +1564,7 @@ function readGlobalPrimary(){
     return r.json();
   }).then(function(j){
     if (!j || !j.data) return null;
-    return { score: cleanScore(j.data.score), name: cleanChampionName(j.data.player), board: normalizeBoard(j.data.board, j.data.score, j.data.player), week: cleanWeekId(j.data.week), winners: normalizeWinners(j.data.winners), alltime: normalizeTopList(j.data.alltime, 3) };
+    return { score: cleanScore(j.data.score), name: cleanChampionName(j.data.player), board: normalizeBoard(j.data.board, j.data.score, j.data.player), week: cleanWeekId(j.data.week), winners: normalizeWinners(j.data.winners), alltime: normalizeTopList(j.data.alltime, 3), duel: normalizeDuel(j.data.duel) };
   }).catch(function(){ return null; });
 }
 function readGlobalMirror(){
@@ -1228,11 +1575,11 @@ function readGlobalMirror(){
   }).then(function(text){
     var j = extractJsonObject(text);
     if (!j) return null;
-    return { score: cleanScore(j.score), name: cleanChampionName(j.name), board: normalizeBoard(j.board, j.score, j.name), week: cleanWeekId(j.week), winners: normalizeWinners(j.winners), alltime: normalizeTopList(j.alltime, 3) };
+    return { score: cleanScore(j.score), name: cleanChampionName(j.name), board: normalizeBoard(j.board, j.score, j.name), week: cleanWeekId(j.week), winners: normalizeWinners(j.winners), alltime: normalizeTopList(j.alltime, 3), duel: normalizeDuel(j.duel) };
   }).catch(function(){ return null; });
 }
 function stateAsRecord(){
-  return { score:globalBest, name:globalName, board:globalBoard, week:boardWeek, winners:weeklyWinners, alltime:allTimeTop };
+  return { score:globalBest, name:globalName, board:globalBoard, week:boardWeek, winners:weeklyWinners, alltime:allTimeTop, duel:duelEntries };
 }
 /* One-time backfill, at the champion's own request: his 27,906 crown
    was claimed before profile animals existed, so every shared copy of
@@ -1282,12 +1629,18 @@ function fetchGlobal(){
     if (!reached){
       boardStale = true;
       if (lbOpen) renderBoard();
+      if (duelOpen) renderDuel();
       return false;
     }
     candidates.push(stateAsRecord()); /* this device's last known record joins the merge */
     var curWeek = currentWeekId();
     var winners = [];
     var pool = [];
+    var duelPool = [];
+    candidates.forEach(function(r){ duelPool = duelPool.concat(r.duel || []); });
+    duelEntries = normalizeDuel(duelPool); /* duel runs from every store, unioned — nobody's run is lost */
+    updateDuelBtn();
+    if (duelOpen) renderDuel();
     var live = [], liveSeen = {};
     var dirty = false; /* a legacy record or a week rollover — write the merged record back */
     candidates.forEach(function(r){
@@ -1322,6 +1675,12 @@ function fetchGlobal(){
     boardStale = false;
     saveGlobalCache();
     updateHUD();
+    /* Social Star: this player's name sitting anywhere on the live
+       board counts, however it got there */
+    if (myName && !stats.boardMade && globalBoard.some(function(e){ return e.name === myName; })){
+      stats.boardMade = 1;
+      saveStats();
+    }
     refreshCrowns(); /* a week rollover may have crowned this player — count it toward the wardrobe unlocks */
     if (dirty) pushBoard(globalBoard, allTimeTop); /* converge the stores — best effort */
     if (lbOpen) renderBoard();
@@ -1345,14 +1704,21 @@ function pushBoard(boardToPush, allTimeToPush){
     return { w:w.week, top:w.top.map(storeEntry) };
   });
   var allPayload = (allTimeToPush || allTimeTop).map(storeEntry);
+  /* duel runs ride in the same record, so a leaderboard write can
+     never wipe them (and a duel write never wipes the boards) */
+  var duelPayload = duelEntries.map(function(e){
+    var o = { w:e.w, n:e.name, s:e.score, t:e.team };
+    if (e.a) o.a = e.a;
+    return o;
+  });
   var wk = currentWeekId();
   var primary = fetch(GLOBAL_PRIMARY_URL, {
     method:"PUT", headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ name:"tetoris-global", data:{ score:champ.score, player:champ.name, board:payload, week:wk, winners:winnersPayload, alltime:allPayload } })
+    body: JSON.stringify({ name:"tetoris-global", data:{ score:champ.score, player:champ.name, board:payload, week:wk, winners:winnersPayload, alltime:allPayload, duel:duelPayload } })
   }).then(function(r){ return !!r.ok; }).catch(function(){ return false; });
   var mirror = fetch(GLOBAL_MIRROR_URL, {
     method:"PUT", headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ score:champ.score, name:champ.name, board:payload, week:wk, winners:winnersPayload, alltime:allPayload })
+    body: JSON.stringify({ score:champ.score, name:champ.name, board:payload, week:wk, winners:winnersPayload, alltime:allPayload, duel:duelPayload })
   }).then(function(r){ return !!r.ok; }).catch(function(){ return false; });
   return Promise.all([primary, mirror]).then(function(res){ return !!(res[0] || res[1]); });
 }
@@ -1436,27 +1802,34 @@ function updateHapticsBtn(){
   b.title = "Haptics " + (hapticsOn ? "on" : "off") + (hapticsSupported ? "" : " — not supported on this device");
 }
 
-/* ================= personalisation — the style wardrobe =================
+/* ================= personalisation — the Me hub =================
    Four kinds of earned customisation, all drawn in code (no image
    files, no extra storage beyond two small localStorage records):
    • Materials — how every block is drawn (board, Next and Hold).
      Crystal is the base look everyone starts with; Wood, Marble,
-     Neon, Candy and Metal unlock by playing.
-   • Backgrounds — silhouette overlays (forest, space, ocean, meadow)
-     painted on a fixed layer above the page background but below
-     every part of the game UI.
+     Neon, Candy, Metal, Obsidian, Rose Gold, Emerald, Sapphire and
+     Rainbow unlock by playing.
+   • Backgrounds — silhouette overlays (forest, space, ocean, meadow,
+     aurora, sunset, cherry blossom, winter) painted on a fixed layer
+     above the page background but below every part of the game UI.
    • Frames — decorations drawn around the board: twirling vines on
-     wooden posts, a glowing neon tube, bamboo, an ornate gold frame.
+     wooden posts, a glowing neon tube, bamboo, an ornate gold frame,
+     a silver laurel, an icy crystal frame, a floral garland.
      Special designs, never recolours.
    • Profile animals — one of sixteen animal faces, all available
      from the start, shown next to the player's name on the shared
      leaderboard (it travels with a claimed score as the entry's "a").
+   Most items are rewards for ACHIEVEMENTS (see ACHIEVEMENTS below):
+   each achievement names its condition and the one item it grants,
+   and earning one pops an "Achievement unlocked!" toast. A few
+   older items keep plain play conditions of their own.
    NOTHING cosmetic is owned at the start beyond the base look and
    the animal pick: every material, background and frame is locked
-   until its condition is met. Lifetime stats (games, lines,
-   Tetrises, best score, days played, weekly crowns won) live on
-   this device only, like the local hi score; the wardrobe shows
-   each locked item's condition and the player's progress. */
+   until it is earned. Lifetime stats (games, lines, Tetrises, best
+   score, best combo, time played, days played, weekly crowns won)
+   live on this device only, like the local hi score; the wardrobe's
+   Achievements and Stats tabs show them all, and each locked item
+   names the achievement that unlocks it plus the player's progress. */
 var LS_STATS = "tetoris_stats", LS_STYLE = "tetoris_style";
 var ANIMALS = [
   ["🐻","Bear"],["🐰","Rabbit"],["🐱","Cat"],["🐶","Dog"],["🦊","Fox"],["🐼","Panda"],
@@ -1471,29 +1844,99 @@ ANIMALS.forEach(function(pair){ ANIMAL_SET[pair[0]] = true; });
 function cleanAnimal(v){ return (typeof v === "string" && ANIMAL_SET[v]) ? v : ""; }
 
 function unlockCond(stat, need, label){ return { stat:stat, need:need, label:label }; }
+/* ---------- achievements ----------
+   Each achievement is earned by playing and grants exactly one
+   specific wardrobe item (its reward, named by item id below).
+   Items tied to an achievement take their unlock condition from it,
+   so the Achievements tab, the locked cards and the unlock check
+   can never disagree. A few older items (Forest, Wooden Vines,
+   Neon Tube) keep plain play conditions of their own. */
+var ACHIEVEMENTS = [
+  { id:"first-game",      name:"First Game",      desc:"Play your first game",                          stat:"games",         need:1,      item:"wood" },
+  { id:"first-tetris",    name:"First Tetris",    desc:"Clear 4 lines at once",                         stat:"tetrises",      need:1,      item:"neon" },
+  { id:"line-master",     name:"Line Master",     desc:"Clear 100 lines in total",                      stat:"totalLines",    need:100,    item:"marble" },
+  { id:"high-scorer",     name:"High Scorer",     desc:"Score 10,000 in one game",                      stat:"bestScore",     need:10000,  item:"candy" },
+  { id:"level-up",        name:"Level Up",        desc:"Reach level 5",                                 stat:"bestLevel",     need:5,      item:"space" },
+  { id:"deep-diver",      name:"Deep Diver",      desc:"Clear 50 lines in one game",                    stat:"bestLinesGame", need:50,     item:"ocean" },
+  { id:"streak",          name:"Streak",          desc:"Play 3 days in a row",                          stat:"streak",        need:3,      item:"meadow" },
+  { id:"crown-winner",    name:"Crown Winner",    desc:"Win a weekly crown — finish a week at #1",      stat:"crowns",        need:1,      item:"gold" },
+  { id:"style-collector", name:"Style Collector", desc:"Unlock 3 wardrobe items",                       stat:"items",         need:3,      item:"bamboo" },
+  { id:"veteran",         name:"Veteran",         desc:"Play 20 games",                                 stat:"games",         need:20,     item:"metal" },
+  { id:"combo-star",      name:"Combo Star",      desc:"Reach a 5x combo in one game",                  stat:"bestCombo",     need:5,      item:"obsidian" },
+  { id:"marathon",        name:"Marathon",        desc:"Play one game for 15 minutes",                  stat:"bestMs",        need:900000, item:"aurora" },
+  { id:"perfectionist",   name:"Perfectionist",   desc:"Get a Perfect Clear — empty the whole board",   stat:"perfectClears", need:1,      item:"silver" },
+  { id:"night-owl",       name:"Night Owl",       desc:"Finish a game after midnight",                  stat:"nightGames",    need:1,      item:"rosegold" },
+  { id:"back-to-back",    name:"Back-to-Back",    desc:"Get 2 Tetrises in a row",                       stat:"bestB2B",       need:2,      item:"emerald" },
+  { id:"century",         name:"Century",         desc:"Clear 100 lines in one game",                   stat:"bestLinesGame", need:100,    item:"sapphire" },
+  { id:"speedster",       name:"Speedster",       desc:"Reach level 10",                                stat:"bestLevel",     need:10,     item:"sunset" },
+  { id:"sharpshooter",    name:"Sharpshooter",    desc:"Get 10 T-spins in total",                       stat:"totalTspins",   need:10,     item:"blossom" },
+  { id:"comeback-kid",    name:"Comeback Kid",    desc:"Clear 20 lines after reaching level 8",         stat:"bestLateLines", need:20,     item:"crystal" },
+  { id:"social-star",     name:"Social Star",     desc:"Make the weekly Top 15 board",                  stat:"boardMade",     need:1,      item:"floral" },
+  { id:"globetrotter",    name:"Globetrotter",    desc:"Play on 7 different days",                      stat:"days",          need:7,      item:"winter" },
+  { id:"legend",          name:"Legend",          desc:"Score 50,000 in one game",                      stat:"bestScore",     need:50000,  item:"rainbow" }
+];
+var ACH_BY_ITEM = {};
+ACHIEVEMENTS.forEach(function(a){ ACH_BY_ITEM[a.item] = a; });
+function achOf(item){ return ACH_BY_ITEM[item.id] || null; }
+/* the effective unlock condition of a wardrobe item: its
+   achievement's terms when it has one, else its own condition */
+function condOf(item){
+  var a = achOf(item);
+  if (a) return { stat:a.stat, need:a.need, label:"🏆 " + a.name + " — " + a.desc };
+  return item.unlock;
+}
 var MATERIAL_CATALOG = [
-  { id:"wood",   name:"Wood",   unlock:unlockCond("games", 5, "Play 5 games") },
-  { id:"marble", name:"Marble", unlock:unlockCond("totalLines", 100, "Clear 100 lines in total") },
-  { id:"neon",   name:"Neon",   unlock:unlockCond("tetrises", 1, "Clear a Tetris — 4 lines at once") },
-  { id:"candy",  name:"Candy",  unlock:unlockCond("bestScore", 10000, "Score 10,000 in one game") },
-  { id:"metal",  name:"Metal",  unlock:unlockCond("crowns", 1, "Win a weekly crown — finish a week at #1") }
+  { id:"wood",     name:"Wood",      ach:"first-game" },
+  { id:"marble",   name:"Marble",    ach:"line-master" },
+  { id:"neon",     name:"Neon",      ach:"first-tetris" },
+  { id:"candy",    name:"Candy",     ach:"high-scorer" },
+  { id:"metal",    name:"Metal",     ach:"veteran" },
+  { id:"obsidian", name:"Obsidian",  ach:"combo-star" },
+  { id:"rosegold", name:"Rose Gold", ach:"night-owl" },
+  { id:"emerald",  name:"Emerald",   ach:"back-to-back" },
+  { id:"sapphire", name:"Sapphire",  ach:"century" },
+  { id:"rainbow",  name:"Rainbow",   ach:"legend" }
 ];
 var BG_CATALOG = [
   { id:"forest", name:"Forest", unlock:unlockCond("bestLevel", 5, "Reach level 5") },
-  { id:"space",  name:"Space",  unlock:unlockCond("bestLinesGame", 50, "Clear 50 lines in one game") },
-  { id:"ocean",  name:"Ocean",  unlock:unlockCond("days", 3, "Play on 3 different days") },
-  { id:"meadow", name:"Meadow", unlock:unlockCond("games", 15, "Play 15 games") }
+  { id:"space",  name:"Space",  ach:"level-up" },
+  { id:"ocean",  name:"Ocean",  ach:"deep-diver" },
+  { id:"meadow", name:"Meadow", ach:"streak" },
+  { id:"aurora", name:"Aurora", ach:"marathon" },
+  { id:"sunset", name:"Sunset", ach:"speedster" },
+  { id:"blossom", name:"Cherry Blossom", ach:"sharpshooter" },
+  { id:"winter", name:"Winter", ach:"globetrotter" }
 ];
 var FRAME_CATALOG = [
   { id:"vines",     name:"Wooden Vines", unlock:unlockCond("tetrises", 3, "Clear 3 Tetrises") },
   { id:"neonframe", name:"Neon Tube",    unlock:unlockCond("bestScore", 20000, "Score 20,000 in one game") },
-  { id:"bamboo",    name:"Bamboo",       unlock:unlockCond("totalLines", 500, "Clear 500 lines in total") },
-  { id:"gold",      name:"Golden Crown", unlock:unlockCond("crowns", 1, "Win a weekly crown — finish a week at #1") }
+  { id:"bamboo",    name:"Bamboo",       ach:"style-collector" },
+  { id:"gold",      name:"Golden Crown", ach:"crown-winner" },
+  { id:"silver",    name:"Silver Laurel", ach:"perfectionist" },
+  { id:"crystal",   name:"Crystal",       ach:"comeback-kid" },
+  { id:"floral",    name:"Floral",        ach:"social-star" }
 ];
 function findItem(cat, id){ for (var i = 0; i < cat.length; i++) if (cat[i].id === id) return cat[i]; return null; }
+function findAnyItem(id){
+  var it = findItem(MATERIAL_CATALOG, id); if (it) return { item:it, kind:"material" };
+  it = findItem(BG_CATALOG, id); if (it) return { item:it, kind:"bg" };
+  it = findItem(FRAME_CATALOG, id); if (it) return { item:it, kind:"frame" };
+  return null;
+}
+/* how an achievement's reward reads in words: "Wood blocks",
+   "Space background", "Bamboo frame" */
+function rewardText(a){
+  var f = findAnyItem(a.item);
+  if (!f) return "";
+  if (f.kind === "material") return f.item.name + " blocks";
+  if (f.kind === "bg") return f.item.name + " background";
+  return f.item.name + " frame";
+}
 
 /* ---------- lifetime stats (this device only) ---------- */
-var stats = { games:0, totalLines:0, tetrises:0, bestScore:0, bestLinesGame:0, bestLevel:0, crowns:0, days:[] };
+var stats = { games:0, totalLines:0, tetrises:0, bestScore:0, bestLinesGame:0, bestLevel:0, crowns:0,
+              totalMs:0, bestMs:0, bestCombo:0, bestTetrisesGame:0, perfectClears:0, nightGames:0,
+              totalTspins:0, bestB2B:0, bestLateLines:0, boardMade:0, days:[] };
 function cleanCount(v){ var n = parseInt(v, 10); return (isFinite(n) && n > 0) ? Math.min(n, 999999999) : 0; }
 function loadStats(){
   try{
@@ -1506,6 +1949,16 @@ function loadStats(){
     stats.bestLinesGame = cleanCount(s.bestLinesGame);
     stats.bestLevel = cleanCount(s.bestLevel);
     stats.crowns = cleanCount(s.crowns);
+    stats.totalMs = cleanCount(s.totalMs);
+    stats.bestMs = cleanCount(s.bestMs);
+    stats.bestCombo = cleanCount(s.bestCombo);
+    stats.bestTetrisesGame = cleanCount(s.bestTetrisesGame);
+    stats.perfectClears = cleanCount(s.perfectClears);
+    stats.nightGames = cleanCount(s.nightGames);
+    stats.totalTspins = cleanCount(s.totalTspins);
+    stats.bestB2B = cleanCount(s.bestB2B);
+    stats.bestLateLines = cleanCount(s.bestLateLines);
+    stats.boardMade = cleanCount(s.boardMade);
     if (Array.isArray(s.days)) stats.days = s.days.filter(function(d){ return typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d); }).slice(-120);
   }catch(e){ /* storage unavailable — stats live for this session only */ }
 }
@@ -1514,7 +1967,28 @@ function todayStr(){
   var d = new Date();
   return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
 }
-function statVal(key){ return key === "days" ? stats.days.length : (stats[key] || 0); }
+/* the longest run of consecutive days in the played-days list —
+   the Streak achievement reads this */
+function bestStreakDays(){
+  if (!stats.days.length) return 0;
+  var nums = stats.days.map(function(d){
+    var p = d.split("-");
+    return Date.UTC(+p[0], +p[1] - 1, +p[2]) / 86400000;
+  }).sort(function(a, b){ return a - b; });
+  var best = 1, run = 1;
+  for (var i = 1; i < nums.length; i++){
+    if (nums[i] === nums[i - 1]) continue;
+    if (nums[i] === nums[i - 1] + 1){ run++; if (run > best) best = run; }
+    else run = 1;
+  }
+  return best;
+}
+function statVal(key){
+  if (key === "days") return stats.days.length;
+  if (key === "streak") return bestStreakDays();
+  if (key === "items") return (typeof unlockedSet !== "undefined" && unlockedSet) ? Object.keys(unlockedSet).length : 0;
+  return stats[key] || 0;
+}
 /* fold one finished game into the lifetime stats */
 function recordGameStats(){
   stats.games++;
@@ -1523,6 +1997,16 @@ function recordGameStats(){
   if (score > stats.bestScore) stats.bestScore = score;
   if (lines > stats.bestLinesGame) stats.bestLinesGame = lines;
   if (level > stats.bestLevel) stats.bestLevel = level;
+  stats.totalMs += playMs;
+  if (playMs > stats.bestMs) stats.bestMs = playMs;
+  if (maxCombo > stats.bestCombo) stats.bestCombo = maxCombo;
+  if (tetrisGame > stats.bestTetrisesGame) stats.bestTetrisesGame = tetrisGame;
+  stats.perfectClears += perfectClearGame;
+  stats.totalTspins += tspinCount;
+  if (tetrisRunBest > stats.bestB2B) stats.bestB2B = tetrisRunBest;
+  if (lateLinesGame > stats.bestLateLines) stats.bestLateLines = lateLinesGame;
+  /* Night Owl: a game that ends in the small hours (midnight–5am) */
+  if (new Date().getHours() < 5) stats.nightGames++;
   var t = todayStr();
   if (stats.days.indexOf(t) === -1){
     stats.days.push(t);
@@ -1550,7 +2034,7 @@ var unlockedSet = {}; /* items genuinely earned by playing — the only
 function isUnlocked(id){ return !!unlockedSet[id]; }
 var styleSel = { material:"crystal", bg:"", frame:"", animal:"" };
 var curMaterial = "crystal"; /* the finish drawCell paints right now */
-var wdOpen = false, wdTab = "pieces";
+var wdOpen = false, wdSection = "style", wdSub = "pieces";
 function loadStyle(){
   try{
     var s = JSON.parse(localStorage.getItem(LS_STYLE) || "null");
@@ -1576,8 +2060,8 @@ function updateProfileAvatar(){
   btn.classList.toggle("is-empty", !a);
   btn.title = a ? "Your profile animal — tap to change it" : "Pick your profile animal";
   btn.setAttribute("aria-label", a
-    ? "Your profile animal " + a + " — open Style wardrobe on Profile tab"
-    : "No profile animal picked yet — open Style wardrobe on Profile tab");
+    ? "Your profile animal " + a + " — open Me"
+    : "No profile animal picked yet — open Me to pick one");
 }
 function saveStyle(){
   try{
@@ -1587,16 +2071,21 @@ function saveStyle(){
     }));
   }catch(e){}
 }
-/* grant anything the lifetime stats have earned; returns the names of
-   newly unlocked items. Silent checks (on load / board refresh) never
-   toast — earning is celebrated at game over. */
+/* grant anything the lifetime stats have earned; returns the newly
+   unlocked entries ({item, ach} — ach is null for the few items with
+   a plain play condition). Silent checks (on load / board refresh)
+   never toast — earning is celebrated at game over. Catalogues are
+   checked materials → backgrounds → frames, so Style Collector's
+   "items unlocked" count includes anything granted earlier in the
+   same pass. */
 function checkUnlocks(silent){
   var fresh = [];
   [MATERIAL_CATALOG, BG_CATALOG, FRAME_CATALOG].forEach(function(cat){
     cat.forEach(function(it){
-      if (!unlockedSet[it.id] && statVal(it.unlock.stat) >= it.unlock.need){
+      var cond = condOf(it);
+      if (!unlockedSet[it.id] && statVal(cond.stat) >= cond.need){
         unlockedSet[it.id] = true;
-        fresh.push(it.name);
+        fresh.push({ item: it, ach: achOf(it) });
       }
     });
   });
@@ -1615,8 +2104,11 @@ function applyStyle(){
 
 /* ---------- unlock toast ---------- */
 var toastQueue = [], toastBusy = false;
-function showUnlockToast(names){
-  names.forEach(function(n){ toastQueue.push(n); });
+function showUnlockToast(fresh){
+  fresh.forEach(function(f){
+    if (f.ach) toastQueue.push("🏆 Achievement unlocked! " + f.ach.name + " — reward: " + rewardText(f.ach));
+    else toastQueue.push("🔓 Unlocked: " + f.item.name + " — find it in Me, under Style!");
+  });
   pumpUnlockToast();
 }
 function pumpUnlockToast(){
@@ -1624,7 +2116,7 @@ function pumpUnlockToast(){
   var el = $("unlockToast");
   if (!el) return;
   toastBusy = true;
-  el.textContent = "🔓 Unlocked: " + toastQueue.shift() + " — find it in 🎨 Style!";
+  el.textContent = toastQueue.shift();
   el.hidden = false;
   void el.offsetWidth;
   el.classList.add("show");
@@ -1646,7 +2138,11 @@ var BG_SVGS = {
   forest: '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax slice" fill="currentColor" aria-hidden="true"><path d="M0 100 L0 91 Q22 83 46 89 Q72 95 100 86 L100 100 Z"/><path d="M5 100 C3 79 6 60 15 45 C17 67 13 86 12 100 Z"/><path d="M14 100 C13 83 16 68 24 56 C25 73 21 88 20 100 Z"/><path d="M87 100 C86 81 89 62 98 48 C100 69 97 87 95 100 Z"/><path d="M78 100 C78 85 81 70 89 59 C90 75 86 89 85 100 Z"/><ellipse cx="15" cy="43" rx="5" ry="2.1" transform="rotate(-36 15 43)"/><ellipse cx="23" cy="54" rx="4.4" ry="1.9" transform="rotate(30 23 54)"/><ellipse cx="89" cy="57" rx="4.4" ry="1.9" transform="rotate(-28 89 57)"/><path d="M3 0 C7 11 6 22 2 31 C9 24 10 11 9 0 Z"/><path d="M97 0 C94 10 95 20 99 28 C93 21 91 10 92 0 Z"/><path d="M31 100 v-4.4 h1.8 V100 Z"/><path d="M27.2 95.8 a4.9 3.1 0 0 1 9.8 0 Z"/><path d="M66 100 v-3.4 h1.5 V100 Z"/><path d="M63.4 96.8 a3.9 2.5 0 0 1 7.8 0 Z"/></svg>',
   space: '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" fill="currentColor" aria-hidden="true"><circle cx="84" cy="15" r="8"/><ellipse cx="84" cy="15" rx="14.5" ry="3.6" fill="none" stroke="currentColor" stroke-width="1.5" transform="rotate(-16 84 15)"/><circle cx="12" cy="32" r="4.6"/><circle cx="20" cy="82" r="5.5"/><ellipse cx="20" cy="82" rx="10" ry="2.6" fill="none" stroke="currentColor" stroke-width="1.2" transform="rotate(-14 20 82)"/><g transform="translate(48 12)"><polygon points="0,-5 1.3,-1.3 5,0 1.3,1.3 0,5 -1.3,1.3 -5,0 -1.3,-1.3"/></g><g transform="translate(66 34) scale(.62)"><polygon points="0,-5 1.3,-1.3 5,0 1.3,1.3 0,5 -1.3,1.3 -5,0 -1.3,-1.3"/></g><g transform="translate(30 55) scale(.8)"><polygon points="0,-5 1.3,-1.3 5,0 1.3,1.3 0,5 -1.3,1.3 -5,0 -1.3,-1.3"/></g><g transform="translate(88 58) scale(.55)"><polygon points="0,-5 1.3,-1.3 5,0 1.3,1.3 0,5 -1.3,1.3 -5,0 -1.3,-1.3"/></g><g transform="translate(58 88) scale(.7)"><polygon points="0,-5 1.3,-1.3 5,0 1.3,1.3 0,5 -1.3,1.3 -5,0 -1.3,-1.3"/></g><circle cx="38" cy="30" r="1"/><circle cx="72" cy="8" r=".9"/><circle cx="8" cy="62" r="1"/><circle cx="93" cy="38" r=".9"/><circle cx="52" cy="66" r=".9"/><circle cx="14" cy="12" r=".8"/><circle cx="78" cy="76" r="1"/><circle cx="42" cy="44" r=".7"/></svg>',
   ocean: '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax slice" fill="currentColor" aria-hidden="true"><path d="M0 100 L0 94 Q26 88 52 93 Q78 97 100 91 L100 100 Z"/><path d="M13 93 C17 83 31 78 45 81 C55 83 61 88 59 93 C56 99 41 101 28 99 C18 98 11 97 13 93 Z"/><path d="M59 87 L70 80 L67.5 88.5 L70 96 L59 93 Z"/><g transform="translate(70 64)"><path d="M0 0 C3 -3.4 9 -3.4 12 0 C9 3.4 3 3.4 0 0 Z"/><polygon points="12,0 17,-3.6 17,3.6"/></g><g transform="translate(80 74) scale(.68)"><path d="M0 0 C3 -3.4 9 -3.4 12 0 C9 3.4 3 3.4 0 0 Z"/><polygon points="12,0 17,-3.6 17,3.6"/></g><g transform="translate(60 76) scale(.5)"><path d="M0 0 C3 -3.4 9 -3.4 12 0 C9 3.4 3 3.4 0 0 Z"/><polygon points="12,0 17,-3.6 17,3.6"/></g><path d="M6 100 C3 92 9 88 6 79 C4 72 8 68 7 61" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 100 C10 94 14 90 12 84" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M94 100 C97 91 91 87 94 78 C96 71 92 67 93 60" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="72" cy="54" r="1.7" fill="none" stroke="currentColor" stroke-width=".8"/><circle cx="76" cy="48" r="1.1" fill="none" stroke="currentColor" stroke-width=".8"/><circle cx="69" cy="44" r=".8" fill="none" stroke="currentColor" stroke-width=".7"/><circle cx="24" cy="60" r="1.2" fill="none" stroke="currentColor" stroke-width=".8"/></svg>',
-  meadow: '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax slice" fill="currentColor" aria-hidden="true"><path d="M0 100 L0 92 Q28 84 54 90 Q78 96 100 89 L100 100 Z"/><path d="M0 100 L0 97 Q38 91 100 96 L100 100 Z"/><path d="M7 100 l1.1 -6.5 L9.4 100 Z"/><path d="M15 100 l1 -5.4 1.3 5.4 Z"/><path d="M24 100 l1.1 -6.8 1.3 6.8 Z"/><path d="M38 100 l1 -5.6 1.3 5.6 Z"/><path d="M52 100 l1.1 -6.4 1.3 6.4 Z"/><path d="M64 100 l1 -5.2 1.3 5.2 Z"/><path d="M93 100 l1.1 -6.2 1.3 6.2 Z"/><ellipse cx="83" cy="93.5" rx="5.2" ry="3.4"/><circle cx="87.6" cy="88.8" r="2.7"/><ellipse cx="86.4" cy="83.4" rx=".95" ry="3.1" transform="rotate(-9 86.4 83.4)"/><ellipse cx="89.2" cy="83.6" rx=".95" ry="3" transform="rotate(11 89.2 83.6)"/><circle cx="78.2" cy="92.6" r="1.3"/><circle cx="20" cy="93.5" r="1.1"/><path d="M20 94.6 v3" stroke="currentColor" stroke-width=".8" fill="none"/><circle cx="30" cy="95.5" r=".9"/><circle cx="58" cy="94" r="1"/><circle cx="70" cy="96" r=".8"/><g transform="translate(24 26)"><ellipse cx="-2.4" cy="0" rx="2.7" ry="1.6" transform="rotate(-28)"/><ellipse cx="2.4" cy="0" rx="2.7" ry="1.6" transform="rotate(28)"/><rect x="-.45" y="-2" width=".9" height="4" rx=".45"/></g><path d="M58 18 q3 -3.2 6 0 q3 -3.2 6 0" fill="none" stroke="currentColor" stroke-width="1.1"/><path d="M70 26 q2.2 -2.4 4.4 0 q2.2 -2.4 4.4 0" fill="none" stroke="currentColor" stroke-width="1"/></svg>'
+  meadow: '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax slice" fill="currentColor" aria-hidden="true"><path d="M0 100 L0 92 Q28 84 54 90 Q78 96 100 89 L100 100 Z"/><path d="M0 100 L0 97 Q38 91 100 96 L100 100 Z"/><path d="M7 100 l1.1 -6.5 L9.4 100 Z"/><path d="M15 100 l1 -5.4 1.3 5.4 Z"/><path d="M24 100 l1.1 -6.8 1.3 6.8 Z"/><path d="M38 100 l1 -5.6 1.3 5.6 Z"/><path d="M52 100 l1.1 -6.4 1.3 6.4 Z"/><path d="M64 100 l1 -5.2 1.3 5.2 Z"/><path d="M93 100 l1.1 -6.2 1.3 6.2 Z"/><ellipse cx="83" cy="93.5" rx="5.2" ry="3.4"/><circle cx="87.6" cy="88.8" r="2.7"/><ellipse cx="86.4" cy="83.4" rx=".95" ry="3.1" transform="rotate(-9 86.4 83.4)"/><ellipse cx="89.2" cy="83.6" rx=".95" ry="3" transform="rotate(11 89.2 83.6)"/><circle cx="78.2" cy="92.6" r="1.3"/><circle cx="20" cy="93.5" r="1.1"/><path d="M20 94.6 v3" stroke="currentColor" stroke-width=".8" fill="none"/><circle cx="30" cy="95.5" r=".9"/><circle cx="58" cy="94" r="1"/><circle cx="70" cy="96" r=".8"/><g transform="translate(24 26)"><ellipse cx="-2.4" cy="0" rx="2.7" ry="1.6" transform="rotate(-28)"/><ellipse cx="2.4" cy="0" rx="2.7" ry="1.6" transform="rotate(28)"/><rect x="-.45" y="-2" width=".9" height="4" rx=".45"/></g><path d="M58 18 q3 -3.2 6 0 q3 -3.2 6 0" fill="none" stroke="currentColor" stroke-width="1.1"/><path d="M70 26 q2.2 -2.4 4.4 0 q2.2 -2.4 4.4 0" fill="none" stroke="currentColor" stroke-width="1"/></svg>',
+  aurora: '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" fill="currentColor" aria-hidden="true"><path d="M-4 4 C22 -3 38 12 58 7 C78 2 92 10 104 5 L104 20 C84 27 66 15 46 21 C26 27 8 18 -4 24 Z" opacity=".5"/><path d="M-4 14 C20 8 40 22 60 17 C80 12 92 19 104 15 L104 27 C86 33 64 23 44 29 C24 35 8 27 -4 33 Z" opacity=".32"/><path d="M-4 26 C24 20 44 32 66 27 C84 23 94 28 104 25 L104 35 C84 40 62 32 42 37 C22 42 6 35 -4 40 Z" opacity=".18"/><path d="M10 52 l.9 3.4 3.4.9 -3.4.9 -.9 3.4 -.9 -3.4 -3.4 -.9 3.4 -.9 Z"/><path d="M86 46 l.7 2.6 2.6.7 -2.6.7 -.7 2.6 -.7 -2.6 -2.6 -.7 2.6 -.7 Z"/><circle cx="30" cy="46" r="1"/><circle cx="55" cy="56" r=".9"/><circle cx="70" cy="42" r=".8"/><circle cx="18" cy="66" r=".8"/><circle cx="93" cy="62" r="1"/><circle cx="44" cy="68" r=".7"/><path d="M0 100 L0 90 L14 79 L27 88 L41 74 L55 86 L68 78 L82 89 L100 81 L100 100 Z"/></svg>',
+  sunset: '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax slice" fill="currentColor" aria-hidden="true"><circle cx="50" cy="84" r="18"/><rect x="4" y="26" width="27" height="3.6" rx="1.8"/><rect x="12" y="34" width="19" height="2.8" rx="1.4"/><rect x="63" y="18" width="31" height="3.8" rx="1.9"/><rect x="71" y="26" width="21" height="2.8" rx="1.4"/><rect x="36" y="46" width="25" height="3" rx="1.5"/><rect x="8" y="56" width="17" height="2.6" rx="1.3"/><path d="M22 12 q2.6 -2.8 5.2 0 q2.6 -2.8 5.2 0" fill="none" stroke="currentColor" stroke-width="1.1"/><path d="M64 38 q2.2 -2.4 4.4 0 q2.2 -2.4 4.4 0" fill="none" stroke="currentColor" stroke-width="1"/><path d="M0 100 L0 91 Q26 86 52 90 Q78 94 100 89 L100 100 Z"/></svg>',
+  blossom: '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" fill="currentColor" aria-hidden="true"><path d="M-2 5 C18 -1 36 6 50 20" fill="none" stroke="currentColor" stroke-width="2.8"/><path d="M102 2 C88 12 74 17 60 18" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M20 3 C26 8 28 13 28 19" fill="none" stroke="currentColor" stroke-width="1.6"/><g transform="translate(13 7)"><circle cx="0" cy="-2" r="1.8"/><circle cx="1.9" cy="-.6" r="1.8"/><circle cx="1.2" cy="1.7" r="1.8"/><circle cx="-1.2" cy="1.7" r="1.8"/><circle cx="-1.9" cy="-.6" r="1.8"/><circle r=".85" opacity=".5"/></g><g transform="translate(31 10) scale(1.3)"><circle cx="0" cy="-2" r="1.8"/><circle cx="1.9" cy="-.6" r="1.8"/><circle cx="1.2" cy="1.7" r="1.8"/><circle cx="-1.2" cy="1.7" r="1.8"/><circle cx="-1.9" cy="-.6" r="1.8"/><circle r=".85" opacity=".5"/></g><g transform="translate(45 17) scale(.9)"><circle cx="0" cy="-2" r="1.8"/><circle cx="1.9" cy="-.6" r="1.8"/><circle cx="1.2" cy="1.7" r="1.8"/><circle cx="-1.2" cy="1.7" r="1.8"/><circle cx="-1.9" cy="-.6" r="1.8"/><circle r=".85" opacity=".5"/></g><g transform="translate(88 7) scale(1.1)"><circle cx="0" cy="-2" r="1.8"/><circle cx="1.9" cy="-.6" r="1.8"/><circle cx="1.2" cy="1.7" r="1.8"/><circle cx="-1.2" cy="1.7" r="1.8"/><circle cx="-1.9" cy="-.6" r="1.8"/><circle r=".85" opacity=".5"/></g><g transform="translate(72 14) scale(.8)"><circle cx="0" cy="-2" r="1.8"/><circle cx="1.9" cy="-.6" r="1.8"/><circle cx="1.2" cy="1.7" r="1.8"/><circle cx="-1.2" cy="1.7" r="1.8"/><circle cx="-1.9" cy="-.6" r="1.8"/><circle r=".85" opacity=".5"/></g><ellipse cx="56" cy="32" rx="2" ry="1.15" transform="rotate(24 56 32)"/><ellipse cx="66" cy="46" rx="1.9" ry="1.1" transform="rotate(-18 66 46)"/><ellipse cx="44" cy="52" rx="2" ry="1.15" transform="rotate(40 44 52)"/><ellipse cx="78" cy="60" rx="1.8" ry="1.05" transform="rotate(12 78 60)"/><ellipse cx="30" cy="66" rx="1.9" ry="1.1" transform="rotate(-30 30 66)"/><ellipse cx="88" cy="80" rx="2" ry="1.15" transform="rotate(55 88 80)"/><ellipse cx="18" cy="44" rx="1.8" ry="1.05" transform="rotate(8 18 44)"/><ellipse cx="52" cy="78" rx="1.9" ry="1.1" transform="rotate(-44 52 78)"/><ellipse cx="70" cy="88" rx="1.7" ry="1" transform="rotate(30 70 88)"/></svg>',
+  winter: '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax slice" fill="currentColor" aria-hidden="true"><g stroke="currentColor" stroke-width="1.1" stroke-linecap="round"><path d="M15 9 V21 M9.8 12 L20.2 18 M20.2 12 L9.8 18"/></g><g transform="translate(52 14) scale(.7)" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"><path d="M0 -6 V6 M-5.2 -3 L5.2 3 M5.2 -3 L-5.2 3"/></g><g transform="translate(82 22) scale(1.15)" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"><path d="M0 -6 V6 M-5.2 -3 L5.2 3 M5.2 -3 L-5.2 3"/></g><g transform="translate(33 30) scale(.55)" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"><path d="M0 -6 V6 M-5.2 -3 L5.2 3 M5.2 -3 L-5.2 3"/></g><circle cx="24" cy="46" r=".9"/><circle cx="68" cy="40" r=".8"/><circle cx="90" cy="52" r=".9"/><circle cx="8" cy="34" r=".8"/><circle cx="46" cy="58" r=".7"/><path d="M0 100 L0 94 Q30 89 56 93 Q80 96 100 92 L100 100 Z"/><path d="M10 95 L17 76 L24 95 Z"/><path d="M13.4 84 L17 73 L20.6 84 Z"/><rect x="16.1" y="94" width="1.8" height="4"/><path d="M76 96 L84 72 L92 96 Z"/><path d="M79.8 83 L84 68 L88.2 83 Z"/><rect x="83" y="95" width="2" height="4"/><path d="M40 97 L45 84 L50 97 Z"/><path d="M42.4 90 L45 81 L47.6 90 Z"/></svg>'
 };
 function renderBg(){
   var el = $("bgOverlay");
@@ -1661,14 +2157,17 @@ function renderBg(){
 }
 
 /* ---------- board frames ----------
-   Vines and bamboo are inline SVGs drawn around the board (wooden
-   posts with twirling vines; segmented bamboo stalks). Neon and gold
-   are pure CSS on the same layer (see .frame-layer.frame-neon /
-   .frame-gold). The viewBox matches the board wrap's proportions and
-   strokes are non-scaling, so the posts stay crisp at any size. */
+   Vines, bamboo and the floral garland are inline SVGs drawn around
+   the board (wooden posts with twirling vines; segmented bamboo
+   stalks; flowering stems). Neon, gold, silver and crystal are pure
+   CSS on the same layer (see .frame-layer.frame-neon / .frame-gold /
+   .frame-silver / .frame-crystal). The viewBox matches the board
+   wrap's proportions and strokes are non-scaling, so the posts stay
+   crisp at any size. */
 var FRAME_SVGS = {
   vines: '<svg viewBox="0 0 340 656" preserveAspectRatio="none" aria-hidden="true"><rect x="1" y="0" width="11" height="656" rx="5" fill="#7a5230"/><rect x="328" y="0" width="11" height="656" rx="5" fill="#7a5230"/><rect x="0" y="1" width="340" height="11" rx="5" fill="#7a5230"/><rect x="0" y="644" width="340" height="11" rx="5" fill="#7a5230"/><rect x="4.5" y="0" width="2.4" height="656" fill="#5b3a1e" opacity=".5"/><rect x="331.5" y="0" width="2.4" height="656" fill="#5b3a1e" opacity=".5"/><path d="M6 650 C-4 560 18 520 6 460 C-4 410 18 370 6 310 C-4 260 18 220 6 160 C-4 110 16 60 6 8" fill="none" stroke="#4c9a44" stroke-width="4" vector-effect="non-scaling-stroke"/><path d="M334 650 C344 570 322 520 334 460 C344 410 322 370 334 310 C344 260 322 215 334 160 C344 105 324 55 334 8" fill="none" stroke="#4c9a44" stroke-width="4" vector-effect="non-scaling-stroke"/><path d="M8 6 C80 -4 130 16 200 6 C260 -3 300 14 332 6" fill="none" stroke="#4c9a44" stroke-width="4" vector-effect="non-scaling-stroke"/><path d="M6 460 c-13 1 -15 -13 -6 -17 c7 -3 13 4 9 10" fill="none" stroke="#4c9a44" stroke-width="3" vector-effect="non-scaling-stroke"/><path d="M334 300 c13 1 15 -13 6 -17 c-7 -3 -13 4 -9 10" fill="none" stroke="#4c9a44" stroke-width="3" vector-effect="non-scaling-stroke"/><ellipse cx="15" cy="382" rx="9" ry="4.4" fill="#69b457" transform="rotate(-32 15 382)"/><ellipse cx="13" cy="238" rx="8" ry="4" fill="#69b457" transform="rotate(24 13 238)"/><ellipse cx="326" cy="420" rx="9" ry="4.4" fill="#69b457" transform="rotate(30 326 420)"/><ellipse cx="327" cy="180" rx="8" ry="4" fill="#69b457" transform="rotate(-22 327 180)"/><ellipse cx="120" cy="13" rx="8" ry="4" fill="#69b457" transform="rotate(14 120 13)"/><ellipse cx="228" cy="12" rx="8" ry="4" fill="#69b457" transform="rotate(-16 228 12)"/></svg>',
-  bamboo: '<svg viewBox="0 0 340 656" preserveAspectRatio="none" aria-hidden="true"><rect x="2" y="0" width="12" height="656" rx="6" fill="#5da85f"/><rect x="326" y="0" width="12" height="656" rx="6" fill="#5da85f"/><rect x="0" y="2" width="340" height="12" rx="6" fill="#5da85f"/><rect x="0" y="642" width="340" height="12" rx="6" fill="#5da85f"/><path d="M2 92 h12 M2 184 h12 M2 276 h12 M2 368 h12 M2 460 h12 M2 552 h12 M326 92 h12 M326 184 h12 M326 276 h12 M326 368 h12 M326 460 h12 M326 552 h12" stroke="#3f7d43" stroke-width="4" vector-effect="non-scaling-stroke"/><path d="M62 2 v12 M124 2 v12 M186 2 v12 M248 2 v12 M310 2 v12 M62 642 v12 M124 642 v12 M186 642 v12 M248 642 v12 M310 642 v12" stroke="#3f7d43" stroke-width="4" vector-effect="non-scaling-stroke"/><rect x="5" y="0" width="2.4" height="656" fill="#3f7d43" opacity=".45"/><rect x="329" y="0" width="2.4" height="656" fill="#3f7d43" opacity=".45"/><path d="M16 44 C32 32 48 34 60 48 C44 52 28 52 16 44 Z" fill="#69b457"/><path d="M324 612 C308 624 292 622 280 608 C296 604 312 604 324 612 Z" fill="#69b457"/></svg>'
+  bamboo: '<svg viewBox="0 0 340 656" preserveAspectRatio="none" aria-hidden="true"><rect x="2" y="0" width="12" height="656" rx="6" fill="#5da85f"/><rect x="326" y="0" width="12" height="656" rx="6" fill="#5da85f"/><rect x="0" y="2" width="340" height="12" rx="6" fill="#5da85f"/><rect x="0" y="642" width="340" height="12" rx="6" fill="#5da85f"/><path d="M2 92 h12 M2 184 h12 M2 276 h12 M2 368 h12 M2 460 h12 M2 552 h12 M326 92 h12 M326 184 h12 M326 276 h12 M326 368 h12 M326 460 h12 M326 552 h12" stroke="#3f7d43" stroke-width="4" vector-effect="non-scaling-stroke"/><path d="M62 2 v12 M124 2 v12 M186 2 v12 M248 2 v12 M310 2 v12 M62 642 v12 M124 642 v12 M186 642 v12 M248 642 v12 M310 642 v12" stroke="#3f7d43" stroke-width="4" vector-effect="non-scaling-stroke"/><rect x="5" y="0" width="2.4" height="656" fill="#3f7d43" opacity=".45"/><rect x="329" y="0" width="2.4" height="656" fill="#3f7d43" opacity=".45"/><path d="M16 44 C32 32 48 34 60 48 C44 52 28 52 16 44 Z" fill="#69b457"/><path d="M324 612 C308 624 292 622 280 608 C296 604 312 604 324 612 Z" fill="#69b457"/></svg>',
+  floral: '<svg viewBox="0 0 340 656" preserveAspectRatio="none" aria-hidden="true"><path d="M7 650 C3 520 11 430 7 330 C3 230 11 110 7 6" fill="none" stroke="#4c9a44" stroke-width="4" vector-effect="non-scaling-stroke"/><path d="M333 650 C337 520 329 430 333 330 C337 230 329 110 333 6" fill="none" stroke="#4c9a44" stroke-width="4" vector-effect="non-scaling-stroke"/><path d="M7 7 C110 3 230 11 333 7" fill="none" stroke="#4c9a44" stroke-width="4" vector-effect="non-scaling-stroke"/><path d="M7 649 C110 653 230 645 333 649" fill="none" stroke="#4c9a44" stroke-width="4" vector-effect="non-scaling-stroke"/><ellipse cx="16" cy="240" rx="9" ry="4.2" fill="#69b457" transform="rotate(-30 16 240)"/><ellipse cx="15" cy="430" rx="9" ry="4.2" fill="#69b457" transform="rotate(26 15 430)"/><ellipse cx="325" cy="300" rx="9" ry="4.2" fill="#69b457" transform="rotate(30 325 300)"/><ellipse cx="326" cy="520" rx="9" ry="4.2" fill="#69b457" transform="rotate(-24 326 520)"/><ellipse cx="180" cy="14" rx="8" ry="4" fill="#69b457" transform="rotate(12 180 14)"/><g transform="translate(9 96)"><circle cx="0" cy="-6.5" r="4.6" fill="#ff8fab"/><circle cx="6.2" cy="-2" r="4.6" fill="#ff8fab"/><circle cx="3.8" cy="5.3" r="4.6" fill="#ff8fab"/><circle cx="-3.8" cy="5.3" r="4.6" fill="#ff8fab"/><circle cx="-6.2" cy="-2" r="4.6" fill="#ff8fab"/><circle r="2.8" fill="#ffd93d"/></g><g transform="translate(331 210) scale(.85)"><circle cx="0" cy="-6.5" r="4.6" fill="#ff8fab"/><circle cx="6.2" cy="-2" r="4.6" fill="#ff8fab"/><circle cx="3.8" cy="5.3" r="4.6" fill="#ff8fab"/><circle cx="-3.8" cy="5.3" r="4.6" fill="#ff8fab"/><circle cx="-6.2" cy="-2" r="4.6" fill="#ff8fab"/><circle r="2.8" fill="#ffd93d"/></g><g transform="translate(9 560) scale(.9)"><circle cx="0" cy="-6.5" r="4.6" fill="#ff8fab"/><circle cx="6.2" cy="-2" r="4.6" fill="#ff8fab"/><circle cx="3.8" cy="5.3" r="4.6" fill="#ff8fab"/><circle cx="-3.8" cy="5.3" r="4.6" fill="#ff8fab"/><circle cx="-6.2" cy="-2" r="4.6" fill="#ff8fab"/><circle r="2.8" fill="#ffd93d"/></g><g transform="translate(331 470)"><circle cx="0" cy="-6.5" r="4.6" fill="#ff8fab"/><circle cx="6.2" cy="-2" r="4.6" fill="#ff8fab"/><circle cx="3.8" cy="5.3" r="4.6" fill="#ff8fab"/><circle cx="-3.8" cy="5.3" r="4.6" fill="#ff8fab"/><circle cx="-6.2" cy="-2" r="4.6" fill="#ff8fab"/><circle r="2.8" fill="#ffd93d"/></g><g transform="translate(96 8) scale(.8)"><circle cx="0" cy="-6.5" r="4.6" fill="#ff8fab"/><circle cx="6.2" cy="-2" r="4.6" fill="#ff8fab"/><circle cx="3.8" cy="5.3" r="4.6" fill="#ff8fab"/><circle cx="-3.8" cy="5.3" r="4.6" fill="#ff8fab"/><circle cx="-6.2" cy="-2" r="4.6" fill="#ff8fab"/><circle r="2.8" fill="#ffd93d"/></g><g transform="translate(252 648) scale(.85)"><circle cx="0" cy="-6.5" r="4.6" fill="#ff8fab"/><circle cx="6.2" cy="-2" r="4.6" fill="#ff8fab"/><circle cx="3.8" cy="5.3" r="4.6" fill="#ff8fab"/><circle cx="-3.8" cy="5.3" r="4.6" fill="#ff8fab"/><circle cx="-6.2" cy="-2" r="4.6" fill="#ff8fab"/><circle r="2.8" fill="#ffd93d"/></g></svg>'
 };
 function renderFrame(){
   var fl = $("frameLayer");
@@ -1681,6 +2180,9 @@ function renderFrame(){
   else if (styleSel.frame === "bamboo") fl.innerHTML = FRAME_SVGS.bamboo;
   else if (styleSel.frame === "neonframe") fl.classList.add("frame-neon");
   else if (styleSel.frame === "gold") fl.classList.add("frame-gold");
+  else if (styleSel.frame === "silver") fl.classList.add("frame-silver");
+  else if (styleSel.frame === "crystal") fl.classList.add("frame-crystal");
+  else if (styleSel.frame === "floral") fl.innerHTML = FRAME_SVGS.floral;
 }
 
 /* ---------- materials — the non-crystal block finishes ----------
@@ -1818,28 +2320,187 @@ function drawCellMaterial(ctx, px, py, s, type){
     ctx.beginPath(); ctx.roundRect(x + 0.75, y + 0.75, w - 1.5, h - 1.5, rt);
     ctx.strokeStyle = def.dark; ctx.lineWidth = 1.7; ctx.stroke();
   }
+  else if (curMaterial === "obsidian"){
+    var rb = Math.max(3, s * 0.14);
+    ctx.beginPath(); ctx.roundRect(x, y, w, h, rb);
+    ctx.save(); ctx.clip();
+    /* volcanic glass: the piece colour sunk to near-black */
+    var gb = ctx.createLinearGradient(x, y, x + w, y + h);
+    gb.addColorStop(0, def.dark);
+    gb.addColorStop(0.55, "#17131d");
+    gb.addColorStop(1, "#0a0810");
+    ctx.fillStyle = gb; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = def.color; ctx.globalAlpha = 0.13;
+    ctx.fillRect(x, y, w, h);
+    ctx.globalAlpha = 1;
+    /* one sharp polished facet sweeping diagonally */
+    ctx.beginPath();
+    ctx.moveTo(x + w * 0.06, y + h);
+    ctx.lineTo(x + w * 0.52, y);
+    ctx.lineTo(x + w * 0.78, y);
+    ctx.lineTo(x + w * 0.34, y + h);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(255,255,255,.13)"; ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x + w * 0.60, y + h);
+    ctx.lineTo(x + w * 0.94, y + h * 0.28);
+    ctx.lineTo(x + w * 0.94, y + h * 0.52);
+    ctx.lineTo(x + w * 0.76, y + h);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(255,255,255,.06)"; ctx.fill();
+    /* a bright core glint in the piece colour */
+    ctx.fillStyle = mixWhite(def.color, 0.55);
+    ctx.beginPath(); ctx.ellipse(x + w * 0.30, y + h * 0.26, Math.max(1.2, w * 0.05), Math.max(1, h * 0.035), -0.5, 0, 7); ctx.fill();
+    ctx.restore();
+    ctx.beginPath(); ctx.roundRect(x + 0.75, y + 0.75, w - 1.5, h - 1.5, rb);
+    ctx.strokeStyle = mixWhite(def.color, 0.25); ctx.lineWidth = 1.4; ctx.stroke();
+  }
+  else if (curMaterial === "rosegold"){
+    var rg = Math.max(3, s * 0.12);
+    ctx.beginPath(); ctx.roundRect(x, y, w, h, rg);
+    ctx.save(); ctx.clip();
+    /* rose gold bands — blush pink melting into warm copper —
+       brushed like the metal finish, tinted by the piece colour */
+    var gr = ctx.createLinearGradient(x, y, x + w, y);
+    gr.addColorStop(0, "#b76e79");
+    gr.addColorStop(0.30, "#f3c1ac");
+    gr.addColorStop(0.52, "#e8a2a2");
+    gr.addColorStop(0.78, "#f6cfae");
+    gr.addColorStop(1, "#a85d68");
+    ctx.fillStyle = gr; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = def.color; ctx.globalAlpha = 0.16;
+    ctx.fillRect(x, y, w, h);
+    ctx.globalAlpha = 1;
+    for (var j = 0; j < 6; j++){
+      ctx.fillStyle = j % 2 ? "rgba(255,255,255,.13)" : "rgba(120,40,50,.08)";
+      ctx.fillRect(x, y + h * (0.12 + j * 0.15), w, Math.max(1, h * 0.035));
+    }
+    /* a warm gleam along the top edge */
+    ctx.fillStyle = "rgba(255,244,230,.55)";
+    ctx.fillRect(x, y, w, Math.max(1, h * 0.06));
+    ctx.restore();
+    ctx.beginPath(); ctx.roundRect(x + 0.75, y + 0.75, w - 1.5, h - 1.5, rg);
+    ctx.strokeStyle = "#8c4a56"; ctx.lineWidth = 1.6; ctx.stroke();
+  }
+  else if (curMaterial === "emerald"){
+    var re = Math.max(3, s * 0.12);
+    ctx.beginPath(); ctx.roundRect(x, y, w, h, re);
+    ctx.save(); ctx.clip();
+    /* cut emerald: the piece colour deepened toward green, with the
+       classic step-cut table of a faceted gemstone */
+    var ge = ctx.createLinearGradient(x, y, x + w, y + h);
+    ge.addColorStop(0, mixWhite(def.color, 0.34));
+    ge.addColorStop(0.5, def.color);
+    ge.addColorStop(1, def.dark);
+    ctx.fillStyle = ge; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = "rgba(14,120,66,.30)";
+    ctx.fillRect(x, y, w, h);
+    /* step-cut facets — frames stepping down to the flat table */
+    ctx.strokeStyle = "rgba(255,255,255,.34)";
+    ctx.lineWidth = Math.max(1, s * 0.022);
+    ctx.beginPath(); ctx.roundRect(x + w * 0.14, y + h * 0.14, w * 0.72, h * 0.72, re * 0.7); ctx.stroke();
+    ctx.strokeStyle = "rgba(0,60,30,.35)";
+    ctx.beginPath(); ctx.roundRect(x + w * 0.27, y + h * 0.27, w * 0.46, h * 0.46, re * 0.5); ctx.stroke();
+    ctx.fillStyle = "rgba(255,255,255,.20)";
+    ctx.fillRect(x + w * 0.27, y + h * 0.27, w * 0.46, h * 0.46);
+    ctx.fillStyle = "rgba(255,255,255,.75)";
+    ctx.beginPath(); ctx.arc(x + w * 0.14, y + h * 0.14, Math.max(1, s * 0.03), 0, 7); ctx.fill();
+    ctx.restore();
+    ctx.beginPath(); ctx.roundRect(x + 0.75, y + 0.75, w - 1.5, h - 1.5, re);
+    ctx.strokeStyle = "#0b5c34"; ctx.lineWidth = 1.6; ctx.stroke();
+  }
+  else if (curMaterial === "sapphire"){
+    var rs = Math.max(3, s * 0.14);
+    ctx.beginPath(); ctx.roundRect(x, y, w, h, rs);
+    ctx.save(); ctx.clip();
+    /* sapphire: a deep blue sunk through the piece colour, cut with
+       a brilliant table and corner facets like the crystal's */
+    var gs = ctx.createLinearGradient(x, y, x, y + h);
+    gs.addColorStop(0, mixWhite(def.color, 0.42));
+    gs.addColorStop(0.45, def.color);
+    gs.addColorStop(1, def.dark);
+    ctx.fillStyle = gs; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = "rgba(22,48,170,.34)";
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = "rgba(255,255,255,.26)";
+    ctx.fillRect(x + w * 0.30, y + h * 0.27, w * 0.40, h * 0.43);
+    ctx.strokeStyle = "rgba(255,255,255,.45)";
+    ctx.lineWidth = Math.max(1, s * 0.018);
+    ctx.strokeRect(x + w * 0.30, y + h * 0.27, w * 0.40, h * 0.43);
+    ctx.beginPath();
+    ctx.moveTo(x + 1, y + 1); ctx.lineTo(x + w * 0.30, y + h * 0.27);
+    ctx.moveTo(x + w - 1, y + 1); ctx.lineTo(x + w * 0.70, y + h * 0.27);
+    ctx.moveTo(x + 1, y + h - 1); ctx.lineTo(x + w * 0.30, y + h * 0.70);
+    ctx.moveTo(x + w - 1, y + h - 1); ctx.lineTo(x + w * 0.70, y + h * 0.70);
+    ctx.stroke();
+    ctx.restore();
+    if (s >= 22) drawSparkle(ctx, x + w * 0.76, y + h * 0.22, s * 0.10);
+    ctx.beginPath(); ctx.roundRect(x + 0.75, y + 0.75, w - 1.5, h - 1.5, rs);
+    ctx.strokeStyle = "#1c2f7a"; ctx.lineWidth = 1.6; ctx.stroke();
+  }
+  else if (curMaterial === "rainbow"){
+    var rr2 = Math.max(4, s * 0.18);
+    ctx.beginPath(); ctx.roundRect(x, y, w, h, rr2);
+    ctx.save(); ctx.clip();
+    /* the full spectrum sweeping diagonally across the block — the
+       same for every piece, so the Legend's prize is unmistakable */
+    var grb = ctx.createLinearGradient(x, y, x + w, y + h);
+    grb.addColorStop(0, "#ff5b5b");
+    grb.addColorStop(0.2, "#ff9f45");
+    grb.addColorStop(0.4, "#ffd93d");
+    grb.addColorStop(0.6, "#7bc96f");
+    grb.addColorStop(0.8, "#57c7e8");
+    grb.addColorStop(1, "#b892e0");
+    ctx.fillStyle = grb; ctx.fillRect(x, y, w, h);
+    /* prism shine over the spectrum */
+    ctx.fillStyle = "rgba(255,255,255,.34)";
+    ctx.beginPath(); ctx.ellipse(x + w * 0.36, y + h * 0.22, w * 0.27, h * 0.11, -0.4, 0, 7); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,.16)";
+    ctx.fillRect(x, y + h * 0.66, w, h * 0.34);
+    ctx.restore();
+    ctx.beginPath(); ctx.roundRect(x + 0.75, y + 0.75, w - 1.5, h - 1.5, rr2);
+    ctx.strokeStyle = "rgba(70,40,90,.55)"; ctx.lineWidth = 1.5; ctx.stroke();
+  }
   ctx.restore();
 }
 
-/* ================= the wardrobe screen =================
-   A full-screen overlay (like the leaderboard, but roomier) opened
-   from the profile animal circle at the top of the left rail (which
-   lands on the Profile tab). Four tabs — Pieces, Background, Frame, Profile.
-   Every card previews its look; tapping an unlocked card wears it
-   immediately (the board behind updates live), and locked cards
-   show their unlock condition plus the player's progress. */
+/* ================= the Me screen =================
+   A top-anchored overlay (like the leaderboard) opened from the
+   profile animal circle at the top of the left rail. An identity
+   header card — the player's animal, name, current look, best
+   score and board rank — sits above three sections:
+   • Style — Pieces, Background, Frame and Animal as sub-tabs.
+     Every card previews its look; tapping an unlocked card wears
+     it immediately (the board behind updates live), and locked
+     cards show the achievement (or condition) that unlocks them
+     plus the player's progress toward it.
+   • Achievements — a grid of badge cards, closest to done first,
+     earned ones last in gold.
+   • Stats — the lifetime numbers as big readable cards. */
 function openWardrobe(tab){
-  /* an optional tab name ("pieces" / "bg" / "frame" / "profile")
-     opens the wardrobe straight on that tab — the profile avatar
-     button in the rail uses it to land on Profile. Click handlers
-     that pass an event object are ignored, so the existing
+  /* an optional name opens Me straight on that spot: a Style
+     sub-tab ("pieces" / "bg" / "frame" / "profile") or a section
+     ("ach" / "stats") — the profile avatar button in the rail uses
+     "profile" to land on the Animal picker. Click handlers that
+     pass an event object are ignored, so the existing
      addEventListener("click", openWardrobe) wiring keeps working. */
-  var wantTab = (typeof tab === "string" && ["pieces", "bg", "frame", "profile"].indexOf(tab) !== -1) ? tab : null;
+  var want = null;
+  if (typeof tab === "string"){
+    if (tab === "ach" || tab === "stats") want = { sec:tab };
+    else if (["pieces", "bg", "frame", "profile"].indexOf(tab) !== -1) want = { sec:"style", sub:tab };
+  }
   if (wdOpen){
-    if (wantTab && wdTab !== wantTab){ wdTab = wantTab; renderWardrobe(); }
+    if (want && (wdSection !== want.sec || (want.sub && wdSub !== want.sub))){
+      wdSection = want.sec;
+      if (want.sub) wdSub = want.sub;
+      renderWardrobe();
+    }
     return;
   }
-  if (wantTab) wdTab = wantTab;
+  if (want){
+    wdSection = want.sec;
+    if (want.sub) wdSub = want.sub;
+  }
   wdOpen = true;
   if (state === "playing") togglePause(true);
   renderWardrobe();
@@ -1878,21 +2539,29 @@ function wdNoteEl(card, text){
   n.textContent = text;
   card.appendChild(n);
 }
-/* the locked state: the condition, a progress bar and the count */
+/* progress values read as times for the clock-based conditions
+   (Marathon), plain counts for everything else */
+function fmtStatVal(stat, v){
+  if (stat === "bestMs" || stat === "totalMs") return formatPlayTime(v);
+  return v.toLocaleString("en-US");
+}
+/* the locked state: the condition (naming the achievement that
+   unlocks the item, when it has one), a progress bar and the count */
 function wdLockEl(card, item){
   card.classList.add("locked");
+  var cond = condOf(item);
   var lock = document.createElement("div");
   lock.className = "wd-lock";
-  lock.textContent = "🔒 " + item.unlock.label;
-  var have = Math.min(statVal(item.unlock.stat), item.unlock.need);
+  lock.textContent = "🔒 " + cond.label;
+  var have = Math.min(statVal(cond.stat), cond.need);
   var bar = document.createElement("div");
   bar.className = "wd-prog";
   var fill = document.createElement("i");
-  fill.style.width = Math.round(have / item.unlock.need * 100) + "%";
+  fill.style.width = Math.round(have / cond.need * 100) + "%";
   bar.appendChild(fill);
   lock.appendChild(bar);
   var prog = document.createElement("div");
-  prog.textContent = have.toLocaleString("en-US") + " / " + item.unlock.need.toLocaleString("en-US");
+  prog.textContent = fmtStatVal(cond.stat, have) + " / " + fmtStatVal(cond.stat, cond.need);
   lock.appendChild(prog);
   card.appendChild(lock);
 }
@@ -1947,20 +2616,65 @@ function equipAnimal(a){
   renderWardrobe();
   if (soundOn) sfx.ui();
 }
+/* the identity header card: animal, name, the look currently worn,
+   best score and board rank (this week first, all-time alongside) */
+function renderWdId(){
+  var av = $("wdIdAvatar");
+  if (av) av.textContent = styleSel.animal || "👤";
+  var nm = $("wdIdName");
+  if (nm) nm.textContent = myName || "You";
+  var look = $("wdIdLook");
+  if (look){
+    var matIt = findItem(MATERIAL_CATALOG, styleSel.material);
+    var bgIt = styleSel.bg ? findItem(BG_CATALOG, styleSel.bg) : null;
+    var frIt = styleSel.frame ? findItem(FRAME_CATALOG, styleSel.frame) : null;
+    look.textContent = (matIt ? matIt.name : "Crystal") + " blocks · " +
+      (bgIt ? bgIt.name + " background" : "Plain background") + " · " +
+      (frIt ? frIt.name + " frame" : "No frame");
+  }
+  var best = $("wdIdBest");
+  if (best) best.textContent = stats.bestScore ? stats.bestScore.toLocaleString("en-US") : "—";
+  var rank = $("wdIdRank");
+  if (rank){
+    var parts = [];
+    if (myName){
+      for (var i = 0; i < globalBoard.length; i++){
+        if (globalBoard[i].name === myName){ parts.push("#" + (i + 1) + " this week"); break; }
+      }
+      for (var j = 0; j < allTimeTop.length; j++){
+        if (allTimeTop[j].name === myName){ parts.push("#" + (j + 1) + " all time"); break; }
+      }
+    }
+    rank.textContent = parts.length ? parts.join(" · ") : "Not on the board yet";
+  }
+}
 function renderWardrobe(){
-  [["wdTabPieces", "pieces"], ["wdTabBg", "bg"], ["wdTabFrame", "frame"], ["wdTabProfile", "profile"]].forEach(function(pair){
+  [["wdSecStyle", "style"], ["wdSecAch", "ach"], ["wdSecStats", "stats"]].forEach(function(pair){
     var btn = $(pair[0]);
     if (!btn) return;
-    var on = wdTab === pair[1];
+    var on = wdSection === pair[1];
     btn.classList.toggle("on", on);
     btn.setAttribute("aria-selected", on ? "true" : "false");
   });
+  var subTabs = $("wdSubTabs");
+  if (subTabs) subTabs.hidden = wdSection !== "style";
+  [["wdTabPieces", "pieces"], ["wdTabBg", "bg"], ["wdTabFrame", "frame"], ["wdTabProfile", "profile"]].forEach(function(pair){
+    var btn = $(pair[0]);
+    if (!btn) return;
+    var on = wdSub === pair[1];
+    btn.classList.toggle("on", on);
+    btn.setAttribute("aria-selected", on ? "true" : "false");
+  });
+  renderWdId();
   var body = $("wdBody");
   if (!body) return;
   body.innerHTML = "";
-  if (wdTab === "pieces") renderWdPieces(body);
-  else if (wdTab === "bg") renderWdBackgrounds(body);
-  else if (wdTab === "frame") renderWdFrames(body);
+  body.scrollTop = 0;
+  if (wdSection === "ach") renderWdAchievements(body);
+  else if (wdSection === "stats") renderWdStats(body);
+  else if (wdSub === "pieces") renderWdPieces(body);
+  else if (wdSub === "bg") renderWdBackgrounds(body);
+  else if (wdSub === "frame") renderWdFrames(body);
   else renderWdProfile(body);
 }
 function renderWdPieces(body){
@@ -2027,6 +2741,9 @@ function framePreviewEl(frameId){
   else if (frameId === "bamboo") fl.innerHTML = FRAME_SVGS.bamboo;
   else if (frameId === "neonframe") fl.classList.add("frame-neon");
   else if (frameId === "gold") fl.classList.add("frame-gold");
+  else if (frameId === "silver") fl.classList.add("frame-silver");
+  else if (frameId === "crystal") fl.classList.add("frame-crystal");
+  else if (frameId === "floral") fl.innerHTML = FRAME_SVGS.floral;
   box.appendChild(fl);
   return box;
 }
@@ -2077,22 +2794,152 @@ function renderWdProfile(body){
     grid.appendChild(card);
   });
 }
+/* the Achievements section — a grid of badge cards, each with its
+   medal, name, progress bar and reward. Unearned cards are greyed
+   and sorted closest-to-done first, so the next unlock is always
+   at the top; earned ones light up gold at the end. An achievement
+   counts as earned exactly when its reward item is unlocked. */
+function renderWdAchievements(body){
+  var earnedCount = ACHIEVEMENTS.filter(function(a){ return isUnlocked(a.item); }).length;
+  var note = document.createElement("p");
+  note.className = "wd-note";
+  note.textContent = "Earn achievements by playing — each one unlocks a specific new look. Closest to done first. " + earnedCount + " of " + ACHIEVEMENTS.length + " earned so far.";
+  body.appendChild(note);
+  var list = document.createElement("div");
+  list.className = "ach-list";
+  var cards = ACHIEVEMENTS.map(function(a){
+    var earned = isUnlocked(a.item);
+    var frac = earned ? 1 : Math.min(statVal(a.stat), a.need) / a.need;
+    return { a:a, earned:earned, frac:frac };
+  });
+  cards.sort(function(x, y){
+    if (x.earned !== y.earned) return x.earned ? 1 : -1;
+    return y.frac - x.frac;
+  });
+  cards.forEach(function(c){
+    var a = c.a;
+    var card = document.createElement("div");
+    card.className = "ach-card" + (c.earned ? " earned" : "");
+    var medal = document.createElement("div");
+    medal.className = "ach-medal";
+    medal.textContent = "🏆";
+    medal.setAttribute("aria-hidden", "true");
+    card.appendChild(medal);
+    var nm = document.createElement("div");
+    nm.className = "ach-name";
+    nm.textContent = a.name;
+    card.appendChild(nm);
+    if (c.earned){
+      var dn = document.createElement("div");
+      dn.className = "ach-done";
+      dn.textContent = "✓ Earned";
+      card.appendChild(dn);
+    }
+    var ds = document.createElement("div");
+    ds.className = "ach-desc";
+    ds.textContent = a.desc;
+    card.appendChild(ds);
+    var rw = document.createElement("div");
+    rw.className = "ach-reward";
+    rw.appendChild(document.createTextNode("Reward: "));
+    var rws = document.createElement("span");
+    rws.className = "rw";
+    rws.textContent = rewardText(a);
+    rw.appendChild(rws);
+    card.appendChild(rw);
+    if (!c.earned){
+      var have = Math.min(statVal(a.stat), a.need);
+      var prow = document.createElement("div");
+      prow.className = "ach-prog";
+      var bar = document.createElement("div");
+      bar.className = "wd-prog";
+      var fill = document.createElement("i");
+      fill.style.width = Math.round(have / a.need * 100) + "%";
+      bar.appendChild(fill);
+      prow.appendChild(bar);
+      var cnt = document.createElement("span");
+      cnt.className = "ach-count";
+      cnt.textContent = fmtStatVal(a.stat, have) + " / " + fmtStatVal(a.stat, a.need);
+      prow.appendChild(cnt);
+      card.appendChild(prow);
+    }
+    list.appendChild(card);
+  });
+  body.appendChild(list);
+}
+/* the Stats section — this device's lifetime totals as big
+   readable cards, two across */
+function renderWdStats(body){
+  var note = document.createElement("p");
+  note.className = "wd-note";
+  note.textContent = "Your Tetoris story so far — every finished game on this device counts toward these.";
+  body.appendChild(note);
+  var grid = document.createElement("div");
+  grid.className = "stat-grid";
+  var tiles = [
+    ["Games played", stats.games.toLocaleString("en-US")],
+    ["Total lines cleared", stats.totalLines.toLocaleString("en-US")],
+    ["Total time played", fmtTotalTime(stats.totalMs)],
+    ["Best score", stats.bestScore ? stats.bestScore.toLocaleString("en-US") : "—"],
+    ["Best combo", stats.bestCombo >= 1 ? "x" + stats.bestCombo : "—"],
+    ["Tetrises", stats.tetrises ? stats.tetrises.toLocaleString("en-US") : "—"],
+    ["Highest level reached", stats.bestLevel ? String(stats.bestLevel) : "—"],
+    ["Days played", String(stats.days.length)]
+  ];
+  tiles.forEach(function(t){
+    var tile = document.createElement("div");
+    tile.className = "stat-tile";
+    var v = document.createElement("div");
+    v.className = "stat-v";
+    v.textContent = t[1];
+    var k = document.createElement("div");
+    k.className = "stat-k";
+    k.textContent = t[0];
+    tile.appendChild(v);
+    tile.appendChild(k);
+    grid.appendChild(tile);
+  });
+  body.appendChild(grid);
+}
+/* lifetime play time reads in hours once it passes one ("2h 15m") */
+function fmtTotalTime(ms){
+  var mins = Math.floor(ms / 60000);
+  if (mins < 60) return formatPlayTime(ms);
+  return Math.floor(mins / 60) + "h " + ("0" + (mins % 60)).slice(-2) + "m";
+}
 var profileAvatarBtnEl = $("profileAvatarBtn");
 if (profileAvatarBtnEl) profileAvatarBtnEl.addEventListener("click", function(){ openWardrobe("profile"); });
 var wdCloseEl = $("wdClose");
 if (wdCloseEl) wdCloseEl.addEventListener("click", closeWardrobe);
 var wdBackdropEl = $("wdBackdrop");
 if (wdBackdropEl) wdBackdropEl.addEventListener("click", closeWardrobe);
-[["wdTabPieces", "pieces"], ["wdTabBg", "bg"], ["wdTabFrame", "frame"], ["wdTabProfile", "profile"]].forEach(function(pair){
+[["wdSecStyle", "style"], ["wdSecAch", "ach"], ["wdSecStats", "stats"]].forEach(function(pair){
   var btn = $(pair[0]);
   if (btn) btn.addEventListener("click", function(){
-    if (wdTab === pair[1]) return;
-    wdTab = pair[1];
+    if (wdSection === pair[1]) return;
+    wdSection = pair[1];
     renderWardrobe();
     if (soundOn) sfx.ui();
   });
 });
-/* the wardrobe's Escape-to-close lives in the single overlay keyboard
+[["wdTabPieces", "pieces"], ["wdTabBg", "bg"], ["wdTabFrame", "frame"], ["wdTabProfile", "profile"]].forEach(function(pair){
+  var btn = $(pair[0]);
+  if (btn) btn.addEventListener("click", function(){
+    if (wdSub === pair[1]) return;
+    wdSub = pair[1];
+    renderWardrobe();
+    if (soundOn) sfx.ui();
+  });
+});
+/* the header card's animal circle jumps straight to the Animal picker */
+var wdIdAvatarEl = $("wdIdAvatar");
+if (wdIdAvatarEl) wdIdAvatarEl.addEventListener("click", function(){
+  wdSection = "style";
+  wdSub = "profile";
+  renderWardrobe();
+  if (soundOn) sfx.ui();
+});
+/* the Me panel's Escape-to-close lives in the single overlay keyboard
    handler near the bottom of this script, with the other panels' */
 
 /* ---------- BGM: Korobeiniki (traditional / public domain) — music-box rendition ----------
@@ -2253,7 +3100,10 @@ function rotateMatrix(m, dir){
 /* ---------- 7-bag ---------- */
 function refillQueue(){
   var bag = TYPES.slice();
-  for (var i = bag.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)); var t = bag[i]; bag[i] = bag[j]; bag[j] = t; }
+  /* a duel run shuffles its bags with the weekend's seeded RNG, so
+     every duellist that weekend is dealt the identical sequence */
+  var rnd = (duelMode && duelRng) ? duelRng : Math.random;
+  for (var i = bag.length - 1; i > 0; i--){ var j = Math.floor(rnd() * (i + 1)); var t = bag[i]; bag[i] = bag[j]; bag[j] = t; }
   queue = queue.concat(bag);
 }
 /* topmost occupied row of a piece's shape matrix (99 if empty) */
@@ -2459,6 +3309,13 @@ function scoreClear(n, tspin){
   }
   else if (label) flash(label + "  +" + pts);
 
+  /* Back-to-Back tracker: consecutive Tetris clears — any other
+     line clear breaks the run (locks that clear nothing don't) */
+  if (n === 4 && !tspin){
+    tetrisRun++;
+    if (tetrisRun > tetrisRunBest) tetrisRunBest = tetrisRun;
+  } else if (n > 0) tetrisRun = 0;
+
   if (n === 4){ tetrisGame++; sfx.tetris(); }
   else if (tspin){ sfx.tspin(); }
   else { sfx.clear(n); }
@@ -2467,6 +3324,9 @@ function scoreClear(n, tspin){
   else if (tspin) buzz(50);
   else buzz(28);
 
+  /* Comeback Kid tracker: lines cleared while already at level 8+
+     (the level in force for this clear, before it levels up) */
+  if (level >= 8) lateLinesGame += n;
   lines += n;
   var newLevel = Math.floor(lines / 10) + 1;
   if (newLevel > level){
@@ -2488,6 +3348,7 @@ function finishLock(){
     /* perfect clear bonus */
     var empty = board.every(function(row){ return row.every(function(c){ return !c; }); });
     if (empty){
+      perfectClearGame++; /* feeds the Perfectionist achievement */
       var pcBonus = [0, 800, 1000, 1800, 2000][n] * level + (b2b && n === 4 ? 2000 * level : 0);
       score += pcBonus;
       flash("PERFECT CLEAR! +" + pcBonus);
@@ -2772,16 +3633,23 @@ function resetGame(){
   dropCounter = 0; lockCounter = 0; lockResets = 0;
   applyLevelTheme(1);
   pendingBoardScore = 0; pendingIsChampion = false;
-  maxCombo = 0; tspinCount = 0; piecesPlaced = 0; playMs = 0; tetrisGame = 0;
+  maxCombo = 0; tspinCount = 0; piecesPlaced = 0; playMs = 0; tetrisGame = 0; perfectClearGame = 0;
+  tetrisRun = 0; tetrisRunBest = 0; lateLinesGame = 0;
   dasDir = 0; dasActive = false; softDropping = false;
 }
 function startGame(){
+  /* a duel start (startDuelRun) arms duelMode + the seeded RNG just
+     before calling here; every other start is a normal game and
+     clears any duel state, so a duel can never leak into free play */
+  if (!duelStartPending){ duelMode = false; duelRng = null; duelRunTeam = ""; duelRunName = ""; }
+  duelStartPending = false;
   resetGame();
   bgmStepIdx = 0; stopBGM();
   fetchGlobal(); /* refresh the shared crown for this run */
   state = "playing";
   var cp = $("championPrompt"); if (cp) cp.hidden = true;
   var cb = $("championBanner"); if (cb) cb.hidden = true;
+  var odv = $("ovDuel"); if (odv) odv.hidden = true;
   $("startOverlay").hidden = true;
   $("overOverlay").hidden = true;
   $("pauseOverlay").hidden = true;
@@ -2793,6 +3661,30 @@ function startGame(){
 function gameOver(){
   stopBGM();
   state = "over";
+  /* a finished duel run is recorded exactly once, the moment it
+     ends: onto this device at once (so the duel icon immediately
+     knows the run is in), then into the shared record alongside the
+     boards. The run still counts for stats and the leaderboard like
+     any other game. */
+  var wasDuel = duelMode;
+  if (wasDuel){
+    duelMode = false; duelRng = null;
+    var dw = currentDuelWeekendId();
+    var dName = duelRunName || myName || "Anonymous";
+    var dEntry = { w:dw, name:dName, score:score, team:duelRunTeam === "B" ? "B" : "A" };
+    if (styleSel.animal) dEntry.a = styleSel.animal;
+    duelMy = { w:dw, team:dEntry.team, score:score, name:dName };
+    saveDuelMy();
+    duelEntries = normalizeDuel(duelEntries.concat([dEntry]));
+    saveGlobalCache();
+    pushBoard(globalBoard, allTimeTop); /* best effort — the local record above keeps the run safe offline */
+    var odv2 = $("ovDuel");
+    if (odv2){
+      odv2.textContent = "⚔ Duel run recorded for Team " + dEntry.team + " — " + score.toLocaleString("en-US") + ". That's your one run this weekend.";
+      odv2.hidden = false;
+    }
+    updateDuelBtn();
+  }
   $("pauseBtn").textContent = "START / PAUSE";
   /* this device's own hi score always updates silently */
   if (score > localBest){ localBest = score; saveLocalScore(); }
@@ -2922,6 +3814,9 @@ function claimGlobal(){
       myName = name;
       try{ localStorage.setItem(LS_MYNAME, name); }catch(e){}
       saveGlobalCache();
+      /* Social Star — claiming a place on the board earns it on the
+         spot, announced like any other achievement */
+      if (!stats.boardMade){ stats.boardMade = 1; saveStats(); checkUnlocks(false); }
       $("championForm").hidden = true;
       $("championSkip").hidden = true;
       done.textContent = wasChampion
@@ -3023,6 +3918,8 @@ document.addEventListener("keydown", function(e){
   if (typeof lbOpen !== "undefined" && lbOpen) return;
   /* …and the style wardrobe */
   if (typeof wdOpen !== "undefined" && wdOpen) return;
+  /* …and the duel panel */
+  if (typeof duelOpen !== "undefined" && duelOpen) return;
   var k = e.key;
   if (["ArrowLeft","ArrowRight","ArrowDown","ArrowUp"," "].indexOf(k) !== -1) e.preventDefault();
   if (k === "p" || k === "P" || k === "Escape"){ if (state === "playing" || state === "paused") togglePause(); return; }
@@ -3494,6 +4391,284 @@ $("lbWeekNewer").addEventListener("click", function(){
 /* the leaderboard's Escape-to-close lives in the single overlay
    keyboard handler near the bottom of this script, with the other panels' */
 
+/* ================= weekend duel panel =================
+   Opened from the crossed-swords button in the left rail. Three
+   faces, decided by the device clock and this player's record:
+   • live + no run yet — pick Team A or Team B (names only, no
+     counts or averages), then one seeded run;
+   • live + run recorded — "already recorded", with only this
+     player's own score. No standings at all while the duel is
+     live, to keep the suspense;
+   • outside the window — the last finished duel: winning team, its
+     average, and every player's score on both teams. Standings are
+     revealed only here, after the window has closed.
+   A team's score is the average of its members' recorded runs —
+   only players who actually played count, so a 2-player team is
+   not punished against a 3-player team. Nobody plays at the same
+   time: runs land whenever each player gets to them inside the
+   window. */
+/* ---------- next-duel countdown ----------
+   A live d:hh:mm:ss countdown to the next duel's Friday 00:00,
+   shown under the "Next duel: …" line in the panel's outside-the-
+   window face. One 1-second timer at a time: every renderDuel()
+   and every closeDuel() stops the previous one, so re-renders
+   (the panel re-renders when the shared board refresh lands)
+   never stack timers. When it reaches zero the duel has gone
+   live — the panel re-renders into its live face on its own. */
+var duelCountdownTimer = null;
+function stopDuelCountdown(){
+  if (duelCountdownTimer !== null){ clearInterval(duelCountdownTimer); duelCountdownTimer = null; }
+}
+function formatDuelCountdown(ms){
+  if (ms < 0) ms = 0;
+  var totalSec = Math.floor(ms / 1000);
+  var d = Math.floor(totalSec / 86400);
+  var h = Math.floor((totalSec % 86400) / 3600);
+  var m = Math.floor((totalSec % 3600) / 60);
+  var s = totalSec % 60;
+  function p2(n){ return ("0" + n).slice(-2); }
+  return d + ":" + p2(h) + ":" + p2(m) + ":" + p2(s);
+}
+function startDuelCountdown(valueEl, target){
+  stopDuelCountdown();
+  function tick(){
+    var left = target.getTime() - Date.now();
+    if (left <= 0){
+      valueEl.textContent = "0:00:00:00";
+      stopDuelCountdown();
+      updateDuelBtn();
+      if (duelOpen) renderDuel(); /* Friday 00:00 has arrived — flip to the live face */
+      return;
+    }
+    valueEl.textContent = formatDuelCountdown(left);
+  }
+  tick();
+  duelCountdownTimer = setInterval(tick, 1000);
+}
+function updateDuelBtn(){
+  var b = $("duelBtn");
+  if (!b) return;
+  var live = isDuelLive();
+  b.classList.toggle("live", live);
+  b.title = live ? "Weekend duel — LIVE now! Tap to play your run" : "Weekend duel — see last weekend's result";
+  b.setAttribute("aria-label", live ? "Weekend duel, live now" : "Weekend duel, last weekend's results");
+}
+function openDuel(){
+  if (duelOpen) return;
+  duelOpen = true;
+  duelTeamPick = "";
+  if (state === "playing") togglePause(true);
+  renderDuel();
+  $("duelBackdrop").hidden = false;
+  $("duelPanel").hidden = false;
+  fetchGlobal(); /* refresh — fetchGlobal re-renders the panel when it lands */
+  if (soundOn) sfx.ui();
+}
+function closeDuel(){
+  if (!duelOpen) return;
+  duelOpen = false;
+  stopDuelCountdown();
+  $("duelBackdrop").hidden = true;
+  $("duelPanel").hidden = true;
+}
+function duelEl(tag, cls, text){
+  var el = document.createElement(tag);
+  if (cls) el.className = cls;
+  if (text != null) el.textContent = text;
+  return el;
+}
+/* one team's block in the standings: header with its average (and a
+   WINNER tag when the weekend is finished and it won), then every
+   player's score, best first — rows built with textContent only,
+   names from the shared store are untrusted */
+function duelTeamBlock(body, entries, team, finished){
+  var mine = entries.filter(function(e){ return e.team === team; })
+    .sort(function(a, b){ return b.score - a.score; });
+  var avg = duelTeamAvg(entries, team);
+  var head = duelEl("div", "duel-team-head");
+  var nm = duelEl("span", null, "Team " + team);
+  head.appendChild(nm);
+  if (finished && mine.length){
+    var other = duelTeamAvg(entries, team === "A" ? "B" : "A");
+    if (avg !== null && (other === null || avg > other)){
+      var tag = duelEl("span", "win-tag", "🏆 WINNER");
+      head.appendChild(tag);
+    }
+  }
+  var av = duelEl("span", "avg", avg === null ? "No runs yet" : "Avg " + avg.toLocaleString("en-US"));
+  head.appendChild(av);
+  body.appendChild(head);
+  if (!mine.length){
+    body.appendChild(duelEl("div", "duel-none", "Nobody has played for Team " + team + " yet."));
+    return;
+  }
+  var list = duelEl("ul", "duel-list");
+  mine.forEach(function(e, i){
+    var li = document.createElement("li");
+    var isMine = !!myName && e.name === myName;
+    li.className = "lb-row" + (i === 0 ? " r1" : "") + (isMine ? " mine" : "");
+    var rank = duelEl("span", "lb-rank", String(i + 1));
+    var name = duelEl("span", "lb-name");
+    if (e.a){
+      var an = duelEl("span", "lb-animal", e.a);
+      name.appendChild(an);
+    }
+    name.appendChild(document.createTextNode(e.name || "Anonymous"));
+    if (isMine){
+      var yt = duelEl("span", "you-tag", "YOU");
+      name.appendChild(yt);
+    }
+    var sc = duelEl("span", "lb-score", e.score.toLocaleString("en-US"));
+    li.appendChild(rank); li.appendChild(name); li.appendChild(sc);
+    list.appendChild(li);
+  });
+  body.appendChild(list);
+}
+function renderDuel(){
+  var body = $("duelBody");
+  if (!body) return;
+  stopDuelCountdown(); /* the old countdown's element is about to be discarded */
+  body.innerHTML = "";
+  var note = $("duelNote");
+  if (note) note.hidden = !boardStale;
+  var live = isDuelLive();
+  if (live){
+    var w = currentDuelWeekendId();
+    var entries = duelEntriesFor(w);
+    var status = duelEl("div", "duel-status live", "⚔ LIVE — the battle is on!");
+    body.appendChild(status);
+    body.appendChild(duelEl("p", "duel-note",
+      duelWeekendLabel(w) + " · Ends Sunday 23:59. Everyone plays the exact same pieces this weekend, " +
+      "and each player gets ONE scored run. Your team's score is the average of its players' runs — " +
+      "but no standings are shown until the duel ends, to keep the suspense."));
+    var mine = myDuelRun(w);
+    if (mine){
+      var rec = duelEl("div", "duel-recorded");
+      rec.appendChild(duelEl("div", "dr-big", "✓ Your run is already recorded"));
+      rec.appendChild(duelEl("div", "dr-score", mine.score.toLocaleString("en-US")));
+      rec.appendChild(duelEl("div", "duel-note", "Team " + mine.team + " · " + (mine.name || "You") +
+        " — one run per player each weekend, so this score stands."));
+      body.appendChild(rec);
+      body.appendChild(duelEl("p", "duel-note",
+        "That's all you get to see for now — no team standings, no other scores. " +
+        "The result is revealed after the duel closes on Sunday 23:59."));
+      return;
+    }
+    /* not played yet — name (if we don't know it) + team pick + start */
+    var nameInput = null;
+    if (myName){
+      body.appendChild(duelEl("p", "duel-as", "Playing as " + (styleSel.animal ? styleSel.animal + " " : "") + myName));
+    } else {
+      var row = duelEl("div", "duel-name-row");
+      nameInput = document.createElement("input");
+      nameInput.type = "text";
+      nameInput.maxLength = 16;
+      nameInput.placeholder = "Your name for the duel";
+      nameInput.setAttribute("aria-label", "Your name for the duel");
+      row.appendChild(nameInput);
+      body.appendChild(row);
+    }
+    var teams = duelEl("div", "duel-teams");
+    /* team pick shows the names only — no player counts and no
+       running averages while the duel is live (suspense rule) */
+    var btnA = duelEl("button", "duel-team-btn", "Team A");
+    btnA.type = "button";
+    var btnB = duelEl("button", "duel-team-btn", "Team B");
+    btnB.type = "button";
+    var startBtn = duelEl("button", "duel-start", "Pick a team to start");
+    startBtn.type = "button";
+    startBtn.disabled = true;
+    function pick(team){
+      duelTeamPick = team;
+      btnA.classList.toggle("on", team === "A");
+      btnB.classList.toggle("on", team === "B");
+      startBtn.disabled = false;
+      startBtn.textContent = "⚔ Start my duel run — Team " + team;
+      if (soundOn) sfx.ui();
+    }
+    btnA.addEventListener("click", function(){ pick("A"); });
+    btnB.addEventListener("click", function(){ pick("B"); });
+    teams.appendChild(btnA); teams.appendChild(btnB);
+    body.appendChild(teams);
+    startBtn.addEventListener("click", function(){
+      if (!duelTeamPick) return;
+      var nm = nameInput ? cleanChampionName(nameInput.value) : myName;
+      if (!nm) nm = "Anonymous";
+      startDuelRun(duelTeamPick, nm);
+    });
+    body.appendChild(startBtn);
+    body.appendChild(duelEl("p", "duel-note", "Normal games don't count — only this run does. You can play it any time before Sunday 23:59."));
+    body.appendChild(duelEl("p", "duel-note", "Standings stay hidden while the duel is live — you'll only see your own recorded score. Everything is revealed after Sunday 23:59."));
+    return;
+  }
+  /* outside the window — the last finished duel's result */
+  var lw = lastDuelWeekendId();
+  var lEntries = duelEntriesFor(lw);
+  var status2 = duelEl("div", "duel-status", "The duel returns Friday 00:00");
+  body.appendChild(status2);
+  var nf = nextDuelFriday();
+  body.appendChild(duelEl("p", "duel-note",
+    "Next duel: " + duelWeekendLabel(duelDateStr(nf)) + ". Pick a team, play one run on that weekend's shared pieces, " +
+    "and your team's average decides it."));
+  /* live countdown to that Friday 00:00, directly under the date */
+  var cd = duelEl("div", "duel-countdown");
+  cd.appendChild(duelEl("div", "duel-countdown-label", "Next duel starts in"));
+  var cdValue = duelEl("div", "duel-countdown-value", formatDuelCountdown(nf.getTime() - Date.now()));
+  cdValue.setAttribute("role", "timer");
+  cdValue.setAttribute("aria-label", "Countdown to the next duel");
+  cd.appendChild(cdValue);
+  cd.appendChild(duelEl("div", "duel-countdown-units", "days : hours : minutes : seconds"));
+  body.appendChild(cd);
+  startDuelCountdown(cdValue, nf);
+  if (!lEntries.length){
+    body.appendChild(duelEl("p", "duel-note", "No duel was recorded last weekend (" + duelWeekendLabel(lw) + ") — be there for the next one!"));
+    return;
+  }
+  var avgA = duelTeamAvg(lEntries, "A"), avgB = duelTeamAvg(lEntries, "B");
+  var verdict;
+  if (avgA !== null && avgB !== null){
+    verdict = avgA === avgB ? "🤝 Last weekend was a draw — both teams averaged " + avgA.toLocaleString("en-US") + "!"
+      : "🏆 Team " + (avgA > avgB ? "A" : "B") + " won last weekend — average " +
+        Math.max(avgA, avgB).toLocaleString("en-US") + " vs " + Math.min(avgA, avgB).toLocaleString("en-US") + ".";
+  } else {
+    var onlyTeam = avgA !== null ? "A" : "B";
+    verdict = "🏆 Team " + onlyTeam + " won last weekend — the only team that played, averaging " +
+      (avgA !== null ? avgA : avgB).toLocaleString("en-US") + ".";
+  }
+  var rec2 = duelEl("div", "duel-recorded");
+  rec2.appendChild(duelEl("div", "dr-big", verdict));
+  rec2.appendChild(duelEl("div", "duel-note", duelWeekendLabel(lw) + " · Every player's score:"));
+  body.appendChild(rec2);
+  duelTeamBlock(body, lEntries, "A", true);
+  duelTeamBlock(body, lEntries, "B", true);
+}
+/* begin the one duel run: remember the name (it becomes the player's
+   leaderboard name too, like a claim), arm the weekend seed, and
+   start the game straight away */
+function startDuelRun(team, name){
+  duelRunTeam = team;
+  duelRunName = name;
+  if (name && name !== "Anonymous"){
+    myName = name;
+    try{ localStorage.setItem(LS_MYNAME, name); }catch(e){}
+  }
+  duelMode = true;
+  duelRng = duelMulberry32(duelHashSeed("tetoris-duel-" + currentDuelWeekendId()));
+  duelStartPending = true;
+  closeDuel();
+  startGame();
+}
+var duelBtnEl = $("duelBtn");
+if (duelBtnEl) duelBtnEl.addEventListener("click", openDuel);
+var duelCloseEl = $("duelClose");
+if (duelCloseEl) duelCloseEl.addEventListener("click", closeDuel);
+var duelBackdropEl = $("duelBackdrop");
+if (duelBackdropEl) duelBackdropEl.addEventListener("click", closeDuel);
+/* the duel button's live look follows the clock — re-check every
+   minute so a page left open over midnight Friday lights up (and
+   one left open past Sunday midnight calms back down) on its own */
+setInterval(updateDuelBtn, 60000);
+
 /* ================= first-time tutorial ================= */
 var LS_TUTORIAL = "tetoris_tutorial_seen_v1";
 var TUTORIAL_STEPS = [
@@ -3503,12 +4678,13 @@ var TUTORIAL_STEPS = [
     title: "These little buttons",
     atTop: false,
     html: '<ul class="tutorial-list">' +
-      '<li><span class="tut-icon">🐻</span><span><b>Style &amp; profile</b> — tap the big animal circle at the very top to open your wardrobe: pick your profile animal, and change your blocks\u2019 material, the background and your board frame. Nothing is owned at the start — new looks unlock as you play, and the wardrobe shows your progress toward each one.</span></li>' +
-      '<li><span class="tut-icon rail-icon music">♪</span><span><b>Music</b> — tap to turn the background music on or off. This button is the music only.</span></li>' +
-      '<li><span class="tut-icon rail-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></span><span><b>Sound effects</b> — tap to turn the game\u2019s sound effects on or off. It does not touch the music — the music note and the speaker each work on their own, so you can keep one and mute the other.</span></li>' +
-      '<li><span class="tut-icon rail-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true" focusable="false"><path d="M7.6 5.5h8.8c3.1 0 5.6 2.6 5.6 5.9 0 .9-.2 1.7-.5 2.5l-1.1 3.4c-.4 1.2-1.9 1.6-2.9.8l-2.3-1.9c-.3-.3-.7-.4-1.1-.4h-4.2c-.4 0-.8.1-1.1.4l-2.3 1.9c-1 .8-2.5.4-2.9-.8L2.5 13.9C2.2 13.1 2 12.3 2 11.4 2 8.1 4.5 5.5 7.6 5.5zM6.9 8.2h1.8v1.9h1.4v1.8H8.7v1.9H6.9v-1.9H5.5v-1.8h1.4V8.2zm9.3.35a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1zm2.1 2.3a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1z"/></svg></span><span><b>Hide controller</b> — tap to hide the buttons at the bottom if you prefer swiping &amp; tapping on the board. Tap it again to bring them back.</span></li>' +
-      '<li><span class="tut-icon rail-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="10.2" y="6.5" width="3.6" height="11" rx="0.9" fill="currentColor" stroke="none"/><path d="M6.6 5 L4.2 8.5 L6.6 12 L4.2 15.5 L6.6 19"/><path d="M17.4 5 L19.8 8.5 L17.4 12 L19.8 15.5 L17.4 19"/></svg></span><span><b>Haptics</b> — the little rectangle with a zig-zag line on each side: a little buzz when a piece locks, a stronger one when lines clear, and a pulse on level up. Tap to turn it on or off. Android phones only — iPhones don\u2019t let web pages vibrate.</span></li>' +
-      '<li><span class="tut-icon rail-icon help">?</span><span><b>Help</b> — tap this ? button any time to see this tour again.</span></li>' +
+      '<li><span class="tut-icon">🐻</span><span><b>Me</b> - Customise your profile &amp; look, view achievement &amp; stats.</span></li>' +
+      '<li><span class="tut-icon rail-icon music">♪</span><span><b>Music</b> - Toggle background music on/off.</span></li>' +
+      '<li><span class="tut-icon rail-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></span><span><b>Sound</b> - Toggle sound effect on/off.</span></li>' +
+      '<li><span class="tut-icon rail-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true" focusable="false"><path d="M7.6 5.5h8.8c3.1 0 5.6 2.6 5.6 5.9 0 .9-.2 1.7-.5 2.5l-1.1 3.4c-.4 1.2-1.9 1.6-2.9.8l-2.3-1.9c-.3-.3-.7-.4-1.1-.4h-4.2c-.4 0-.8.1-1.1.4l-2.3 1.9c-1 .8-2.5.4-2.9-.8L2.5 13.9C2.2 13.1 2 12.3 2 11.4 2 8.1 4.5 5.5 7.6 5.5zM6.9 8.2h1.8v1.9h1.4v1.8H8.7v1.9H6.9v-1.9H5.5v-1.8h1.4V8.2zm9.3.35a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1zm2.1 2.3a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1z"/></svg></span><span><b>Buttons</b> - Toggle button controller on/off.</span></li>' +
+      '<li><span class="tut-icon rail-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="10.2" y="6.5" width="3.6" height="11" rx="0.9" fill="currentColor" stroke="none"/><path d="M6.6 5 L4.2 8.5 L6.6 12 L4.2 15.5 L6.6 19"/><path d="M17.4 5 L19.8 8.5 L17.4 12 L19.8 15.5 L17.4 19"/></svg></span><span><b>Haptics</b> - Toggle vibration on/off.</span></li>' +
+      '<li><span class="tut-icon rail-icon help">?</span><span><b>Help</b> - Replay this tour.</span></li>' +
+      '<li><span class="tut-icon rail-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M5 3 L14.5 12.5"/><path d="M13 14 L17 10"/><path d="M15.5 13.5 L19 17"/><circle cx="20" cy="18" r="1.1" fill="currentColor" stroke="none"/><path d="M19 3 L9.5 12.5"/><path d="M7 10 L11 14"/><path d="M8.5 13.5 L5 17"/><circle cx="4" cy="18" r="1.1" fill="currentColor" stroke="none"/></svg></span><span><b>Battle</b> - Weekly weekend team duel.</span></li>' +
       '</ul>'
   },
   {
@@ -3517,13 +4693,12 @@ var TUTORIAL_STEPS = [
     title: "Scores, next piece & hold",
     atTop: false,
     html: '<ul class="tutorial-list">' +
-      '<li><span class="tut-icon">Global</span><span><b>Global Hi Score</b> — the highest score this week across everyone, and who holds it. The board resets every Monday, and each week\u2019s top 3 are kept forever — step back through past weeks with the \u2039 arrow on the leaderboard.</span></li>' +
-      '<li><span class="tut-icon">🏆</span><span><b>Leaderboard</b> — tap the Global Hi Score any time to open it. It has two boards: This Week \u2014 the live Top 15, with a \u2039 arrow that steps back one week at a time to each past week\u2019s Top 3 winners \u2014 and the All-Time Top 3. Number 1 wears the crown on gold, number 2 is silver and number 3 is bronze.</span></li>' +
-      '<li><span class="tut-icon">Local</span><span><b>Local Hi Score</b> — the best score on this device.</span></li>' +
-      '<li><span class="tut-icon">Score</span><span><b>Score</b> — your score in the game you are playing now.</span></li>' +
-      '<li><span class="tut-icon">Next</span><span><b>Next</b> — the piece that will fall after this one, so you can plan ahead.</span></li>' +
-      '<li><span class="tut-icon">Hold</span><span><b>Hold</b> — the piece you have saved for later. You can hold or swap once per falling piece — after that it greys out until the next piece falls. If you are playing with swipe &amp; tap controls, tap this box to hold or swap.</span></li>' +
-      '<li><span class="tut-icon">Lv</span><span><b>Level &amp; Lines</b> — lines you have cleared. Every 10 lines the level rises and pieces fall faster.</span></li>' +
+      '<li><span class="tut-icon">Global</span><span><b>Global Hi Score</b> - This week\u2019s best score, across everyone. Tap it for the leaderboard.</span></li>' +
+      '<li><span class="tut-icon">Local</span><span><b>Local Hi Score</b> - The best score on this device.</span></li>' +
+      '<li><span class="tut-icon">Score</span><span><b>Score</b> - Your score in this game.</span></li>' +
+      '<li><span class="tut-icon">Next</span><span><b>Next</b> - The piece that falls after this one.</span></li>' +
+      '<li><span class="tut-icon">Hold</span><span><b>Hold</b> - A piece saved for later. Tap the box to swap, once per piece.</span></li>' +
+      '<li><span class="tut-icon">Lv</span><span><b>Level &amp; Lines</b> - Level rises every 10 lines, and pieces fall faster.</span></li>' +
       '</ul>'
   },
   {
@@ -3805,11 +4980,13 @@ document.addEventListener("keydown", function(e){
     return;
   }
   if (wdOpen && e.key === "Escape"){ e.preventDefault(); closeWardrobe(); return; }
+  if (duelOpen && e.key === "Escape"){ e.preventDefault(); closeDuel(); return; }
   if (lbOpen && e.key === "Escape"){ e.preventDefault(); closeLeaderboard(); }
 });
 
 /* ================= init ================= */
 loadScores();
+loadDuelMy();  /* this device's recorded duel run, if any */
 loadStats();   /* lifetime stats — the wardrobe unlock progress */
 loadStyle();   /* unlocked items + the style currently worn */
 applyStyle();  /* paint the background overlay and board frame */
@@ -3820,6 +4997,7 @@ resetGame();
 drawSide();
 updateHUD();
 updateHapticsBtn();
+updateDuelBtn(); /* the duel icon lights up + pulses while the weekend window is open */
 /* first-time players get the guided tour — shown once, then remembered
    on this device — followed on a first game by the control picker and
    its scheme tutorial, which drops straight into a running game.
