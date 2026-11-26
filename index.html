@@ -109,6 +109,11 @@
         border-radius:14px; padding:10px 12px; width:100%; max-width:260px;
       }
       .champion-prompt[hidden]{ display:none; }
+      /* the name row and the Skip button carry their own display
+         (flex / block) below, and an author display rule beats the UA
+         stylesheet's [hidden] rule — so without these pins, setting
+         .hidden on them after a successful claim would not hide them */
+      .champion-prompt .cp-row[hidden], .champion-prompt .cp-skip[hidden]{ display:none; }
       .champion-prompt .cp-title{ font-family:"Baloo 2",sans-serif; font-weight:800; font-size:1.02rem; color:#ffe27a; line-height:1.2; }
       .champion-prompt .cp-sub{ font-size:.78rem; font-weight:700; color:#ffd9e2; margin:3px 0 8px; line-height:1.35; }
       .champion-prompt .cp-row{ display:flex; gap:6px; }
@@ -150,24 +155,48 @@
       .side-stats .ss .k{ font-size:.58rem; font-weight:900; letter-spacing:.1em; color:var(--muted); text-transform:uppercase; }
       .side-stats .ss .v{ font-family:"Baloo 2",sans-serif; font-weight:800; font-size:1.15rem; line-height:1.1; }
       /* ---------- sound icon buttons — small rail at the top left, beside the board ---------- */
-      .sound-rail{ display:flex; flex-direction:column; gap:8px; flex:0 0 auto; }
+      .sound-rail{ display:flex; flex-direction:column; align-items:center; gap:8px; flex:0 0 auto; }
+      /* every rail glyph is a clean white silhouette on a pink circle —
+         no colourful emoji. A toggle that is off keeps the same pink,
+         just dimmed and desaturated, so its white glyph stays readable.
+         (The profile animal circle above the rail is the one colourful
+         accent and has its own class.) */
       .icon-sound-btn{
         width:42px; height:42px; min-height:42px; border-radius:50%; cursor:pointer;
-        border:2px solid var(--panel-edge); background:var(--panel); color:var(--ink);
+        border:2px solid var(--accent-deep); background:var(--accent); color:#fff;
         box-shadow:var(--shadow); padding:0;
         display:flex; align-items:center; justify-content:center;
         font-size:1.15rem; line-height:1; touch-action:none;
       }
-      .icon-sound-btn.on{ background:var(--accent); border-color:var(--accent-deep); color:#fff; }
-      .icon-sound-btn:not(.on){ opacity:.55; filter:grayscale(.6); }
+      /* profile avatar — a bigger circle at the very top of the rail,
+         showing the animal picked in the wardrobe's Profile tab.
+         Tapping it opens the wardrobe straight on that tab. It is a
+         door, not a toggle, so it never greys out like the toggles. */
+      .profile-avatar-btn{
+        width:58px; height:58px; min-height:58px; border-radius:50%; cursor:pointer;
+        border:3px solid var(--accent-deep); background:var(--panel); color:var(--ink);
+        box-shadow:var(--shadow); padding:0; margin-bottom:2px;
+        display:flex; align-items:center; justify-content:center;
+        font-size:1.95rem; line-height:1; touch-action:manipulation;
+      }
+      .profile-avatar-btn:active{ transform:scale(.93); }
+      .profile-avatar-btn.is-empty{ border-color:var(--panel-edge); border-style:dashed; }
+      .profile-avatar-btn.is-empty #profileAvatarEmoji{ opacity:.45; filter:grayscale(1); font-size:1.55rem; }
+      /* the music glyph fills more of its circle — the circle itself
+         stays exactly 42px (36px on small screens); only the ♪ inside
+         grows, so the music-off state is easy to see at a glance. The
+         drawn speaker glyph keeps the base rail size — enlarged it
+         read as too big next to the others. */
+      #bgmBtn{ font-size:1.9rem; font-weight:800; }
+      /* drawn glyphs (speaker, gamepad, vibrate) sit as block SVGs */
+      .icon-sound-btn svg{ display:block; }
+      .icon-sound-btn:not(.on){ opacity:.5; filter:saturate(.35); }
       .icon-sound-btn:active{ transform:scale(.93); }
-      /* the ? help button must NOT look like the three pink toggles beside
-         it — identical pink circles are why it went unseen. It gets its own
-         yellow, fully opaque, un-greyed look so it stands out in the rail. */
+      /* the ? help button wears the same white-on-pink look as the rest
+         of the rail; it is not a toggle, so it keeps its permanent "on"
+         class and always stays at full strength */
       #tutorialBtn{
         font-family:"Baloo 2",sans-serif; font-weight:800; font-size:1.3rem; line-height:1;
-        background:#ffd93d !important; border-color:#d9a812 !important; color:#46302c !important;
-        opacity:1 !important; filter:none !important;
       }
       /* controller bar hidden by the 🎮 toggle — swipe & tap play instead */
       .controller[hidden]{ display:none; }
@@ -367,6 +396,18 @@
         display:inline-flex; align-items:center; justify-content:center;
         font-family:"Baloo 2",sans-serif; font-weight:800; font-size:.82rem; text-align:center;
       }
+      /* rail-matching icons in the tour: the same white silhouettes on
+         pink circles as the left rail buttons themselves (music note,
+         speaker, gamepad, vibrate glyph, ?), so the tutorial shows the
+         buttons exactly as the player sees them beside the board */
+      .tutorial-list .tut-icon.rail-icon{
+        width:30px; height:30px; min-width:30px; border-radius:50%;
+        background:var(--accent); border:2px solid var(--accent-deep); color:#fff;
+        padding:0; margin-top:1px;
+      }
+      .tutorial-list .tut-icon.rail-icon svg{ display:block; }
+      .tutorial-list .tut-icon.rail-icon.music{ font-size:1.3rem; line-height:1; }
+      .tutorial-list .tut-icon.rail-icon.help{ font-size:1.05rem; line-height:1; }
       .tutorial-list b{ font-weight:900; }
       .tutorial-actions{ display:flex; align-items:center; gap:8px; margin-top:12px; flex-wrap:wrap; }
       .tutorial-dots{ display:flex; gap:6px; margin-right:auto; }
@@ -387,12 +428,83 @@
         .tutorial-list li, .tutorial-card p{ font-size:.86rem; }
       }
 
+      /* ---------- control-choice onboarding (after the tour, first game only) ----------
+         A soft dim fades the whole game out behind a centred card that
+         asks how the player wants to play: touch (swipe & tap, button
+         bar hidden) or buttons (the D-pad + A/B bar). The pick is
+         remembered on the device and the matching mini-tutorial runs
+         in the same spotlight-and-Next style as the main tour. */
+      .control-choice-backdrop{
+        position:fixed; inset:0; z-index:84;
+        background:rgba(28,12,22,.48);
+      }
+      .control-choice-backdrop[hidden]{ display:none; }
+      .control-choice-card{
+        position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index:86;
+        width:min(540px, calc(100vw - 24px));
+        background:var(--panel); color:var(--ink); border:2px solid var(--panel-edge);
+        border-radius:20px; box-shadow:0 18px 44px rgba(0,0,0,.32); padding:20px 18px 16px;
+        max-height:min(88dvh, 560px); overflow:auto; text-align:center;
+      }
+      .control-choice-card[hidden]{ display:none; }
+      .control-choice-card h2{ font-family:"Baloo 2",sans-serif; font-size:1.45rem; line-height:1.15; margin:5px 0 8px; }
+      .control-choice-card p{ margin:0 0 14px; font-size:.92rem; line-height:1.5; font-weight:700; color:var(--ink); }
+      .control-choice-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+      .choice-btn{
+        font-family:"Nunito",sans-serif; cursor:pointer; text-align:center;
+        background:var(--chip); color:var(--ink);
+        border:2px solid var(--panel-edge); border-radius:16px;
+        padding:16px 12px 14px; min-height:132px;
+        display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:6px;
+      }
+      .choice-btn:active{ transform:scale(.97); }
+      .choice-btn .choice-icon{
+        width:52px; height:52px; border-radius:50%; flex:0 0 auto;
+        background:var(--accent); color:#fff; border:2px solid var(--accent-deep);
+        display:flex; align-items:center; justify-content:center;
+      }
+      /* the label sits on its own line with the explanation on the
+         next line below it — the wrapper must stack its two spans in
+         every layout, not just the narrow one (as plain inline spans
+         they ran together: "TouchSwipe & tap…") */
+      .choice-btn .choice-text{ display:flex; flex-direction:column; align-items:center; gap:2px; }
+      .choice-btn .choice-name{ display:block; font-family:"Baloo 2",sans-serif; font-weight:800; font-size:1.12rem; line-height:1.15; }
+      .choice-btn .choice-desc{ display:block; font-size:.80rem; font-weight:700; line-height:1.4; color:var(--muted); }
+      .control-choice-note{ margin:14px 0 0 !important; font-size:.78rem !important; color:var(--muted) !important; }
+      .control-choice-keep{
+        display:block; margin:10px auto 0; background:none; border:none; cursor:pointer;
+        color:var(--muted); font-family:"Nunito",sans-serif; font-weight:800; font-size:.78rem;
+        text-decoration:underline; min-height:32px; padding:4px 8px;
+      }
+      /* same [hidden] pin as the champion prompt's row: the display
+         above would otherwise beat the UA [hidden] rule */
+      .control-choice-keep[hidden]{ display:none; }
+      @media (max-width:520px){
+        .control-choice-grid{ grid-template-columns:1fr; }
+        .choice-btn{ min-height:0; flex-direction:row; text-align:left; align-items:center; }
+        .choice-btn .choice-text{ align-items:flex-start; }
+      }
+      /* individual controller parts can be spotlighted on their own —
+         the D-pad grid and the A / B buttons keep their exact size and
+         place while highlighted, like every other tour target */
+      .dpad.tut-highlight{ border-radius:14px; }
+      .ab-btn.tut-highlight{ border-radius:50%; }
+      /* the A / B buttons are absolutely positioned inside their
+         cluster — the generic .tut-highlight forces position:relative,
+         which would rip the highlighted button out of the cluster and
+         into the flow, so keep it absolute while it is spotlighted */
+      .ab-btn.tut-highlight{ position:absolute !important; }
+      #holdSection.tut-highlight{ border-radius:12px; }
+
       /* ---------- leaderboard panel ---------- */
       .lb-backdrop{ position:fixed; inset:0; background:rgba(28,12,22,.55); z-index:99; }
       .lb-backdrop[hidden]{ display:none; }
       .lb-panel{
-        position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index:100;
-        width:min(430px, calc(100vw - 24px)); max-height:min(84dvh, 660px);
+        /* anchored near the top of the screen, not centred: the panel
+           keeps a fixed top edge and expands downwards as the list
+           grows, instead of growing both ways around the middle */
+        position:fixed; left:50%; top:calc(12px + env(safe-area-inset-top)); transform:translateX(-50%); z-index:100;
+        width:min(430px, calc(100vw - 24px)); max-height:min(88dvh, 720px);
         display:flex; flex-direction:column;
         background:var(--panel); color:var(--ink); border:2px solid var(--panel-edge);
         border-radius:20px; box-shadow:0 18px 44px rgba(0,0,0,.32); padding:16px;
@@ -407,7 +519,8 @@
       }
       .lb-close:active{ transform:scale(.93); }
       .lb-sub{ color:var(--muted); font-weight:800; font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; margin:3px 0 10px; }
-      /* board switcher: This Week / Past Winners / All Time */
+      /* board switcher: This Week / All Time — past weeks live inside
+         the This Week tab, stepped through with the week cycler */
       .lb-tabs{ display:flex; gap:6px; margin:0 0 10px; }
       .lb-tab{
         flex:1 1 0; font-family:"Baloo 2",sans-serif; font-weight:800; font-size:.82rem; cursor:pointer;
@@ -416,8 +529,8 @@
       }
       .lb-tab.on{ background:var(--accent); border-color:var(--accent-deep); color:#fff; }
       .lb-tab:active{ transform:scale(.97); }
-      /* Past Winners week cycler: one archived week at a time, stepped
-         through with the ‹ › arrows */
+      /* week cycler: sits on the weekly board — ‹ steps back one week
+         (that week's top 3), › steps forward again toward this week */
       .lb-week-nav{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin:0 0 8px; }
       .lb-week-nav[hidden]{ display:none; }
       .lb-week-label{ flex:1 1 auto; text-align:center; font-family:"Baloo 2",sans-serif; font-weight:800; font-size:.95rem; line-height:1.2; }
@@ -462,6 +575,107 @@
       }
       @keyframes confettiFall{ to{ transform:translateY(112vh) rotate(680deg); } }
 
+      /* ---------- background silhouette overlay ----------
+         A fixed layer above the page background and the level tint,
+         below the whole game UI: the wardrobe's silhouette themes
+         (forest, space, ocean, meadow) paint here at low opacity. */
+      #bgOverlay{ position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; color:var(--ink); }
+      #bgOverlay[hidden]{ display:none; }
+      #bgOverlay svg{ width:100%; height:100%; display:block; opacity:.12; }
+      @media (prefers-color-scheme: dark){ #bgOverlay svg{ opacity:.17; } }
+
+      /* ---------- board frames (wardrobe) ----------
+         Decorations drawn around the board inside .board-wrap: SVG
+         vines / bamboo, or pure-CSS neon tube / ornate gold. The layer
+         never takes pointer events and hugs the wrap's own radius. */
+      .frame-layer{ position:absolute; inset:0; border-radius:inherit; pointer-events:none; z-index:6; }
+      .frame-layer[hidden]{ display:none; }
+      .frame-layer svg{ width:100%; height:100%; display:block; }
+      .frame-layer.frame-neon{
+        border:3px solid #ff5c8a;
+        box-shadow:0 0 20px 4px rgba(255,92,138,.60), inset 0 0 16px rgba(255,92,138,.45);
+        animation:neonPulse 2.6s ease-in-out infinite alternate;
+      }
+      @keyframes neonPulse{
+        from{ box-shadow:0 0 13px 2px rgba(255,92,138,.45), inset 0 0 10px rgba(255,92,138,.32); }
+        to{ box-shadow:0 0 26px 7px rgba(255,92,138,.80), inset 0 0 22px rgba(255,92,138,.55); }
+      }
+      @media (prefers-reduced-motion: reduce){ .frame-layer.frame-neon{ animation:none; } }
+      .frame-layer.frame-gold{
+        border:3px solid #d9a812; outline:2px solid #ffe27a; outline-offset:3px;
+        box-shadow:0 0 18px rgba(217,168,18,.50), inset 0 0 14px rgba(217,168,18,.35);
+      }
+
+      /* ---------- style wardrobe ---------- */
+      .wd-backdrop{ position:fixed; inset:0; background:rgba(28,12,22,.55); z-index:109; }
+      .wd-backdrop[hidden]{ display:none; }
+      .wd-panel{
+        position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index:110;
+        width:min(480px, calc(100vw - 20px)); max-height:min(88dvh, 730px);
+        display:flex; flex-direction:column;
+        background:var(--panel); color:var(--ink); border:2px solid var(--panel-edge);
+        border-radius:20px; box-shadow:0 18px 44px rgba(0,0,0,.32); padding:16px;
+      }
+      .wd-panel[hidden]{ display:none; }
+      .wd-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; }
+      .wd-head h2{ font-family:"Baloo 2",sans-serif; font-size:1.3rem; line-height:1.1; margin:0; }
+      .wd-tabs{ margin:0 0 12px; }
+      .wd-tabs .lb-tab{ font-size:.78rem; }
+      .wd-body{ overflow-y:auto; padding:2px; }
+      .wd-note{ margin:0 0 10px; font-size:.82rem; font-weight:700; color:var(--muted); line-height:1.45; }
+      .wd-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+      .wd-grid.animals{ grid-template-columns:repeat(4, 1fr); }
+      .wd-card{
+        position:relative; border:2px solid var(--panel-edge); background:var(--chip);
+        border-radius:14px; padding:10px; cursor:pointer; text-align:center;
+      }
+      .wd-card:active{ transform:scale(.98); }
+      .wd-card.selected{ border-color:var(--accent); box-shadow:0 0 0 2px var(--accent); cursor:default; }
+      .wd-card.selected:active{ transform:none; }
+      .wd-card.locked{ cursor:default; }
+      .wd-card.locked:active{ transform:none; }
+      .wd-card.locked .wd-preview{ opacity:.5; filter:grayscale(.45); }
+      .wd-preview{
+        height:64px; display:flex; align-items:center; justify-content:center;
+        border-radius:10px; overflow:hidden; background:var(--panel);
+      }
+      .wd-preview.tall{ height:104px; }
+      .wd-preview canvas{ display:block; max-width:100%; }
+      .wd-bgprev{ color:var(--ink); }
+      .wd-bgprev svg{ width:100%; height:100%; display:block; opacity:.55; }
+      .wd-none{ font-family:"Baloo 2",sans-serif; font-weight:800; color:var(--muted); }
+      .wd-frame-box{ position:relative; width:48px; height:92px; border-radius:9px; background:var(--board); flex:0 0 auto; }
+      .wd-name{ font-family:"Baloo 2",sans-serif; font-weight:800; font-size:.95rem; margin-top:7px; line-height:1.15; }
+      .wd-grid.animals .wd-name{ font-size:.72rem; margin-top:4px; }
+      .wd-tag{
+        position:absolute; top:6px; right:6px; z-index:2;
+        font-size:.56rem; font-weight:900; letter-spacing:.05em;
+        background:var(--accent); color:#fff; border-radius:999px; padding:2px 7px;
+      }
+      .wd-grid.animals .wd-tag{ top:4px; right:4px; padding:1px 5px; }
+      .wd-lock{ margin-top:5px; font-size:.72rem; font-weight:800; color:var(--muted); line-height:1.4; }
+      .wd-prog{ height:6px; border-radius:3px; background:var(--panel-edge); margin:6px 2px 3px; overflow:hidden; }
+      .wd-prog i{ display:block; height:100%; background:var(--accent); border-radius:3px; }
+      .wd-animal{ font-size:1.9rem; line-height:1.25; }
+      .wd-foot{ margin-top:12px; font-size:.72rem; color:var(--muted); font-weight:700; text-align:center; line-height:1.4; }
+
+      /* ---------- unlock toast ---------- */
+      .unlock-toast{
+        position:fixed; left:50%; top:calc(14px + env(safe-area-inset-top)); z-index:130;
+        transform:translate(-50%, -10px); opacity:0; pointer-events:none;
+        background:var(--board); color:#ffe27a; border:2px solid #d9a812;
+        border-radius:999px; padding:10px 18px; max-width:calc(100vw - 24px); text-align:center;
+        font-family:"Baloo 2",sans-serif; font-weight:800; font-size:.95rem; line-height:1.3;
+        box-shadow:0 12px 30px rgba(0,0,0,.35);
+        transition:opacity .25s ease, transform .25s ease;
+      }
+      .unlock-toast.show{ opacity:1; transform:translate(-50%, 0); }
+      .unlock-toast[hidden]{ display:none; }
+      @media (prefers-reduced-motion: reduce){ .unlock-toast{ transition:none; } }
+
+      /* the player's animal, next to their name on the leaderboard */
+      .lb-animal{ margin-right:6px; }
+
       /* ---------- responsive ---------- */
       @media (max-width:760px){
         body{ padding:8px 6px calc(10px + env(safe-area-inset-bottom)); }
@@ -469,7 +683,7 @@
         .panel h3{ font-size:.66rem; }
         #holdCanvas{ width:72px; height:52px; }
         #nextCanvas{ width:72px; height:52px; }
-        #board{ width:min(300px,56vw); }
+        #board{ width:min(300px,54vw); }
         .stage{ gap:7px; }
         .board-wrap{ padding:5px; border-radius:14px; }
         .side-stats{ grid-template-columns:1fr; }
@@ -480,6 +694,9 @@
         .score-cell .by{ font-size:.54rem; }
         .score-cell .k{ font-size:.54rem; }
         .icon-sound-btn{ width:36px; height:36px; min-height:36px; font-size:1rem; }
+        #bgmBtn{ font-size:1.65rem; }
+        .profile-avatar-btn{ width:48px; height:48px; min-height:48px; font-size:1.6rem; border-width:2.5px; }
+        .profile-avatar-btn.is-empty #profileAvatarEmoji{ font-size:1.3rem; }
         .sound-rail{ gap:6px; }
         .overlay .big{ font-size:1.45rem; }
         .controller{ padding:12px 10px; gap:5px; border-radius:20px; }
@@ -507,14 +724,18 @@
   </head>
   <body>
     <div id="levelTint" aria-hidden="true"></div>
+    <!-- background silhouette overlay — above the page background and
+         the level tint, below the whole game UI (the .app layer) -->
+    <div id="bgOverlay" aria-hidden="true" hidden></div>
     <main class="app">
       <div class="stage">
         <!-- sound icon buttons — top left, beside the playing field -->
         <div class="sound-rail">
+          <button class="profile-avatar-btn is-empty" id="profileAvatarBtn" type="button" aria-label="No profile animal picked yet — open Style wardrobe on Profile tab" title="Pick your profile animal"><span id="profileAvatarEmoji" aria-hidden="true">👤</span></button>
           <button class="icon-sound-btn on" id="bgmBtn" type="button" aria-pressed="true" aria-label="Toggle background music" title="Background music">♪</button>
-          <button class="icon-sound-btn on" id="sideSoundBtn" type="button" aria-pressed="true" aria-label="Toggle all sound" title="All sound">🔊</button>
-          <button class="icon-sound-btn on" id="ctrlToggleBtn" type="button" aria-pressed="true" aria-label="Hide on-screen controls" title="Hide controls — play with swipes &amp; taps">🎮</button>
-          <button class="icon-sound-btn on" id="hapticsBtn" type="button" aria-pressed="true" aria-label="Toggle haptics" title="Haptics">📳</button>
+          <button class="icon-sound-btn on" id="sideSoundBtn" type="button" aria-pressed="true" aria-label="Toggle sound effects" title="Sound effects"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></button>
+          <button class="icon-sound-btn on" id="ctrlToggleBtn" type="button" aria-pressed="true" aria-label="Hide on-screen controls" title="Hide controls — play with swipes &amp; taps"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true" focusable="false"><path d="M7.6 5.5h8.8c3.1 0 5.6 2.6 5.6 5.9 0 .9-.2 1.7-.5 2.5l-1.1 3.4c-.4 1.2-1.9 1.6-2.9.8l-2.3-1.9c-.3-.3-.7-.4-1.1-.4h-4.2c-.4 0-.8.1-1.1.4l-2.3 1.9c-1 .8-2.5.4-2.9-.8L2.5 13.9C2.2 13.1 2 12.3 2 11.4 2 8.1 4.5 5.5 7.6 5.5zM6.9 8.2h1.8v1.9h1.4v1.8H8.7v1.9H6.9v-1.9H5.5v-1.8h1.4V8.2zm9.3.35a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1zm2.1 2.3a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1z"/></svg></button>
+          <button class="icon-sound-btn on" id="hapticsBtn" type="button" aria-pressed="true" aria-label="Toggle haptics" title="Haptics"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="10.2" y="6.5" width="3.6" height="11" rx="0.9" fill="currentColor" stroke="none"/><path d="M6.6 5 L4.2 8.5 L6.6 12 L4.2 15.5 L6.6 19"/><path d="M17.4 5 L19.8 8.5 L17.4 12 L19.8 15.5 L17.4 19"/></svg></button>
           <button class="icon-sound-btn on" id="tutorialBtn" type="button" aria-label="Show how to play tutorial" title="How to play — show tutorial">?</button>
         </div>
         <!-- board -->
@@ -560,6 +781,8 @@
               <button class="bigbtn alt" id="boardBtnOver" type="button">🏆 Leaderboard</button>
             </div>
           </div>
+          <!-- board frame decoration (wardrobe) — vines, neon, bamboo or gold -->
+          <div class="frame-layer" id="frameLayer" hidden></div>
         </div>
 
         <!-- side bar, top to bottom: Global Hi Score, Local Hi Score, Score, Next, Hold, Level & Lines -->
@@ -623,8 +846,34 @@
     <!-- confetti layer for the new-champion celebration -->
     <div id="confettiBox" aria-hidden="true"></div>
 
-    <!-- leaderboard panel — three shared boards: this week's top 15,
-         past weekly winners, and the all-time top 3 -->
+    <!-- unlock toast — announces a newly earned wardrobe item -->
+    <div class="unlock-toast" id="unlockToast" hidden role="status"></div>
+
+    <!-- style wardrobe — piece materials, background silhouette
+         overlays, board frames and the profile animal. Nothing is
+         owned at the start beyond the base look: every item is locked
+         until it is earned by playing (profile animals excepted —
+         all sixteen are available from the get-go). -->
+    <div class="wd-backdrop" id="wdBackdrop" hidden></div>
+    <section class="wd-panel" id="wdPanel" hidden role="dialog" aria-modal="true" aria-labelledby="wdTitle">
+      <div class="wd-head">
+        <h2 id="wdTitle">🎨 Style</h2>
+        <button class="lb-close" id="wdClose" type="button" aria-label="Close style wardrobe">✕</button>
+      </div>
+      <div class="lb-tabs wd-tabs" role="tablist" aria-label="Choose what to style">
+        <button class="lb-tab on" id="wdTabPieces" type="button" role="tab" aria-selected="true">Pieces</button>
+        <button class="lb-tab" id="wdTabBg" type="button" role="tab" aria-selected="false">Background</button>
+        <button class="lb-tab" id="wdTabFrame" type="button" role="tab" aria-selected="false">Frame</button>
+        <button class="lb-tab" id="wdTabProfile" type="button" role="tab" aria-selected="false">Profile</button>
+      </div>
+      <div class="wd-body" id="wdBody"></div>
+      <div class="wd-foot">New looks unlock as you play — your style and progress are kept on this device.</div>
+    </section>
+
+    <!-- leaderboard panel — two shared boards: the weekly board (this
+         week's top 15, with the ‹ › cycler stepping back through past
+         weeks' top 3 winners) and the all-time top 3. The panel is
+         anchored near the top so a longer list expands downwards. -->
     <div class="lb-backdrop" id="lbBackdrop" hidden></div>
     <section class="lb-panel" id="lbPanel" hidden role="dialog" aria-modal="true" aria-labelledby="lbTitle">
       <div class="lb-head">
@@ -633,7 +882,6 @@
       </div>
       <div class="lb-tabs" role="tablist" aria-label="Choose a board">
         <button class="lb-tab on" id="lbTabWeek" type="button" role="tab" aria-selected="true">This Week</button>
-        <button class="lb-tab" id="lbTabPast" type="button" role="tab" aria-selected="false">Past Winners</button>
         <button class="lb-tab" id="lbTabAll" type="button" role="tab" aria-selected="false">All Time</button>
       </div>
       <div class="lb-sub" id="lbSub">Top 15 · This week</div>
@@ -650,7 +898,7 @@
     <!-- first-time tutorial -->
     <div class="tutorial-backdrop" id="tutorialBackdrop" hidden></div>
     <section class="tutorial-card" id="tutorialCard" hidden role="dialog" aria-modal="true" aria-labelledby="tutorialTitle" aria-describedby="tutorialBody">
-      <div class="tutorial-step-label" id="tutorialStepLabel">Step 1 of 4 · Welcome to Tetoris</div>
+      <div class="tutorial-step-label" id="tutorialStepLabel">Step 1 of 3 · Top-left buttons</div>
       <h2 id="tutorialTitle">Quick tour</h2>
       <div id="tutorialBody"></div>
       <div class="tutorial-actions">
@@ -659,6 +907,28 @@
         <button class="tut-btn" id="tutorialBack" type="button">Back</button>
         <button class="tut-btn primary" id="tutorialNext" type="button">Next</button>
       </div>
+    </section>
+
+    <!-- control-choice onboarding — shown once, right after the tour,
+         on a player's first game: pick Touch or Buttons, then a short
+         spotlight tutorial for that scheme, then straight into a game -->
+    <div class="control-choice-backdrop" id="controlChoiceBackdrop" hidden></div>
+    <section class="control-choice-card" id="controlChoiceCard" hidden role="dialog" aria-modal="true" aria-labelledby="controlChoiceTitle">
+      <div class="tutorial-step-label">One last thing · Your controls</div>
+      <h2 id="controlChoiceTitle">How do you want to play?</h2>
+      <p>Pick the controls that feel best. We&rsquo;ll show you how they work, then your game starts straight away.</p>
+      <div class="control-choice-grid">
+        <button class="choice-btn" id="chooseTouchBtn" type="button">
+          <span class="choice-icon" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M4 12h16"/><path d="M7 8l-3 4 3 4"/><path d="M17 8l3 4-3 4"/><path d="M12 3v3"/><path d="M12 18v3"/></svg></span>
+          <span class="choice-text"><span class="choice-name">Touch</span><span class="choice-desc">Swipe &amp; tap right on the board. The button bar hides away.</span></span>
+        </button>
+        <button class="choice-btn" id="chooseButtonsBtn" type="button">
+          <span class="choice-icon" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" focusable="false"><path d="M7.6 5.5h8.8c3.1 0 5.6 2.6 5.6 5.9 0 .9-.2 1.7-.5 2.5l-1.1 3.4c-.4 1.2-1.9 1.6-2.9.8l-2.3-1.9c-.3-.3-.7-.4-1.1-.4h-4.2c-.4 0-.8.1-1.1.4l-2.3 1.9c-1 .8-2.5.4-2.9-.8L2.5 13.9C2.2 13.1 2 12.3 2 11.4 2 8.1 4.5 5.5 7.6 5.5zM6.9 8.2h1.8v1.9h1.4v1.8H8.7v1.9H6.9v-1.9H5.5v-1.8h1.4V8.2zm9.3.35a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1zm2.1 2.3a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1z"/></svg></span>
+          <span class="choice-text"><span class="choice-name">Buttons</span><span class="choice-desc">Use the D-pad and the A / B buttons at the bottom of the screen.</span></span>
+        </button>
+      </div>
+      <p class="control-choice-note">You can switch any time with the gamepad button in the left rail, or see this again from the ? button.</p>
+      <button class="control-choice-keep" id="controlChoiceKeep" type="button" hidden>Keep my current controls</button>
     </section>
 
 <script>
@@ -712,7 +982,7 @@ var boardWeek = "";           /* ISO week id ("2026-W48") the live board belongs
 var weeklyWinners = [];       /* past weeks' podiums: [{week, top:[{name, score} ×3]}], newest week first */
 var allTimeTop = [];          /* the all-time top 3 — never resets */
 var myName = "";              /* this player's last claimed leaderboard name (this device) */
-var maxCombo = 0, tspinCount = 0, piecesPlaced = 0, playMs = 0; /* per-game stats for the game-over screen */
+var maxCombo = 0, tspinCount = 0, piecesPlaced = 0, playMs = 0, tetrisGame = 0; /* per-game stats for the game-over screen (tetrisGame also feeds the wardrobe unlocks) */
 var state = "ready"; /* ready | playing | paused | over */
 var dropCounter, lockCounter, lockResets, lastMoveWasRotate, lastKickIndex;
 var clearingRows = null, clearTimer = 0;
@@ -746,17 +1016,29 @@ var GLOBAL_MIRROR_URL = "https://extendsclass.com/api/json-storage/bin/fbbabad";
 var claimSaving = false, championChecked = false;
 /* The shared stores are public and world-writable by design (no accounts,
    no keys), so anything read back from them — or from the on-device cache
-   of them — is untrusted input. Scores are clamped to a sane range and
-   champion names are stripped of markup characters and control codes and
-   capped in length before they are stored or shown. Names are only ever
-   rendered via textContent, never innerHTML; this is defence in depth. */
+   of them — is untrusted input. Scores are clamped to a sane range;
+   champion names are stripped of markup characters, control codes and
+   invisible formatting characters (zero-width marks and bidi overrides,
+   which could otherwise make a name render as different text than it
+   reads) and capped in length before they are stored or shown; week
+   ids are held to the exact shape the game itself writes; animals are
+   limited to the sixteen known faces (see cleanAnimal). Names are only
+   ever rendered via textContent, never innerHTML; this is defence in
+   depth. */
 function cleanScore(v){
   var n = parseInt(v, 10);
   if (!isFinite(n) || n < 0) return 0;
   return Math.min(n, 999999999);
 }
 function cleanChampionName(v){
-  return String(v == null ? "" : v).replace(/[<>"'`]/g, "").replace(/[\u0000-\u001f\u007f]/g, "").replace(/\s+/g, " ").trim().slice(0, 16);
+  return String(v == null ? "" : v)
+    .replace(/[<>"'`]/g, "")
+    .replace(/[\u0000-\u001f\u007f]/g, "")
+    .replace(/[\u00ad\u200b-\u200f\u202a-\u202e\u2060\u2066-\u2069\ufeff]/g, "")
+    .replace(/\s+/g, " ").trim().slice(0, 16);
+}
+function cleanWeekId(v){
+  return (typeof v === "string" && /^\d{4}-W\d{2}$/.test(v)) ? v : "";
 }
 /* ---------- week helpers — the live board is weekly, resetting Monday ---------- */
 function currentWeekId(){
@@ -797,7 +1079,10 @@ function normalizeTopList(list, cap){
     var key = n + "|" + s;
     if (seen[key]) return;
     seen[key] = 1;
-    out.push({ name:n, score:s });
+    var o = { name:n, score:s };
+    var av = cleanAnimal(e.a); /* the player's profile animal, when the entry carries one */
+    if (av) o.a = av;
+    out.push(o);
   });
   out.sort(function(a, b){ return b.score - a.score; });
   return out.slice(0, cap);
@@ -853,7 +1138,7 @@ function loadScores(){
       globalBest = cleanScore(cache.score);
       globalName = cleanChampionName(cache.name);
       globalBoard = normalizeBoard(cache.board, cache.score, cache.name);
-      boardWeek = typeof cache.week === "string" ? cache.week : "";
+      boardWeek = cleanWeekId(cache.week);
       weeklyWinners = normalizeWinners(cache.winners);
       allTimeTop = normalizeTopList(cache.alltime, 3);
     } else {
@@ -865,6 +1150,7 @@ function loadScores(){
     myName = cleanChampionName(localStorage.getItem(LS_MYNAME));
   }catch(e){ /* storage unavailable — scores still work for this session */ }
   settleWeekLocal();
+  backfillChampionAnimal(); /* the champion's bear shows even from the on-device cache, before the stores answer */
 }
 function saveLocalScore(){
   try{ localStorage.setItem(LS_LOCAL, String(localBest)); }catch(e){}
@@ -904,18 +1190,21 @@ function extractJsonObject(text){
    keys are read leniently: {n, s} or {name/player, score}. */
 function normalizeBoard(list, champScore, champName){
   var out = [], seen = {};
-  function add(n, s){
+  function add(n, s, a){
     s = cleanScore(s); n = cleanChampionName(n);
     if (s <= 0) return;
     var key = n + "|" + s;
     if (seen[key]) return;
     seen[key] = 1;
-    out.push({ name:n, score:s });
+    var o = { name:n, score:s };
+    var av = cleanAnimal(a);
+    if (av) o.a = av;
+    out.push(o);
   }
   if (Array.isArray(list)) list.forEach(function(e){
     if (!e) return;
     add(e.n != null ? e.n : (e.name != null ? e.name : e.player),
-        e.s != null ? e.s : e.score);
+        e.s != null ? e.s : e.score, e.a);
   });
   add(champName, champScore);
   out.sort(function(a, b){ return b.score - a.score; });
@@ -928,7 +1217,7 @@ function readGlobalPrimary(){
     return r.json();
   }).then(function(j){
     if (!j || !j.data) return null;
-    return { score: cleanScore(j.data.score), name: cleanChampionName(j.data.player), board: normalizeBoard(j.data.board, j.data.score, j.data.player), week: typeof j.data.week === "string" ? j.data.week : "", winners: normalizeWinners(j.data.winners), alltime: normalizeTopList(j.data.alltime, 3) };
+    return { score: cleanScore(j.data.score), name: cleanChampionName(j.data.player), board: normalizeBoard(j.data.board, j.data.score, j.data.player), week: cleanWeekId(j.data.week), winners: normalizeWinners(j.data.winners), alltime: normalizeTopList(j.data.alltime, 3) };
   }).catch(function(){ return null; });
 }
 function readGlobalMirror(){
@@ -939,11 +1228,37 @@ function readGlobalMirror(){
   }).then(function(text){
     var j = extractJsonObject(text);
     if (!j) return null;
-    return { score: cleanScore(j.score), name: cleanChampionName(j.name), board: normalizeBoard(j.board, j.score, j.name), week: typeof j.week === "string" ? j.week : "", winners: normalizeWinners(j.winners), alltime: normalizeTopList(j.alltime, 3) };
+    return { score: cleanScore(j.score), name: cleanChampionName(j.name), board: normalizeBoard(j.board, j.score, j.name), week: cleanWeekId(j.week), winners: normalizeWinners(j.winners), alltime: normalizeTopList(j.alltime, 3) };
   }).catch(function(){ return null; });
 }
 function stateAsRecord(){
   return { score:globalBest, name:globalName, board:globalBoard, week:boardWeek, winners:weeklyWinners, alltime:allTimeTop };
+}
+/* One-time backfill, at the champion's own request: his 27,906 crown
+   was claimed before profile animals existed, so every shared copy of
+   that entry carries no animal and the leaderboard shows a bare name.
+   Stamp the bear onto each copy of that exact entry — this week's
+   board, the all-time top 3, any archived week's podium — wherever it
+   is still missing one. Returns true when anything changed, so the
+   caller can write the record back and both stores converge with the
+   bear on them. Leaderboard rows already render an entry's animal;
+   the game screen's hi-score cell is name-only and stays that way. */
+var CHAMP_BACKFILL = { name:"Ghost.", score:27906, animal:"🐻" };
+function backfillChampionAnimal(){
+  var changed = false;
+  function stamp(list){
+    if (!Array.isArray(list)) return;
+    list.forEach(function(e){
+      if (e && e.name === CHAMP_BACKFILL.name && e.score === CHAMP_BACKFILL.score && !e.a){
+        e.a = CHAMP_BACKFILL.animal;
+        changed = true;
+      }
+    });
+  }
+  stamp(globalBoard);
+  stamp(allTimeTop);
+  weeklyWinners.forEach(function(w){ stamp(w && w.top); });
+  return changed;
 }
 /* pull the shared record; resolves true if any store answered. The two
    stores' records are merged with this device's last known record:
@@ -1003,9 +1318,11 @@ function fetchGlobal(){
       globalBest = globalBoard[0].score;
       globalName = globalBoard[0].name;
     } else { globalBest = 0; globalName = ""; }
+    if (backfillChampionAnimal()) dirty = true; /* the champion's bear — write it back so both stores converge with it */
     boardStale = false;
     saveGlobalCache();
     updateHUD();
+    refreshCrowns(); /* a week rollover may have crowned this player — count it toward the wardrobe unlocks */
     if (dirty) pushBoard(globalBoard, allTimeTop); /* converge the stores — best effort */
     if (lbOpen) renderBoard();
     return true;
@@ -1017,11 +1334,17 @@ function fetchGlobal(){
 function pushBoard(boardToPush, allTimeToPush){
   if (typeof fetch !== "function") return Promise.resolve(false);
   var champ = boardToPush.length ? boardToPush[0] : { name:"", score:0 };
-  var payload = boardToPush.map(function(e){ return { n:e.name, s:e.score }; });
+  /* entries carry the player's profile animal as "a" when they have one */
+  function storeEntry(e){
+    var o = { n:e.name, s:e.score };
+    if (e.a) o.a = e.a;
+    return o;
+  }
+  var payload = boardToPush.map(storeEntry);
   var winnersPayload = weeklyWinners.map(function(w){
-    return { w:w.week, top:w.top.map(function(e){ return { n:e.name, s:e.score }; }) };
+    return { w:w.week, top:w.top.map(storeEntry) };
   });
-  var allPayload = (allTimeToPush || allTimeTop).map(function(e){ return { n:e.name, s:e.score }; });
+  var allPayload = (allTimeToPush || allTimeTop).map(storeEntry);
   var wk = currentWeekId();
   var primary = fetch(GLOBAL_PRIMARY_URL, {
     method:"PUT", headers:{ "Content-Type":"application/json" },
@@ -1112,6 +1435,665 @@ function updateHapticsBtn(){
   b.setAttribute("aria-pressed", hapticsOn ? "true" : "false");
   b.title = "Haptics " + (hapticsOn ? "on" : "off") + (hapticsSupported ? "" : " — not supported on this device");
 }
+
+/* ================= personalisation — the style wardrobe =================
+   Four kinds of earned customisation, all drawn in code (no image
+   files, no extra storage beyond two small localStorage records):
+   • Materials — how every block is drawn (board, Next and Hold).
+     Crystal is the base look everyone starts with; Wood, Marble,
+     Neon, Candy and Metal unlock by playing.
+   • Backgrounds — silhouette overlays (forest, space, ocean, meadow)
+     painted on a fixed layer above the page background but below
+     every part of the game UI.
+   • Frames — decorations drawn around the board: twirling vines on
+     wooden posts, a glowing neon tube, bamboo, an ornate gold frame.
+     Special designs, never recolours.
+   • Profile animals — one of sixteen animal faces, all available
+     from the start, shown next to the player's name on the shared
+     leaderboard (it travels with a claimed score as the entry's "a").
+   NOTHING cosmetic is owned at the start beyond the base look and
+   the animal pick: every material, background and frame is locked
+   until its condition is met. Lifetime stats (games, lines,
+   Tetrises, best score, days played, weekly crowns won) live on
+   this device only, like the local hi score; the wardrobe shows
+   each locked item's condition and the player's progress. */
+var LS_STATS = "tetoris_stats", LS_STYLE = "tetoris_style";
+var ANIMALS = [
+  ["🐻","Bear"],["🐰","Rabbit"],["🐱","Cat"],["🐶","Dog"],["🦊","Fox"],["🐼","Panda"],
+  ["🐸","Frog"],["🦁","Lion"],["🐨","Koala"],["🐯","Tiger"],["🐷","Pig"],["🐵","Monkey"],
+  ["🐧","Penguin"],["🐢","Turtle"],["🦉","Owl"],["🦄","Unicorn"]
+];
+var ANIMAL_SET = {};
+ANIMALS.forEach(function(pair){ ANIMAL_SET[pair[0]] = true; });
+/* leaderboard entries come back from shared, world-writable stores,
+   so they are untrusted: an animal is only ever one of the sixteen
+   known faces — anything else is dropped, never rendered. */
+function cleanAnimal(v){ return (typeof v === "string" && ANIMAL_SET[v]) ? v : ""; }
+
+function unlockCond(stat, need, label){ return { stat:stat, need:need, label:label }; }
+var MATERIAL_CATALOG = [
+  { id:"wood",   name:"Wood",   unlock:unlockCond("games", 5, "Play 5 games") },
+  { id:"marble", name:"Marble", unlock:unlockCond("totalLines", 100, "Clear 100 lines in total") },
+  { id:"neon",   name:"Neon",   unlock:unlockCond("tetrises", 1, "Clear a Tetris — 4 lines at once") },
+  { id:"candy",  name:"Candy",  unlock:unlockCond("bestScore", 10000, "Score 10,000 in one game") },
+  { id:"metal",  name:"Metal",  unlock:unlockCond("crowns", 1, "Win a weekly crown — finish a week at #1") }
+];
+var BG_CATALOG = [
+  { id:"forest", name:"Forest", unlock:unlockCond("bestLevel", 5, "Reach level 5") },
+  { id:"space",  name:"Space",  unlock:unlockCond("bestLinesGame", 50, "Clear 50 lines in one game") },
+  { id:"ocean",  name:"Ocean",  unlock:unlockCond("days", 3, "Play on 3 different days") },
+  { id:"meadow", name:"Meadow", unlock:unlockCond("games", 15, "Play 15 games") }
+];
+var FRAME_CATALOG = [
+  { id:"vines",     name:"Wooden Vines", unlock:unlockCond("tetrises", 3, "Clear 3 Tetrises") },
+  { id:"neonframe", name:"Neon Tube",    unlock:unlockCond("bestScore", 20000, "Score 20,000 in one game") },
+  { id:"bamboo",    name:"Bamboo",       unlock:unlockCond("totalLines", 500, "Clear 500 lines in total") },
+  { id:"gold",      name:"Golden Crown", unlock:unlockCond("crowns", 1, "Win a weekly crown — finish a week at #1") }
+];
+function findItem(cat, id){ for (var i = 0; i < cat.length; i++) if (cat[i].id === id) return cat[i]; return null; }
+
+/* ---------- lifetime stats (this device only) ---------- */
+var stats = { games:0, totalLines:0, tetrises:0, bestScore:0, bestLinesGame:0, bestLevel:0, crowns:0, days:[] };
+function cleanCount(v){ var n = parseInt(v, 10); return (isFinite(n) && n > 0) ? Math.min(n, 999999999) : 0; }
+function loadStats(){
+  try{
+    var s = JSON.parse(localStorage.getItem(LS_STATS) || "null");
+    if (!s) return;
+    stats.games = cleanCount(s.games);
+    stats.totalLines = cleanCount(s.totalLines);
+    stats.tetrises = cleanCount(s.tetrises);
+    stats.bestScore = cleanCount(s.bestScore);
+    stats.bestLinesGame = cleanCount(s.bestLinesGame);
+    stats.bestLevel = cleanCount(s.bestLevel);
+    stats.crowns = cleanCount(s.crowns);
+    if (Array.isArray(s.days)) stats.days = s.days.filter(function(d){ return typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d); }).slice(-120);
+  }catch(e){ /* storage unavailable — stats live for this session only */ }
+}
+function saveStats(){ try{ localStorage.setItem(LS_STATS, JSON.stringify(stats)); }catch(e){} }
+function todayStr(){
+  var d = new Date();
+  return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+}
+function statVal(key){ return key === "days" ? stats.days.length : (stats[key] || 0); }
+/* fold one finished game into the lifetime stats */
+function recordGameStats(){
+  stats.games++;
+  stats.totalLines += lines;
+  stats.tetrises += tetrisGame;
+  if (score > stats.bestScore) stats.bestScore = score;
+  if (lines > stats.bestLinesGame) stats.bestLinesGame = lines;
+  if (level > stats.bestLevel) stats.bestLevel = level;
+  var t = todayStr();
+  if (stats.days.indexOf(t) === -1){
+    stats.days.push(t);
+    if (stats.days.length > 120) stats.days = stats.days.slice(-120);
+  }
+  saveStats();
+}
+/* a weekly crown is won by finishing a week at #1 — the archived
+   winners list is the record of that, so crowns are counted from it */
+function countMyCrowns(){
+  if (!myName) return 0;
+  var n = 0;
+  weeklyWinners.forEach(function(w){ if (w.top && w.top[0] && w.top[0].name === myName) n++; });
+  return n;
+}
+function refreshCrowns(){
+  var c = countMyCrowns();
+  if (c > stats.crowns){ stats.crowns = c; saveStats(); }
+  checkUnlocks(true);
+}
+
+/* ---------- unlocks & the player's current style ---------- */
+var unlockedSet = {}; /* items genuinely earned by playing — the only
+   set checkUnlocks ever writes, and the one other players live by */
+function isUnlocked(id){ return !!unlockedSet[id]; }
+var styleSel = { material:"crystal", bg:"", frame:"", animal:"" };
+var curMaterial = "crystal"; /* the finish drawCell paints right now */
+var wdOpen = false, wdTab = "pieces";
+function loadStyle(){
+  try{
+    var s = JSON.parse(localStorage.getItem(LS_STYLE) || "null");
+    if (s){
+      if (Array.isArray(s.unlocked)) s.unlocked.forEach(function(id){ if (typeof id === "string") unlockedSet[id] = true; });
+      styleSel.animal = cleanAnimal(s.animal);
+      if (s.material === "crystal" || (findItem(MATERIAL_CATALOG, s.material) && isUnlocked(s.material))) styleSel.material = s.material;
+      if (s.bg && findItem(BG_CATALOG, s.bg) && isUnlocked(s.bg)) styleSel.bg = s.bg;
+      if (s.frame && findItem(FRAME_CATALOG, s.frame) && isUnlocked(s.frame)) styleSel.frame = s.frame;
+    }
+  }catch(e){ /* corrupted style record — fall back to the base look */ }
+  curMaterial = styleSel.material;
+  updateProfileAvatar();
+}
+/* keep the big circle at the top of the rail in step with the
+   animal picked in the wardrobe's Profile tab — the animal itself,
+   or a neutral placeholder when none is picked yet */
+function updateProfileAvatar(){
+  var btn = $("profileAvatarBtn"), span = $("profileAvatarEmoji");
+  if (!btn || !span) return;
+  var a = styleSel.animal || "";
+  span.textContent = a || "👤";
+  btn.classList.toggle("is-empty", !a);
+  btn.title = a ? "Your profile animal — tap to change it" : "Pick your profile animal";
+  btn.setAttribute("aria-label", a
+    ? "Your profile animal " + a + " — open Style wardrobe on Profile tab"
+    : "No profile animal picked yet — open Style wardrobe on Profile tab");
+}
+function saveStyle(){
+  try{
+    localStorage.setItem(LS_STYLE, JSON.stringify({
+      material:styleSel.material, bg:styleSel.bg, frame:styleSel.frame,
+      animal:styleSel.animal, unlocked:Object.keys(unlockedSet)
+    }));
+  }catch(e){}
+}
+/* grant anything the lifetime stats have earned; returns the names of
+   newly unlocked items. Silent checks (on load / board refresh) never
+   toast — earning is celebrated at game over. */
+function checkUnlocks(silent){
+  var fresh = [];
+  [MATERIAL_CATALOG, BG_CATALOG, FRAME_CATALOG].forEach(function(cat){
+    cat.forEach(function(it){
+      if (!unlockedSet[it.id] && statVal(it.unlock.stat) >= it.unlock.need){
+        unlockedSet[it.id] = true;
+        fresh.push(it.name);
+      }
+    });
+  });
+  if (fresh.length){
+    saveStyle();
+    if (!silent) showUnlockToast(fresh);
+    if (wdOpen) renderWardrobe();
+  }
+  return fresh;
+}
+function applyStyle(){
+  curMaterial = styleSel.material;
+  renderBg();
+  renderFrame();
+}
+
+/* ---------- unlock toast ---------- */
+var toastQueue = [], toastBusy = false;
+function showUnlockToast(names){
+  names.forEach(function(n){ toastQueue.push(n); });
+  pumpUnlockToast();
+}
+function pumpUnlockToast(){
+  if (toastBusy || !toastQueue.length) return;
+  var el = $("unlockToast");
+  if (!el) return;
+  toastBusy = true;
+  el.textContent = "🔓 Unlocked: " + toastQueue.shift() + " — find it in 🎨 Style!";
+  el.hidden = false;
+  void el.offsetWidth;
+  el.classList.add("show");
+  setTimeout(function(){
+    el.classList.remove("show");
+    el.hidden = true;
+    toastBusy = false;
+    pumpUnlockToast();
+  }, 3600);
+}
+
+/* ---------- background silhouette overlays ----------
+   One inline SVG per theme, painted into the fixed #bgOverlay layer
+   (above the page background and level tint, below the whole game
+   UI) at low opacity so play stays readable. Shapes are
+   currentColor, so the silhouette follows the page ink colour in
+   light and dark mode alike. */
+var BG_SVGS = {
+  forest: '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax slice" fill="currentColor" aria-hidden="true"><path d="M0 100 L0 91 Q22 83 46 89 Q72 95 100 86 L100 100 Z"/><path d="M5 100 C3 79 6 60 15 45 C17 67 13 86 12 100 Z"/><path d="M14 100 C13 83 16 68 24 56 C25 73 21 88 20 100 Z"/><path d="M87 100 C86 81 89 62 98 48 C100 69 97 87 95 100 Z"/><path d="M78 100 C78 85 81 70 89 59 C90 75 86 89 85 100 Z"/><ellipse cx="15" cy="43" rx="5" ry="2.1" transform="rotate(-36 15 43)"/><ellipse cx="23" cy="54" rx="4.4" ry="1.9" transform="rotate(30 23 54)"/><ellipse cx="89" cy="57" rx="4.4" ry="1.9" transform="rotate(-28 89 57)"/><path d="M3 0 C7 11 6 22 2 31 C9 24 10 11 9 0 Z"/><path d="M97 0 C94 10 95 20 99 28 C93 21 91 10 92 0 Z"/><path d="M31 100 v-4.4 h1.8 V100 Z"/><path d="M27.2 95.8 a4.9 3.1 0 0 1 9.8 0 Z"/><path d="M66 100 v-3.4 h1.5 V100 Z"/><path d="M63.4 96.8 a3.9 2.5 0 0 1 7.8 0 Z"/></svg>',
+  space: '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" fill="currentColor" aria-hidden="true"><circle cx="84" cy="15" r="8"/><ellipse cx="84" cy="15" rx="14.5" ry="3.6" fill="none" stroke="currentColor" stroke-width="1.5" transform="rotate(-16 84 15)"/><circle cx="12" cy="32" r="4.6"/><circle cx="20" cy="82" r="5.5"/><ellipse cx="20" cy="82" rx="10" ry="2.6" fill="none" stroke="currentColor" stroke-width="1.2" transform="rotate(-14 20 82)"/><g transform="translate(48 12)"><polygon points="0,-5 1.3,-1.3 5,0 1.3,1.3 0,5 -1.3,1.3 -5,0 -1.3,-1.3"/></g><g transform="translate(66 34) scale(.62)"><polygon points="0,-5 1.3,-1.3 5,0 1.3,1.3 0,5 -1.3,1.3 -5,0 -1.3,-1.3"/></g><g transform="translate(30 55) scale(.8)"><polygon points="0,-5 1.3,-1.3 5,0 1.3,1.3 0,5 -1.3,1.3 -5,0 -1.3,-1.3"/></g><g transform="translate(88 58) scale(.55)"><polygon points="0,-5 1.3,-1.3 5,0 1.3,1.3 0,5 -1.3,1.3 -5,0 -1.3,-1.3"/></g><g transform="translate(58 88) scale(.7)"><polygon points="0,-5 1.3,-1.3 5,0 1.3,1.3 0,5 -1.3,1.3 -5,0 -1.3,-1.3"/></g><circle cx="38" cy="30" r="1"/><circle cx="72" cy="8" r=".9"/><circle cx="8" cy="62" r="1"/><circle cx="93" cy="38" r=".9"/><circle cx="52" cy="66" r=".9"/><circle cx="14" cy="12" r=".8"/><circle cx="78" cy="76" r="1"/><circle cx="42" cy="44" r=".7"/></svg>',
+  ocean: '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax slice" fill="currentColor" aria-hidden="true"><path d="M0 100 L0 94 Q26 88 52 93 Q78 97 100 91 L100 100 Z"/><path d="M13 93 C17 83 31 78 45 81 C55 83 61 88 59 93 C56 99 41 101 28 99 C18 98 11 97 13 93 Z"/><path d="M59 87 L70 80 L67.5 88.5 L70 96 L59 93 Z"/><g transform="translate(70 64)"><path d="M0 0 C3 -3.4 9 -3.4 12 0 C9 3.4 3 3.4 0 0 Z"/><polygon points="12,0 17,-3.6 17,3.6"/></g><g transform="translate(80 74) scale(.68)"><path d="M0 0 C3 -3.4 9 -3.4 12 0 C9 3.4 3 3.4 0 0 Z"/><polygon points="12,0 17,-3.6 17,3.6"/></g><g transform="translate(60 76) scale(.5)"><path d="M0 0 C3 -3.4 9 -3.4 12 0 C9 3.4 3 3.4 0 0 Z"/><polygon points="12,0 17,-3.6 17,3.6"/></g><path d="M6 100 C3 92 9 88 6 79 C4 72 8 68 7 61" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 100 C10 94 14 90 12 84" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M94 100 C97 91 91 87 94 78 C96 71 92 67 93 60" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="72" cy="54" r="1.7" fill="none" stroke="currentColor" stroke-width=".8"/><circle cx="76" cy="48" r="1.1" fill="none" stroke="currentColor" stroke-width=".8"/><circle cx="69" cy="44" r=".8" fill="none" stroke="currentColor" stroke-width=".7"/><circle cx="24" cy="60" r="1.2" fill="none" stroke="currentColor" stroke-width=".8"/></svg>',
+  meadow: '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax slice" fill="currentColor" aria-hidden="true"><path d="M0 100 L0 92 Q28 84 54 90 Q78 96 100 89 L100 100 Z"/><path d="M0 100 L0 97 Q38 91 100 96 L100 100 Z"/><path d="M7 100 l1.1 -6.5 L9.4 100 Z"/><path d="M15 100 l1 -5.4 1.3 5.4 Z"/><path d="M24 100 l1.1 -6.8 1.3 6.8 Z"/><path d="M38 100 l1 -5.6 1.3 5.6 Z"/><path d="M52 100 l1.1 -6.4 1.3 6.4 Z"/><path d="M64 100 l1 -5.2 1.3 5.2 Z"/><path d="M93 100 l1.1 -6.2 1.3 6.2 Z"/><ellipse cx="83" cy="93.5" rx="5.2" ry="3.4"/><circle cx="87.6" cy="88.8" r="2.7"/><ellipse cx="86.4" cy="83.4" rx=".95" ry="3.1" transform="rotate(-9 86.4 83.4)"/><ellipse cx="89.2" cy="83.6" rx=".95" ry="3" transform="rotate(11 89.2 83.6)"/><circle cx="78.2" cy="92.6" r="1.3"/><circle cx="20" cy="93.5" r="1.1"/><path d="M20 94.6 v3" stroke="currentColor" stroke-width=".8" fill="none"/><circle cx="30" cy="95.5" r=".9"/><circle cx="58" cy="94" r="1"/><circle cx="70" cy="96" r=".8"/><g transform="translate(24 26)"><ellipse cx="-2.4" cy="0" rx="2.7" ry="1.6" transform="rotate(-28)"/><ellipse cx="2.4" cy="0" rx="2.7" ry="1.6" transform="rotate(28)"/><rect x="-.45" y="-2" width=".9" height="4" rx=".45"/></g><path d="M58 18 q3 -3.2 6 0 q3 -3.2 6 0" fill="none" stroke="currentColor" stroke-width="1.1"/><path d="M70 26 q2.2 -2.4 4.4 0 q2.2 -2.4 4.4 0" fill="none" stroke="currentColor" stroke-width="1"/></svg>'
+};
+function renderBg(){
+  var el = $("bgOverlay");
+  if (!el) return;
+  if (styleSel.bg && BG_SVGS[styleSel.bg]){
+    el.innerHTML = BG_SVGS[styleSel.bg];
+    el.hidden = false;
+  } else {
+    el.innerHTML = "";
+    el.hidden = true;
+  }
+}
+
+/* ---------- board frames ----------
+   Vines and bamboo are inline SVGs drawn around the board (wooden
+   posts with twirling vines; segmented bamboo stalks). Neon and gold
+   are pure CSS on the same layer (see .frame-layer.frame-neon /
+   .frame-gold). The viewBox matches the board wrap's proportions and
+   strokes are non-scaling, so the posts stay crisp at any size. */
+var FRAME_SVGS = {
+  vines: '<svg viewBox="0 0 340 656" preserveAspectRatio="none" aria-hidden="true"><rect x="1" y="0" width="11" height="656" rx="5" fill="#7a5230"/><rect x="328" y="0" width="11" height="656" rx="5" fill="#7a5230"/><rect x="0" y="1" width="340" height="11" rx="5" fill="#7a5230"/><rect x="0" y="644" width="340" height="11" rx="5" fill="#7a5230"/><rect x="4.5" y="0" width="2.4" height="656" fill="#5b3a1e" opacity=".5"/><rect x="331.5" y="0" width="2.4" height="656" fill="#5b3a1e" opacity=".5"/><path d="M6 650 C-4 560 18 520 6 460 C-4 410 18 370 6 310 C-4 260 18 220 6 160 C-4 110 16 60 6 8" fill="none" stroke="#4c9a44" stroke-width="4" vector-effect="non-scaling-stroke"/><path d="M334 650 C344 570 322 520 334 460 C344 410 322 370 334 310 C344 260 322 215 334 160 C344 105 324 55 334 8" fill="none" stroke="#4c9a44" stroke-width="4" vector-effect="non-scaling-stroke"/><path d="M8 6 C80 -4 130 16 200 6 C260 -3 300 14 332 6" fill="none" stroke="#4c9a44" stroke-width="4" vector-effect="non-scaling-stroke"/><path d="M6 460 c-13 1 -15 -13 -6 -17 c7 -3 13 4 9 10" fill="none" stroke="#4c9a44" stroke-width="3" vector-effect="non-scaling-stroke"/><path d="M334 300 c13 1 15 -13 6 -17 c-7 -3 -13 4 -9 10" fill="none" stroke="#4c9a44" stroke-width="3" vector-effect="non-scaling-stroke"/><ellipse cx="15" cy="382" rx="9" ry="4.4" fill="#69b457" transform="rotate(-32 15 382)"/><ellipse cx="13" cy="238" rx="8" ry="4" fill="#69b457" transform="rotate(24 13 238)"/><ellipse cx="326" cy="420" rx="9" ry="4.4" fill="#69b457" transform="rotate(30 326 420)"/><ellipse cx="327" cy="180" rx="8" ry="4" fill="#69b457" transform="rotate(-22 327 180)"/><ellipse cx="120" cy="13" rx="8" ry="4" fill="#69b457" transform="rotate(14 120 13)"/><ellipse cx="228" cy="12" rx="8" ry="4" fill="#69b457" transform="rotate(-16 228 12)"/></svg>',
+  bamboo: '<svg viewBox="0 0 340 656" preserveAspectRatio="none" aria-hidden="true"><rect x="2" y="0" width="12" height="656" rx="6" fill="#5da85f"/><rect x="326" y="0" width="12" height="656" rx="6" fill="#5da85f"/><rect x="0" y="2" width="340" height="12" rx="6" fill="#5da85f"/><rect x="0" y="642" width="340" height="12" rx="6" fill="#5da85f"/><path d="M2 92 h12 M2 184 h12 M2 276 h12 M2 368 h12 M2 460 h12 M2 552 h12 M326 92 h12 M326 184 h12 M326 276 h12 M326 368 h12 M326 460 h12 M326 552 h12" stroke="#3f7d43" stroke-width="4" vector-effect="non-scaling-stroke"/><path d="M62 2 v12 M124 2 v12 M186 2 v12 M248 2 v12 M310 2 v12 M62 642 v12 M124 642 v12 M186 642 v12 M248 642 v12 M310 642 v12" stroke="#3f7d43" stroke-width="4" vector-effect="non-scaling-stroke"/><rect x="5" y="0" width="2.4" height="656" fill="#3f7d43" opacity=".45"/><rect x="329" y="0" width="2.4" height="656" fill="#3f7d43" opacity=".45"/><path d="M16 44 C32 32 48 34 60 48 C44 52 28 52 16 44 Z" fill="#69b457"/><path d="M324 612 C308 624 292 622 280 608 C296 604 312 604 324 612 Z" fill="#69b457"/></svg>'
+};
+function renderFrame(){
+  var fl = $("frameLayer");
+  if (!fl) return;
+  fl.className = "frame-layer";
+  fl.innerHTML = "";
+  if (!styleSel.frame){ fl.hidden = true; return; }
+  fl.hidden = false;
+  if (styleSel.frame === "vines") fl.innerHTML = FRAME_SVGS.vines;
+  else if (styleSel.frame === "bamboo") fl.innerHTML = FRAME_SVGS.bamboo;
+  else if (styleSel.frame === "neonframe") fl.classList.add("frame-neon");
+  else if (styleSel.frame === "gold") fl.classList.add("frame-gold");
+}
+
+/* ---------- materials — the non-crystal block finishes ----------
+   drawCell hands every non-ghost cell here when a material other
+   than the base crystal is worn. Each finish is pure canvas drawing
+   from the piece's own two colours, so materials cost no image
+   files and apply identically on the board and in Next / Hold. */
+function drawCellMaterial(ctx, px, py, s, type){
+  var def = PIECES[type];
+  var x = px + 1, y = py + 1, w = s - 2, h = s - 2;
+  ctx.save();
+  if (curMaterial === "wood"){
+    var rw = Math.max(4, s * 0.20);
+    ctx.beginPath(); ctx.roundRect(x, y, w, h, rw);
+    ctx.save(); ctx.clip();
+    var gw = ctx.createLinearGradient(x, y, x, y + h);
+    gw.addColorStop(0, mixWhite(def.color, 0.30));
+    gw.addColorStop(0.5, def.color);
+    gw.addColorStop(1, def.dark);
+    ctx.fillStyle = gw; ctx.fillRect(x, y, w, h);
+    /* grain — wavy lines running down the block */
+    ctx.strokeStyle = "rgba(59,36,16,.35)";
+    ctx.lineWidth = Math.max(1, s * 0.028);
+    [0.28, 0.5, 0.72].forEach(function(fx, i){
+      ctx.beginPath();
+      ctx.moveTo(x + w * fx, y - 2);
+      ctx.bezierCurveTo(x + w * (fx + (i % 2 ? 0.07 : -0.07)), y + h * 0.33,
+                        x + w * (fx + (i % 2 ? -0.05 : 0.05)), y + h * 0.66,
+                        x + w * fx, y + h + 2);
+      ctx.stroke();
+    });
+    /* a little knot */
+    ctx.beginPath();
+    ctx.ellipse(x + w * 0.64, y + h * 0.60, Math.max(1.5, w * 0.075), Math.max(1.2, h * 0.055), 0, 0, 7);
+    ctx.stroke();
+    /* matte top light — wood does not shine like crystal */
+    ctx.fillStyle = "rgba(255,255,255,.18)";
+    ctx.fillRect(x, y, w, h * 0.15);
+    ctx.restore();
+    ctx.beginPath(); ctx.roundRect(x + 0.75, y + 0.75, w - 1.5, h - 1.5, rw);
+    ctx.strokeStyle = def.dark; ctx.lineWidth = 1.7; ctx.stroke();
+  }
+  else if (curMaterial === "marble"){
+    var rm = Math.max(3, s * 0.13);
+    ctx.beginPath(); ctx.roundRect(x, y, w, h, rm);
+    ctx.save(); ctx.clip();
+    var gm = ctx.createLinearGradient(x, y, x + w, y + h);
+    gm.addColorStop(0, mixWhite(def.color, 0.90));
+    gm.addColorStop(0.55, mixWhite(def.color, 0.66));
+    gm.addColorStop(1, mixWhite(def.color, 0.80));
+    ctx.fillStyle = gm; ctx.fillRect(x, y, w, h);
+    /* veins wandering through the stone */
+    ctx.strokeStyle = def.dark; ctx.globalAlpha = 0.42;
+    ctx.lineWidth = Math.max(1, s * 0.022);
+    ctx.beginPath();
+    ctx.moveTo(x + w * 0.08, y + h * 0.92);
+    ctx.bezierCurveTo(x + w * 0.34, y + h * 0.55, x + w * 0.52, y + h * 0.62, x + w * 0.94, y + h * 0.10);
+    ctx.stroke();
+    ctx.globalAlpha = 0.26; ctx.lineWidth = Math.max(1, s * 0.016);
+    ctx.beginPath();
+    ctx.moveTo(x + w * 0.30, y + h * 0.98);
+    ctx.bezierCurveTo(x + w * 0.48, y + h * 0.70, x + w * 0.66, y + h * 0.66, x + w * 0.86, y + h * 0.42);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x + w * 0.52, y + h * 0.60);
+    ctx.lineTo(x + w * 0.70, y + h * 0.44);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    /* a soft polished sheen */
+    ctx.fillStyle = "rgba(255,255,255,.28)";
+    ctx.beginPath(); ctx.ellipse(x + w * 0.36, y + h * 0.20, w * 0.30, h * 0.10, -0.5, 0, 7); ctx.fill();
+    ctx.restore();
+    ctx.beginPath(); ctx.roundRect(x + 0.75, y + 0.75, w - 1.5, h - 1.5, rm);
+    ctx.strokeStyle = "rgba(110,110,120,.55)"; ctx.lineWidth = 1.4; ctx.stroke();
+  }
+  else if (curMaterial === "neon"){
+    var rn = Math.max(3, s * 0.16);
+    var cc = hexRgb(def.color);
+    /* near-black glass with a faint colour wash inside… */
+    ctx.beginPath(); ctx.roundRect(x, y, w, h, rn);
+    ctx.fillStyle = "rgb(" + Math.round(cc[0] * 0.15) + "," + Math.round(cc[1] * 0.15) + "," + Math.round(cc[2] * 0.15) + ")";
+    ctx.fill();
+    ctx.beginPath(); ctx.roundRect(x + w * 0.14, y + h * 0.14, w * 0.72, h * 0.72, rn * 0.7);
+    ctx.fillStyle = def.color; ctx.globalAlpha = 0.16; ctx.fill();
+    ctx.globalAlpha = 1;
+    /* …and a glowing tube edge in the piece colour */
+    ctx.save();
+    ctx.shadowColor = def.color; ctx.shadowBlur = Math.max(4, s * 0.20);
+    ctx.beginPath(); ctx.roundRect(x + 2, y + 2, w - 4, h - 4, rn);
+    ctx.strokeStyle = def.color; ctx.lineWidth = Math.max(2, s * 0.05); ctx.stroke();
+    ctx.restore();
+    ctx.beginPath(); ctx.roundRect(x + 2, y + 2, w - 4, h - 4, rn);
+    ctx.strokeStyle = mixWhite(def.color, 0.72); ctx.lineWidth = 1.1; ctx.stroke();
+  }
+  else if (curMaterial === "candy"){
+    var rc = Math.max(5, s * 0.30);
+    ctx.beginPath(); ctx.roundRect(x, y, w, h, rc);
+    ctx.save(); ctx.clip();
+    var gc = ctx.createLinearGradient(x, y, x, y + h);
+    gc.addColorStop(0, mixWhite(def.color, 0.58));
+    gc.addColorStop(0.45, def.color);
+    gc.addColorStop(1, def.dark);
+    ctx.fillStyle = gc; ctx.fillRect(x, y, w, h);
+    /* jelly translucency glowing at the base */
+    ctx.fillStyle = "rgba(255,255,255,.20)";
+    ctx.fillRect(x, y + h * 0.68, w, h * 0.32);
+    /* big soft gloss */
+    ctx.fillStyle = "rgba(255,255,255,.55)";
+    ctx.beginPath(); ctx.ellipse(x + w * 0.36, y + h * 0.24, w * 0.26, h * 0.13, -0.4, 0, 7); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,.85)";
+    ctx.beginPath(); ctx.ellipse(x + w * 0.30, y + h * 0.19, w * 0.10, h * 0.05, -0.4, 0, 7); ctx.fill();
+    ctx.restore();
+    ctx.beginPath(); ctx.roundRect(x + 0.75, y + 0.75, w - 1.5, h - 1.5, rc);
+    ctx.strokeStyle = mixWhite(def.color, 0.30); ctx.lineWidth = 1.5; ctx.stroke();
+  }
+  else if (curMaterial === "metal"){
+    var rt = Math.max(2, s * 0.10);
+    ctx.beginPath(); ctx.roundRect(x, y, w, h, rt);
+    ctx.save(); ctx.clip();
+    /* brushed steel bands running across the block */
+    var gt = ctx.createLinearGradient(x, y, x + w, y);
+    gt.addColorStop(0, def.dark);
+    gt.addColorStop(0.28, mixWhite(def.color, 0.68));
+    gt.addColorStop(0.52, def.color);
+    gt.addColorStop(0.78, mixWhite(def.color, 0.34));
+    gt.addColorStop(1, def.dark);
+    ctx.fillStyle = gt; ctx.fillRect(x, y, w, h);
+    for (var i = 0; i < 6; i++){
+      ctx.fillStyle = i % 2 ? "rgba(255,255,255,.10)" : "rgba(0,0,0,.08)";
+      ctx.fillRect(x, y + h * (0.12 + i * 0.15), w, Math.max(1, h * 0.035));
+    }
+    ctx.fillStyle = "rgba(255,255,255,.35)";
+    ctx.fillRect(x, y, w, Math.max(1, h * 0.05));
+    ctx.restore();
+    ctx.beginPath(); ctx.roundRect(x + 0.75, y + 0.75, w - 1.5, h - 1.5, rt);
+    ctx.strokeStyle = def.dark; ctx.lineWidth = 1.7; ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/* ================= the wardrobe screen =================
+   A full-screen overlay (like the leaderboard, but roomier) opened
+   from the profile animal circle at the top of the left rail (which
+   lands on the Profile tab). Four tabs — Pieces, Background, Frame, Profile.
+   Every card previews its look; tapping an unlocked card wears it
+   immediately (the board behind updates live), and locked cards
+   show their unlock condition plus the player's progress. */
+function openWardrobe(tab){
+  /* an optional tab name ("pieces" / "bg" / "frame" / "profile")
+     opens the wardrobe straight on that tab — the profile avatar
+     button in the rail uses it to land on Profile. Click handlers
+     that pass an event object are ignored, so the existing
+     addEventListener("click", openWardrobe) wiring keeps working. */
+  var wantTab = (typeof tab === "string" && ["pieces", "bg", "frame", "profile"].indexOf(tab) !== -1) ? tab : null;
+  if (wdOpen){
+    if (wantTab && wdTab !== wantTab){ wdTab = wantTab; renderWardrobe(); }
+    return;
+  }
+  if (wantTab) wdTab = wantTab;
+  wdOpen = true;
+  if (state === "playing") togglePause(true);
+  renderWardrobe();
+  $("wdBackdrop").hidden = false;
+  $("wdPanel").hidden = false;
+  if (soundOn) sfx.ui();
+}
+function closeWardrobe(){
+  if (!wdOpen) return;
+  wdOpen = false;
+  $("wdBackdrop").hidden = true;
+  $("wdPanel").hidden = true;
+}
+function wdCardEl(){
+  var d = document.createElement("div");
+  d.className = "wd-card";
+  d.setAttribute("role", "button");
+  d.tabIndex = 0;
+  return d;
+}
+function wdNameEl(name){
+  var n = document.createElement("div");
+  n.className = "wd-name";
+  n.textContent = name;
+  return n;
+}
+function wdTagEl(card){
+  var t = document.createElement("span");
+  t.className = "wd-tag";
+  t.textContent = "✓ Wearing";
+  card.appendChild(t);
+}
+function wdNoteEl(card, text){
+  var n = document.createElement("div");
+  n.className = "wd-lock";
+  n.textContent = text;
+  card.appendChild(n);
+}
+/* the locked state: the condition, a progress bar and the count */
+function wdLockEl(card, item){
+  card.classList.add("locked");
+  var lock = document.createElement("div");
+  lock.className = "wd-lock";
+  lock.textContent = "🔒 " + item.unlock.label;
+  var have = Math.min(statVal(item.unlock.stat), item.unlock.need);
+  var bar = document.createElement("div");
+  bar.className = "wd-prog";
+  var fill = document.createElement("i");
+  fill.style.width = Math.round(have / item.unlock.need * 100) + "%";
+  bar.appendChild(fill);
+  lock.appendChild(bar);
+  var prog = document.createElement("div");
+  prog.textContent = have.toLocaleString("en-US") + " / " + item.unlock.need.toLocaleString("en-US");
+  lock.appendChild(prog);
+  card.appendChild(lock);
+}
+function wdWire(card, fn){
+  card.addEventListener("click", fn);
+  card.addEventListener("keydown", function(e){
+    if (e.key === "Enter" || e.key === " "){ e.preventDefault(); fn(); }
+  });
+}
+function wdGrid(body, animals){
+  var g = document.createElement("div");
+  g.className = "wd-grid" + (animals ? " animals" : "");
+  body.appendChild(g);
+  return g;
+}
+/* a strip of four blocks painted in the given material */
+function drawMaterialPreview(cv, matId){
+  var ctx = cv.getContext("2d");
+  if (!ctx) return;
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  var prev = curMaterial;
+  curMaterial = matId;
+  ["I", "T", "O", "S"].forEach(function(t, i){ drawCell(ctx, 5 + i * 32, 13, 30, t); });
+  curMaterial = prev;
+}
+function equipMaterial(id){
+  styleSel.material = id;
+  curMaterial = id;
+  saveStyle();
+  drawSide(); /* Next & Hold repaint in the new material at once */
+  renderWardrobe();
+  if (soundOn) sfx.ui();
+}
+function equipBg(id){
+  styleSel.bg = id;
+  saveStyle();
+  renderBg();
+  renderWardrobe();
+  if (soundOn) sfx.ui();
+}
+function equipFrame(id){
+  styleSel.frame = id;
+  saveStyle();
+  renderFrame();
+  renderWardrobe();
+  if (soundOn) sfx.ui();
+}
+function equipAnimal(a){
+  styleSel.animal = a;
+  saveStyle();
+  updateProfileAvatar();
+  renderWardrobe();
+  if (soundOn) sfx.ui();
+}
+function renderWardrobe(){
+  [["wdTabPieces", "pieces"], ["wdTabBg", "bg"], ["wdTabFrame", "frame"], ["wdTabProfile", "profile"]].forEach(function(pair){
+    var btn = $(pair[0]);
+    if (!btn) return;
+    var on = wdTab === pair[1];
+    btn.classList.toggle("on", on);
+    btn.setAttribute("aria-selected", on ? "true" : "false");
+  });
+  var body = $("wdBody");
+  if (!body) return;
+  body.innerHTML = "";
+  if (wdTab === "pieces") renderWdPieces(body);
+  else if (wdTab === "bg") renderWdBackgrounds(body);
+  else if (wdTab === "frame") renderWdFrames(body);
+  else renderWdProfile(body);
+}
+function renderWdPieces(body){
+  var grid = wdGrid(body, false);
+  /* the base look — always available; it is what new players wear */
+  var base = wdCardEl();
+  if (styleSel.material === "crystal"){ base.classList.add("selected"); wdTagEl(base); }
+  var bp = document.createElement("div"); bp.className = "wd-preview";
+  var bcv = document.createElement("canvas"); bcv.width = 132; bcv.height = 56;
+  bp.appendChild(bcv);
+  base.appendChild(bp);
+  base.appendChild(wdNameEl("Crystal"));
+  wdNoteEl(base, "The original look");
+  wdWire(base, function(){ equipMaterial("crystal"); });
+  grid.appendChild(base);
+  drawMaterialPreview(bcv, "crystal");
+  MATERIAL_CATALOG.forEach(function(it){
+    var card = wdCardEl();
+    var unlocked = isUnlocked(it.id);
+    if (styleSel.material === it.id){ card.classList.add("selected"); wdTagEl(card); }
+    var pv = document.createElement("div"); pv.className = "wd-preview";
+    var cv = document.createElement("canvas"); cv.width = 132; cv.height = 56;
+    pv.appendChild(cv);
+    card.appendChild(pv);
+    card.appendChild(wdNameEl(it.name));
+    if (unlocked) wdWire(card, function(){ equipMaterial(it.id); });
+    else wdLockEl(card, it);
+    grid.appendChild(card);
+    drawMaterialPreview(cv, it.id);
+  });
+}
+function renderWdBackgrounds(body){
+  var grid = wdGrid(body, false);
+  var base = wdCardEl();
+  if (!styleSel.bg){ base.classList.add("selected"); wdTagEl(base); }
+  var bp = document.createElement("div"); bp.className = "wd-preview wd-bgprev";
+  var btxt = document.createElement("span"); btxt.className = "wd-none"; btxt.textContent = "Plain";
+  bp.appendChild(btxt);
+  base.appendChild(bp);
+  base.appendChild(wdNameEl("None"));
+  wdNoteEl(base, "No silhouette overlay");
+  wdWire(base, function(){ equipBg(""); });
+  grid.appendChild(base);
+  BG_CATALOG.forEach(function(it){
+    var card = wdCardEl();
+    var unlocked = isUnlocked(it.id);
+    if (styleSel.bg === it.id){ card.classList.add("selected"); wdTagEl(card); }
+    var pv = document.createElement("div"); pv.className = "wd-preview wd-bgprev";
+    pv.innerHTML = BG_SVGS[it.id] || "";
+    card.appendChild(pv);
+    card.appendChild(wdNameEl(it.name));
+    if (unlocked) wdWire(card, function(){ equipBg(it.id); });
+    else wdLockEl(card, it);
+    grid.appendChild(card);
+  });
+}
+/* a miniature board wearing the given frame ("" = the plain base) */
+function framePreviewEl(frameId){
+  var box = document.createElement("div");
+  box.className = "wd-frame-box";
+  var fl = document.createElement("div");
+  fl.className = "frame-layer";
+  if (frameId === "vines") fl.innerHTML = FRAME_SVGS.vines;
+  else if (frameId === "bamboo") fl.innerHTML = FRAME_SVGS.bamboo;
+  else if (frameId === "neonframe") fl.classList.add("frame-neon");
+  else if (frameId === "gold") fl.classList.add("frame-gold");
+  box.appendChild(fl);
+  return box;
+}
+function renderWdFrames(body){
+  var grid = wdGrid(body, false);
+  var base = wdCardEl();
+  if (!styleSel.frame){ base.classList.add("selected"); wdTagEl(base); }
+  var bp = document.createElement("div"); bp.className = "wd-preview tall";
+  bp.appendChild(framePreviewEl(""));
+  base.appendChild(bp);
+  base.appendChild(wdNameEl("Plain"));
+  wdNoteEl(base, "The frame you start with");
+  wdWire(base, function(){ equipFrame(""); });
+  grid.appendChild(base);
+  FRAME_CATALOG.forEach(function(it){
+    var card = wdCardEl();
+    var unlocked = isUnlocked(it.id);
+    if (styleSel.frame === it.id){ card.classList.add("selected"); wdTagEl(card); }
+    var pv = document.createElement("div"); pv.className = "wd-preview tall";
+    pv.appendChild(framePreviewEl(it.id));
+    card.appendChild(pv);
+    card.appendChild(wdNameEl(it.name));
+    if (unlocked) wdWire(card, function(){ equipFrame(it.id); });
+    else wdLockEl(card, it);
+    grid.appendChild(card);
+  });
+}
+function renderWdProfile(body){
+  var note = document.createElement("p");
+  note.className = "wd-note";
+  note.textContent = "Your animal sits next to your name on the shared leaderboard. All sixteen are yours from the start — pick a favourite, change it any time.";
+  body.appendChild(note);
+  var grid = wdGrid(body, true);
+  var none = wdCardEl();
+  if (!styleSel.animal){ none.classList.add("selected"); wdTagEl(none); }
+  var ne = document.createElement("div"); ne.className = "wd-animal"; ne.textContent = "—";
+  none.appendChild(ne);
+  none.appendChild(wdNameEl("None"));
+  wdWire(none, function(){ equipAnimal(""); });
+  grid.appendChild(none);
+  ANIMALS.forEach(function(pair){
+    var card = wdCardEl();
+    if (styleSel.animal === pair[0]){ card.classList.add("selected"); wdTagEl(card); }
+    var em = document.createElement("div"); em.className = "wd-animal"; em.textContent = pair[0];
+    card.appendChild(em);
+    card.appendChild(wdNameEl(pair[1]));
+    wdWire(card, function(){ equipAnimal(pair[0]); });
+    grid.appendChild(card);
+  });
+}
+var profileAvatarBtnEl = $("profileAvatarBtn");
+if (profileAvatarBtnEl) profileAvatarBtnEl.addEventListener("click", function(){ openWardrobe("profile"); });
+var wdCloseEl = $("wdClose");
+if (wdCloseEl) wdCloseEl.addEventListener("click", closeWardrobe);
+var wdBackdropEl = $("wdBackdrop");
+if (wdBackdropEl) wdBackdropEl.addEventListener("click", closeWardrobe);
+[["wdTabPieces", "pieces"], ["wdTabBg", "bg"], ["wdTabFrame", "frame"], ["wdTabProfile", "profile"]].forEach(function(pair){
+  var btn = $(pair[0]);
+  if (btn) btn.addEventListener("click", function(){
+    if (wdTab === pair[1]) return;
+    wdTab = pair[1];
+    renderWardrobe();
+    if (soundOn) sfx.ui();
+  });
+});
+/* the wardrobe's Escape-to-close lives in the single overlay keyboard
+   handler near the bottom of this script, with the other panels' */
 
 /* ---------- BGM: Korobeiniki (traditional / public domain) — music-box rendition ----------
    The same Tetris melody, re-voiced as a gentle music box and synthesised
@@ -1218,11 +2200,17 @@ function stopBGM(){
   bgmPlaying = false;
   if (bgmTimer){ clearTimeout(bgmTimer); bgmTimer = null; }
 }
+/* white speaker silhouettes for the sound-effects toggle — waves
+   when effects are on, the crossed-out speaker when they are off.
+   The speaker controls sound effects ONLY; the ♪ button beside it
+   is the music, and the two toggles are fully independent. */
+var SPEAKER_ON_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
+var SPEAKER_OFF_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3 3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4 9.91 6.09 12 8.18V4z"/></svg>';
 function updateAudioPills(){
   var b = $("bgmBtn");
   if (b){ b.classList.toggle("on", bgmOn); b.setAttribute("aria-pressed", bgmOn ? "true" : "false"); b.textContent = "♪"; b.title = "Background music " + (bgmOn ? "on" : "off"); }
   var side = $("sideSoundBtn");
-  if (side){ var anyOn = bgmOn || soundOn; side.classList.toggle("on", anyOn); side.setAttribute("aria-pressed", anyOn ? "true" : "false"); side.textContent = anyOn ? "🔊" : "🔇"; side.title = "All sound " + (anyOn ? "on" : "off"); }
+  if (side){ side.classList.toggle("on", soundOn); side.setAttribute("aria-pressed", soundOn ? "true" : "false"); side.innerHTML = soundOn ? SPEAKER_ON_SVG : SPEAKER_OFF_SVG; side.title = "Sound effects " + (soundOn ? "on" : "off"); }
 }
 
 /* ---------- action flash (TETRIS!, T-SPIN!, combos…) ---------- */
@@ -1471,7 +2459,7 @@ function scoreClear(n, tspin){
   }
   else if (label) flash(label + "  +" + pts);
 
-  if (n === 4){ sfx.tetris(); }
+  if (n === 4){ tetrisGame++; sfx.tetris(); }
   else if (tspin){ sfx.tspin(); }
   else { sfx.clear(n); }
   /* clears buzz harder than a plain lock; a Tetris hardest of all */
@@ -1584,6 +2572,13 @@ function drawCell(ctx, px, py, s, type, opts){
     ctx.moveTo(px + 4, py + s * 0.30); ctx.lineTo(px + s - 4, py + s * 0.30);
     ctx.stroke();
     ctx.restore(); return;
+  }
+  /* a worn material replaces the crystal finish entirely (the ghost
+     above always keeps the crystal outline, whatever is worn) */
+  if (curMaterial !== "crystal"){
+    drawCellMaterial(ctx, px, py, s, type);
+    ctx.restore();
+    return;
   }
   /* -- clip to the gem silhouette -- */
   ctx.beginPath(); ctx.roundRect(x, y, w, h, r);
@@ -1777,7 +2772,7 @@ function resetGame(){
   dropCounter = 0; lockCounter = 0; lockResets = 0;
   applyLevelTheme(1);
   pendingBoardScore = 0; pendingIsChampion = false;
-  maxCombo = 0; tspinCount = 0; piecesPlaced = 0; playMs = 0;
+  maxCombo = 0; tspinCount = 0; piecesPlaced = 0; playMs = 0; tetrisGame = 0;
   dasDir = 0; dasActive = false; softDropping = false;
 }
 function startGame(){
@@ -1801,6 +2796,10 @@ function gameOver(){
   $("pauseBtn").textContent = "START / PAUSE";
   /* this device's own hi score always updates silently */
   if (score > localBest){ localBest = score; saveLocalScore(); }
+  /* lifetime stats feed the wardrobe unlocks — anything this game
+     earned is announced over the game-over screen */
+  recordGameStats();
+  checkUnlocks(false);
   sfx.over();
   /* the stats screen: this run's numbers, with both hi scores to
      compare against */
@@ -1892,6 +2891,7 @@ function claimGlobal(){
   var name = cleanChampionName($("championName").value);
   if (!name) name = "Anonymous";
   var entry = { name:name, score:pendingBoardScore };
+  if (styleSel.animal) entry.a = styleSel.animal; /* the chosen profile animal rides along to the shared board */
   var wasChampion = pendingIsChampion;
   var newBoard = globalBoard.slice();
   newBoard.push(entry);
@@ -2017,8 +3017,12 @@ document.addEventListener("keydown", function(e){
   if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
   /* the tutorial owns the keyboard while it is open */
   if (typeof tutorialOpen !== "undefined" && tutorialOpen) return;
+  /* …and so does the control-choice picker */
+  if (typeof controlChoiceOpen !== "undefined" && controlChoiceOpen) return;
   /* …and so does the leaderboard panel */
   if (typeof lbOpen !== "undefined" && lbOpen) return;
+  /* …and the style wardrobe */
+  if (typeof wdOpen !== "undefined" && wdOpen) return;
   var k = e.key;
   if (["ArrowLeft","ArrowRight","ArrowDown","ArrowUp"," "].indexOf(k) !== -1) e.preventDefault();
   if (k === "p" || k === "P" || k === "Escape"){ if (state === "playing" || state === "paused") togglePause(); return; }
@@ -2185,26 +3189,52 @@ if (bgmBtnEl) bgmBtnEl.addEventListener("click", function(){
   else stopBGM();
   if (bgmOn && soundOn) sfx.ui();
 });
+/* the speaker toggles sound effects ONLY — the music keeps playing
+   (or stays off) exactly as the ♪ button left it */
 var sideSoundBtnEl = $("sideSoundBtn");
 if (sideSoundBtnEl) sideSoundBtnEl.addEventListener("click", function(){
-  var turnOn = !(bgmOn || soundOn);
-  bgmOn = turnOn;
-  soundOn = turnOn;
+  soundOn = !soundOn;
   updateAudioPills();
-  if (bgmOn && state === "playing") startBGM();
-  else stopBGM();
-  if (soundOn) sfx.ui();
+  if (soundOn) sfx.ui(); /* hear the effects you just switched back on */
 });
-/* hide / show the button controllers — for swipe & tap players */
+/* hide / show the button controllers — for swipe & tap players.
+   The choice is a remembered control scheme on this device:
+   "touch" keeps the button bar hidden (swipe & tap play) and
+   "buttons" keeps it shown, and the game starts with whichever
+   scheme was picked last — in the first-game control onboarding,
+   or later with this 🎮 toggle. */
+var LS_CONTROL_CHOICE = "tetoris_control_choice";
+var LS_CONTROL_ONBOARDING = "tetoris_control_onboarding_seen_v1";
+var controlScheme = "buttons";
 var controlsHidden = false;
+function syncControllerVisibility(){
+  var bar = $("controllerBar");
+  if (bar) bar.hidden = controlsHidden;
+  var b = $("ctrlToggleBtn");
+  if (b){
+    b.classList.toggle("on", !controlsHidden);
+    b.setAttribute("aria-pressed", controlsHidden ? "false" : "true");
+    b.setAttribute("aria-label", controlsHidden ? "Show on-screen controls" : "Hide on-screen controls");
+    b.title = controlsHidden ? "Show controls" : "Hide controls — play with swipes & taps";
+  }
+}
+function setControlScheme(scheme, save){
+  controlScheme = scheme === "touch" ? "touch" : "buttons";
+  controlsHidden = controlScheme === "touch";
+  syncControllerVisibility();
+  if (save !== false){
+    try{ localStorage.setItem(LS_CONTROL_CHOICE, controlScheme); }catch(e){ /* session only */ }
+  }
+}
+function loadControlScheme(){
+  var saved = null;
+  try{ saved = localStorage.getItem(LS_CONTROL_CHOICE); }catch(e){}
+  if (saved === "touch" || saved === "buttons") setControlScheme(saved, false);
+  else syncControllerVisibility();
+}
 var ctrlToggleBtnEl = $("ctrlToggleBtn");
 if (ctrlToggleBtnEl) ctrlToggleBtnEl.addEventListener("click", function(){
-  controlsHidden = !controlsHidden;
-  $("controllerBar").hidden = controlsHidden;
-  ctrlToggleBtnEl.classList.toggle("on", !controlsHidden);
-  ctrlToggleBtnEl.setAttribute("aria-pressed", controlsHidden ? "false" : "true");
-  ctrlToggleBtnEl.setAttribute("aria-label", controlsHidden ? "Show on-screen controls" : "Hide on-screen controls");
-  ctrlToggleBtnEl.title = controlsHidden ? "Show controls" : "Hide controls — play with swipes & taps";
+  setControlScheme(controlsHidden ? "buttons" : "touch");
   if (soundOn) sfx.ui();
 });
 /* haptics toggle — feel a piece lock and a line clear on Android.
@@ -2219,12 +3249,15 @@ if (hapticsBtnEl) hapticsBtnEl.addEventListener("click", function(){
   else if (soundOn) sfx.ui();
 });
 /* ? button — replay the tutorial any time (it only auto-shows once):
-   the yellow ? in the top-left rail. */
+   the white ? in the top-left rail. */
 function replayTutorial(){
   if (typeof tutorialOpen !== "undefined" && tutorialOpen) return;
+  if (typeof controlChoiceOpen !== "undefined" && controlChoiceOpen) return;
   if (soundOn) sfx.ui();
   if (state === "playing") togglePause(true);
-  if (typeof openTutorial === "function") openTutorial();
+  /* replaying the tour ends at the control picker too, so the
+     player can change their Touch / Buttons scheme from here */
+  if (typeof openTutorial === "function") openTutorial(true);
 }
 var tutorialBtnEl = $("tutorialBtn");
 if (tutorialBtnEl) tutorialBtnEl.addEventListener("click", replayTutorial);
@@ -2283,20 +3316,22 @@ function launchConfetti(){
 
 /* ================= leaderboard panel =================
    Opened by tapping the Global Hi Score cell in the right bar, or the
-   Leaderboard buttons on the start and game-over screens. Three tabs:
-   This Week (the live top 15, resetting every Monday), Past Winners
-   (each finished week's top 3, archived at the rollover) and All Time
-   (the top 3, never resetting). Rows are built with textContent only —
-   names from the shared stores are untrusted input. #1 wears the crown
-   on a gold row, #2 silver, #3 bronze; the player's own rows are
-   outlined, and on the weekly tab a footer row shows where their best
-   would rank if it isn't on the board. */
+   Leaderboard buttons on the start and game-over screens. Two tabs:
+   This Week and All Time. The weekly tab carries a ‹ › cycler: at
+   offset 0 it shows the live top 15; each ‹ step goes back one week
+   and shows that finished week's archived top 3, and › steps forward
+   again. All Time is the top 3, never resetting. Rows are built with
+   textContent only — names from the shared stores are untrusted
+   input. #1 wears the crown on a gold row, #2 silver, #3 bronze; the
+   player's own rows are outlined, and on the current week a footer
+   row shows where their best would rank if it isn't on the board. */
 var lbOpen = false;
-var lbTab = "week"; /* week | past | all */
-var lbPastIdx = 0;  /* which archived week the Past Winners tab is showing — 0 = newest */
+var lbTab = "week"; /* week | all */
+var lbWeekBack = 0; /* weeks back from the current one on the weekly tab — 0 = this week (top 15), 1+ = that past week's top 3 */
 function openLeaderboard(){
   if (lbOpen) return;
   lbOpen = true;
+  lbWeekBack = 0; /* always land on this week */
   if (state === "playing") togglePause(true);
   renderBoard();
   $("lbBackdrop").hidden = false;
@@ -2321,7 +3356,13 @@ function buildLbRow(e, i){
   rank.textContent = (i === 0 ? "👑 " : "") + (i + 1);
   var nm = document.createElement("span");
   nm.className = "lb-name";
-  nm.textContent = e.name || "Anonymous";
+  if (e.a){
+    var an = document.createElement("span");
+    an.className = "lb-animal";
+    an.textContent = e.a;
+    nm.appendChild(an);
+  }
+  nm.appendChild(document.createTextNode(e.name || "Anonymous"));
   if (mine){
     var tag = document.createElement("span");
     tag.className = "you-tag";
@@ -2337,7 +3378,7 @@ function buildLbRow(e, i){
 function renderBoard(){
   var list = $("lbList");
   if (!list) return;
-  [["lbTabWeek", "week"], ["lbTabPast", "past"], ["lbTabAll", "all"]].forEach(function(pair){
+  [["lbTabWeek", "week"], ["lbTabAll", "all"]].forEach(function(pair){
     var btn = $(pair[0]);
     if (!btn) return;
     var on = lbTab === pair[1];
@@ -2350,29 +3391,9 @@ function renderBoard(){
   list.innerHTML = "";
   you.innerHTML = "";
   you.hidden = true;
-  if (weekNav) weekNav.hidden = lbTab !== "past";
-  if (lbTab === "past"){
-    if (sub) sub.textContent = "Past weekly winners · Top 3 each week";
-    if (!weeklyWinners.length){
-      if (weekNav) weekNav.hidden = true;
-      var pe = document.createElement("li");
-      pe.className = "lb-empty";
-      pe.textContent = "No past winners yet — every Monday, the week just ended has its top 3 saved here for good.";
-      list.appendChild(pe);
-    } else {
-      /* one week at a time, newest first — the ‹ › arrows step through
-         the archived weeks; the index is clamped because a refresh can
-         land while the panel is open and change the list */
-      if (lbPastIdx < 0) lbPastIdx = 0;
-      if (lbPastIdx > weeklyWinners.length - 1) lbPastIdx = weeklyWinners.length - 1;
-      var w = weeklyWinners[lbPastIdx];
-      $("lbWeekLabel").textContent = weekLabel(w.week);
-      $("lbWeekCount").textContent = "Week " + (lbPastIdx + 1) + " of " + weeklyWinners.length;
-      $("lbWeekOlder").disabled = lbPastIdx >= weeklyWinners.length - 1;
-      $("lbWeekNewer").disabled = lbPastIdx <= 0;
-      w.top.forEach(function(e, i){ list.appendChild(buildLbRow(e, i)); });
-    }
-  } else if (lbTab === "all"){
+  /* the week cycler belongs to the weekly board only */
+  if (weekNav) weekNav.hidden = lbTab !== "week";
+  if (lbTab === "all"){
     if (sub) sub.textContent = "All-time Top 3 · Never resets";
     if (!allTimeTop.length){
       var ae = document.createElement("li");
@@ -2383,34 +3404,55 @@ function renderBoard(){
       allTimeTop.forEach(function(e, i){ list.appendChild(buildLbRow(e, i)); });
     }
   } else {
-    if (sub) sub.textContent = "Top 15 · " + weekLabel(boardWeek || currentWeekId()) + " · Resets Monday";
-    if (!globalBoard.length){
-      var empty = document.createElement("li");
-      empty.className = "lb-empty";
-      empty.textContent = "No scores this week yet — be the first champion!";
-      list.appendChild(empty);
+    /* weekly board: offset 0 is this week's live top 15; each step
+       back shows one archived week's top 3. The offset is clamped
+       because a refresh can land while the panel is open and change
+       the archive. */
+    if (lbWeekBack < 0) lbWeekBack = 0;
+    if (lbWeekBack > weeklyWinners.length) lbWeekBack = weeklyWinners.length;
+    var olderBtn = $("lbWeekOlder"), newerBtn = $("lbWeekNewer");
+    if (olderBtn) olderBtn.disabled = lbWeekBack >= weeklyWinners.length;
+    if (newerBtn) newerBtn.disabled = lbWeekBack <= 0;
+    if (lbWeekBack === 0){
+      $("lbWeekLabel").textContent = weekLabel(boardWeek || currentWeekId());
+      $("lbWeekCount").textContent = weeklyWinners.length
+        ? "This week · ‹ steps back through past weeks"
+        : "This week";
+      if (sub) sub.textContent = "Top 15 · " + weekLabel(boardWeek || currentWeekId()) + " · Resets Monday";
+      if (!globalBoard.length){
+        var empty = document.createElement("li");
+        empty.className = "lb-empty";
+        empty.textContent = "No scores this week yet — be the first champion!";
+        list.appendChild(empty);
+      } else {
+        globalBoard.forEach(function(e, i){ list.appendChild(buildLbRow(e, i)); });
+      }
+      /* the player's own standing, when their best isn't on the board:
+         the rank it would hold against the stored top 15 — beyond a full
+         board that can only be stated as "#16+", since lower scores are
+         not kept */
+      var onBoard = !!myName && globalBoard.some(function(e){ return e.name === myName && e.score === localBest; });
+      if (localBest > 0 && !onBoard){
+        var rank = 1;
+        globalBoard.forEach(function(e){ if (e.score > localBest) rank++; });
+        var rankTxt = rank > BOARD_SIZE ? "#" + (BOARD_SIZE + 1) + "+" : "#" + rank;
+        var yl = document.createElement("span"); yl.textContent = "Your best";
+        var yr = document.createElement("span");
+        yr.textContent = localBest.toLocaleString("en-US") + " · Rank " + rankTxt;
+        you.appendChild(yl); you.appendChild(yr);
+        you.hidden = false;
+      } else if (localBest <= 0){
+        var ym = document.createElement("span");
+        ym.textContent = "Play a game to earn your place on the board!";
+        you.appendChild(ym);
+        you.hidden = false;
+      }
     } else {
-      globalBoard.forEach(function(e, i){ list.appendChild(buildLbRow(e, i)); });
-    }
-    /* the player's own standing, when their best isn't on the board:
-       the rank it would hold against the stored top 15 — beyond a full
-       board that can only be stated as "#16+", since lower scores are
-       not kept */
-    var onBoard = !!myName && globalBoard.some(function(e){ return e.name === myName && e.score === localBest; });
-    if (localBest > 0 && !onBoard){
-      var rank = 1;
-      globalBoard.forEach(function(e){ if (e.score > localBest) rank++; });
-      var rankTxt = rank > BOARD_SIZE ? "#" + (BOARD_SIZE + 1) + "+" : "#" + rank;
-      var yl = document.createElement("span"); yl.textContent = "Your best";
-      var yr = document.createElement("span");
-      yr.textContent = localBest.toLocaleString("en-US") + " · Rank " + rankTxt;
-      you.appendChild(yl); you.appendChild(yr);
-      you.hidden = false;
-    } else if (localBest <= 0){
-      var ym = document.createElement("span");
-      ym.textContent = "Play a game to earn your place on the board!";
-      you.appendChild(ym);
-      you.hidden = false;
+      var w = weeklyWinners[lbWeekBack - 1];
+      $("lbWeekLabel").textContent = weekLabel(w.week);
+      $("lbWeekCount").textContent = "Past week " + lbWeekBack + " of " + weeklyWinners.length;
+      if (sub) sub.textContent = "Top 3 · " + weekLabel(w.week) + " · That week's winners";
+      w.top.forEach(function(e, i){ list.appendChild(buildLbRow(e, i)); });
     }
   }
   $("lbNote").hidden = !boardStale;
@@ -2428,53 +3470,55 @@ var boardBtnOverEl = $("boardBtnOver");
 if (boardBtnOverEl) boardBtnOverEl.addEventListener("click", openLeaderboard);
 $("lbClose").addEventListener("click", closeLeaderboard);
 $("lbBackdrop").addEventListener("click", closeLeaderboard);
-/* board tabs: This Week / Past Winners / All Time */
-[["lbTabWeek", "week"], ["lbTabPast", "past"], ["lbTabAll", "all"]].forEach(function(pair){
+/* board tabs: This Week / All Time — switching back to This Week
+   always lands on the current week */
+[["lbTabWeek", "week"], ["lbTabAll", "all"]].forEach(function(pair){
   var btn = $(pair[0]);
   if (btn) btn.addEventListener("click", function(){
     if (lbTab === pair[1]) return;
     lbTab = pair[1];
-    if (lbTab === "past") lbPastIdx = 0; /* always land on the newest archived week */
+    if (lbTab === "week") lbWeekBack = 0;
     renderBoard();
     if (soundOn) sfx.ui();
   });
 });
-/* Past Winners week cycler: ‹ steps to older weeks, › back to newer
-   ones; renderBoard disables each arrow at its end of the archive */
+/* week cycler on the weekly board: ‹ steps back one week (0 = this
+   week's top 15, each further step an older week's top 3), › steps
+   forward again; renderBoard disables each arrow at its end */
 $("lbWeekOlder").addEventListener("click", function(){
-  if (lbPastIdx < weeklyWinners.length - 1){ lbPastIdx++; renderBoard(); if (soundOn) sfx.ui(); }
+  if (lbWeekBack < weeklyWinners.length){ lbWeekBack++; renderBoard(); if (soundOn) sfx.ui(); }
 });
 $("lbWeekNewer").addEventListener("click", function(){
-  if (lbPastIdx > 0){ lbPastIdx--; renderBoard(); if (soundOn) sfx.ui(); }
+  if (lbWeekBack > 0){ lbWeekBack--; renderBoard(); if (soundOn) sfx.ui(); }
 });
-document.addEventListener("keydown", function(e){
-  if (lbOpen && e.key === "Escape"){ e.preventDefault(); closeLeaderboard(); }
-});
+/* the leaderboard's Escape-to-close lives in the single overlay
+   keyboard handler near the bottom of this script, with the other panels' */
 
 /* ================= first-time tutorial ================= */
 var LS_TUTORIAL = "tetoris_tutorial_seen_v1";
 var TUTORIAL_STEPS = [
   {
     selector: ".sound-rail",
-    label: "Step 1 of 4 · Top-left buttons",
+    label: "Step 1 of 3 · Top-left buttons",
     title: "These little buttons",
     atTop: false,
     html: '<ul class="tutorial-list">' +
-      '<li><span class="tut-icon">♪</span><span><b>Music</b> — tap to turn the background music on or off.</span></li>' +
-      '<li><span class="tut-icon">🔊</span><span><b>All sound</b> — tap to mute or unmute everything: music and sound effects together.</span></li>' +
-      '<li><span class="tut-icon">🎮</span><span><b>Hide controller</b> — tap to hide the buttons at the bottom if you prefer swiping &amp; tapping on the board. Tap it again to bring them back.</span></li>' +
-      '<li><span class="tut-icon">📳</span><span><b>Haptics</b> — a little buzz when a piece locks, a stronger one when lines clear, and a pulse on level up. Tap to turn it on or off. Android phones only — iPhones don\u2019t let web pages vibrate.</span></li>' +
-      '<li><span class="tut-icon">?</span><span><b>Help</b> — tap this yellow ? button any time to see this tour again.</span></li>' +
+      '<li><span class="tut-icon">🐻</span><span><b>Style &amp; profile</b> — tap the big animal circle at the very top to open your wardrobe: pick your profile animal, and change your blocks\u2019 material, the background and your board frame. Nothing is owned at the start — new looks unlock as you play, and the wardrobe shows your progress toward each one.</span></li>' +
+      '<li><span class="tut-icon rail-icon music">♪</span><span><b>Music</b> — tap to turn the background music on or off. This button is the music only.</span></li>' +
+      '<li><span class="tut-icon rail-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></span><span><b>Sound effects</b> — tap to turn the game\u2019s sound effects on or off. It does not touch the music — the music note and the speaker each work on their own, so you can keep one and mute the other.</span></li>' +
+      '<li><span class="tut-icon rail-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true" focusable="false"><path d="M7.6 5.5h8.8c3.1 0 5.6 2.6 5.6 5.9 0 .9-.2 1.7-.5 2.5l-1.1 3.4c-.4 1.2-1.9 1.6-2.9.8l-2.3-1.9c-.3-.3-.7-.4-1.1-.4h-4.2c-.4 0-.8.1-1.1.4l-2.3 1.9c-1 .8-2.5.4-2.9-.8L2.5 13.9C2.2 13.1 2 12.3 2 11.4 2 8.1 4.5 5.5 7.6 5.5zM6.9 8.2h1.8v1.9h1.4v1.8H8.7v1.9H6.9v-1.9H5.5v-1.8h1.4V8.2zm9.3.35a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1zm2.1 2.3a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1z"/></svg></span><span><b>Hide controller</b> — tap to hide the buttons at the bottom if you prefer swiping &amp; tapping on the board. Tap it again to bring them back.</span></li>' +
+      '<li><span class="tut-icon rail-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="10.2" y="6.5" width="3.6" height="11" rx="0.9" fill="currentColor" stroke="none"/><path d="M6.6 5 L4.2 8.5 L6.6 12 L4.2 15.5 L6.6 19"/><path d="M17.4 5 L19.8 8.5 L17.4 12 L19.8 15.5 L17.4 19"/></svg></span><span><b>Haptics</b> — the little rectangle with a zig-zag line on each side: a little buzz when a piece locks, a stronger one when lines clear, and a pulse on level up. Tap to turn it on or off. Android phones only — iPhones don\u2019t let web pages vibrate.</span></li>' +
+      '<li><span class="tut-icon rail-icon help">?</span><span><b>Help</b> — tap this ? button any time to see this tour again.</span></li>' +
       '</ul>'
   },
   {
     selector: "aside.panel",
-    label: "Step 2 of 4 · Info bar",
+    label: "Step 2 of 3 · Info bar",
     title: "Scores, next piece & hold",
     atTop: false,
     html: '<ul class="tutorial-list">' +
-      '<li><span class="tut-icon">Global</span><span><b>Global Hi Score</b> — the highest score this week across everyone, and who holds it. The board resets every Monday, and each week\u2019s top 3 are kept forever on the Past Winners board.</span></li>' +
-      '<li><span class="tut-icon">🏆</span><span><b>Leaderboard</b> — tap the Global Hi Score any time to open it. It has three boards: This Week\u2019s Top 15, Past Winners (every week\u2019s top 3) and the All-Time Top 3. Number 1 wears the crown on gold, number 2 is silver and number 3 is bronze.</span></li>' +
+      '<li><span class="tut-icon">Global</span><span><b>Global Hi Score</b> — the highest score this week across everyone, and who holds it. The board resets every Monday, and each week\u2019s top 3 are kept forever — step back through past weeks with the \u2039 arrow on the leaderboard.</span></li>' +
+      '<li><span class="tut-icon">🏆</span><span><b>Leaderboard</b> — tap the Global Hi Score any time to open it. It has two boards: This Week \u2014 the live Top 15, with a \u2039 arrow that steps back one week at a time to each past week\u2019s Top 3 winners \u2014 and the All-Time Top 3. Number 1 wears the crown on gold, number 2 is silver and number 3 is bronze.</span></li>' +
       '<li><span class="tut-icon">Local</span><span><b>Local Hi Score</b> — the best score on this device.</span></li>' +
       '<li><span class="tut-icon">Score</span><span><b>Score</b> — your score in the game you are playing now.</span></li>' +
       '<li><span class="tut-icon">Next</span><span><b>Next</b> — the piece that will fall after this one, so you can plan ahead.</span></li>' +
@@ -2484,7 +3528,7 @@ var TUTORIAL_STEPS = [
   },
   {
     selector: ".board-wrap",
-    label: "Step 3 of 4 · Playing field",
+    label: "Step 3 of 3 · Playing field",
     title: "The playing field",
     atTop: false,
     html: '<p>Blocks fall from the top of this board.</p>' +
@@ -2492,24 +3536,87 @@ var TUTORIAL_STEPS = [
       '<li><span class="tut-icon">▦</span><span>Move and rotate each piece to fill a whole horizontal row — filled rows clear and score points.</span></li>' +
       '<li><span class="tut-icon">◇</span><span>The faint outline shows where the falling piece will land.</span></li>' +
       '<li><span class="tut-icon">!</span><span>If the stack reaches the top, the game is over — keep clearing lines to stay alive.</span></li>' +
+      '</ul><p style="margin-top:8px">One more thing before you play — next, pick how you want to control the pieces.</p>'
+  }
+];
+/* ---------- control-scheme tutorials ----------
+   Shown right after the player picks Touch or Buttons in the
+   control-choice card (first game only, or on a ? replay). Same
+   spotlight frame, same Next / Back / dots as the main tour — only
+   the steps differ. Touch hides the button bar first, so every
+   gesture happens on the board itself; Buttons walks the D-pad,
+   then A, then B, one part of the controller at a time. */
+var TOUCH_STEPS = [
+  {
+    selector: ".board-wrap",
+    label: "Touch controls · Step 1 of 3",
+    title: "Swipe sideways to move",
+    atTop: false,
+    html: '<p>The button bar is hidden — everything happens right here on the board.</p>' +
+      '<ul class="tutorial-list">' +
+      '<li><span class="tut-icon">◀ ▶</span><span><b>Swipe left or right</b> — drag your finger across the board and the piece slides with it, one column per step.</span></li>' +
+      '<li><span class="tut-icon">↔</span><span>Keep dragging to move several columns in one swipe.</span></li>' +
       '</ul>'
   },
   {
-    selector: "#controlsDock",
-    label: "Step 4 of 4 · Controller",
-    title: "The controller at the bottom",
+    selector: ".board-wrap",
+    label: "Touch controls · Step 2 of 3",
+    title: "Swipe down & tap",
+    atTop: false,
+    html: '<ul class="tutorial-list">' +
+      '<li><span class="tut-icon">▼</span><span><b>Swipe down</b> — drag downwards to soft drop: the piece comes down faster while you hold the swipe.</span></li>' +
+      '<li><span class="tut-icon">⬇</span><span><b>Quick flick down</b> — a fast, short flick drops the piece straight down instantly (hard drop).</span></li>' +
+      '<li><span class="tut-icon">↻</span><span><b>Tap the board</b> — one quick tap rotates the piece.</span></li>' +
+      '</ul>'
+  },
+  {
+    selector: "#holdSection",
+    label: "Touch controls · Step 3 of 3",
+    title: "Tap Hold to hold / swap",
+    atTop: false,
+    html: '<ul class="tutorial-list">' +
+      '<li><span class="tut-icon">Hold</span><span><b>Tap this Hold box</b> — it saves the falling piece for later, or swaps it with the one already saved.</span></li>' +
+      '<li><span class="tut-icon">1×</span><span>Once per falling piece only — after that the box greys out until the next piece falls.</span></li>' +
+      '</ul><p style="margin-top:8px">That\u2019s touch — your game starts as soon as you tap the button below. Have fun!</p>'
+  }
+];
+var BUTTON_STEPS = [
+  {
+    selector: ".dpad",
+    label: "Button controls · Step 1 of 3",
+    title: "The D-pad moves the piece",
     atTop: true,
     html: '<ul class="tutorial-list">' +
-      '<li><span class="tut-icon">◀ ▶</span><span><b>D-pad left / right</b> — move the piece sideways.</span></li>' +
-      '<li><span class="tut-icon">▼</span><span><b>D-pad down</b> — soft drop: bring the piece down faster.</span></li>' +
-      '<li><span class="tut-icon">▲</span><span><b>D-pad up</b> — hard drop: drop the piece straight down instantly.</span></li>' +
-      '<li><span class="tut-icon">B</span><span><b>B · Hold</b> — hold the current piece, or swap it with the one in Hold. Once per piece only — it locks until the next piece falls.</span></li>' +
-      '<li><span class="tut-icon">A</span><span><b>A · Rotate</b> — rotate the piece.</span></li>' +
-      '<li><span class="tut-icon">⏯</span><span><b>Start / Pause &amp; Reset</b> — in the middle: start or pause the game, or reset to start again.</span></li>' +
-      '</ul><p style="margin-top:8px">That\u2019s it — tap Start on the board when you\u2019re ready. Have fun!</p>'
+      '<li><span class="tut-icon">◀ ▶</span><span><b>Left / right</b> — move the piece sideways. Hold to keep sliding.</span></li>' +
+      '<li><span class="tut-icon">▼</span><span><b>Down</b> — soft drop: bring the piece down faster while held.</span></li>' +
+      '<li><span class="tut-icon">▲</span><span><b>Up</b> — hard drop: drop the piece straight down instantly.</span></li>' +
+      '</ul>'
+  },
+  {
+    selector: "#tcRotate",
+    label: "Button controls · Step 2 of 3",
+    title: "A — Rotate",
+    atTop: true,
+    html: '<ul class="tutorial-list">' +
+      '<li><span class="tut-icon">A</span><span><b>A · Rotate</b> — the big pink button on the right. Tap it to rotate the falling piece.</span></li>' +
+      '</ul>'
+  },
+  {
+    selector: "#tcHold",
+    label: "Button controls · Step 3 of 3",
+    title: "B — Hold / swap",
+    atTop: true,
+    html: '<ul class="tutorial-list">' +
+      '<li><span class="tut-icon">B</span><span><b>B · Hold</b> — the blue button on the left. It saves the falling piece for later, or swaps it with the one in Hold.</span></li>' +
+      '<li><span class="tut-icon">1×</span><span>Once per falling piece only — after that it greys out until the next piece falls.</span></li>' +
+      '</ul><p style="margin-top:8px">That\u2019s buttons — your game starts as soon as you tap the button below. Have fun!</p>'
   }
 ];
 var tutorialIdx = 0, tutorialOpen = false, tutorialTarget = null;
+var activeTutorialSteps = TUTORIAL_STEPS; /* the step list the card is walking right now */
+var tutorialPhase = "main"; /* main | touch | buttons */
+var tutorialOnFinish = null; /* runs once when the current step list is finished or skipped */
+var controlChoiceOpen = false;
 function tutorialWasSeen(){
   try{ return localStorage.getItem(LS_TUTORIAL) === "1"; }catch(e){ return false; }
 }
@@ -2537,8 +3644,8 @@ function updateTutorialSpotlight(){
 window.addEventListener("resize", function(){ if (tutorialOpen) updateTutorialSpotlight(); });
 window.addEventListener("scroll", function(){ if (tutorialOpen) updateTutorialSpotlight(); }, true);
 function showTutorialStep(i){
-  tutorialIdx = Math.max(0, Math.min(TUTORIAL_STEPS.length - 1, i));
-  var step = TUTORIAL_STEPS[tutorialIdx];
+  tutorialIdx = Math.max(0, Math.min(activeTutorialSteps.length - 1, i));
+  var step = activeTutorialSteps[tutorialIdx];
   clearTutorialHighlight();
   var el = document.querySelector(step.selector);
   if (el){
@@ -2550,7 +3657,7 @@ function showTutorialStep(i){
        vertical one — re-anchored the whole UI sideways between step 1
        (target on the left) and step 2 (target on the right). The page
        is scroll-locked for the whole tour (see openTutorial) and all
-       four targets sit in the stage at the top of the page, so no
+       three targets sit in the stage at the top of the page, so no
        scrolling is needed: just place the frame over the target in the
        same frame as the highlight change. */
     updateTutorialSpotlight();
@@ -2561,38 +3668,115 @@ function showTutorialStep(i){
   $("tutorialBody").innerHTML = step.html;
   $("tutorialCard").classList.toggle("at-top", !!step.atTop);
   $("tutorialBack").disabled = tutorialIdx === 0;
-  $("tutorialNext").textContent = tutorialIdx === TUTORIAL_STEPS.length - 1 ? "Done — let's play!" : "Next";
+  var isLast = tutorialIdx === activeTutorialSteps.length - 1;
+  /* the main tour's last step hands over to the control picker; a
+     control tutorial's last step starts the game immediately */
+  $("tutorialNext").textContent = !isLast ? "Next"
+    : tutorialPhase === "main" ? "Next — pick your controls"
+    : "Start playing!";
+  $("tutorialSkip").textContent = tutorialPhase === "main" ? "Skip tour" : "Skip";
   var dots = $("tutorialDots");
   dots.innerHTML = "";
-  TUTORIAL_STEPS.forEach(function(_, di){
+  activeTutorialSteps.forEach(function(_, di){
     var s = document.createElement("span");
     if (di === tutorialIdx) s.className = "active";
     dots.appendChild(s);
   });
 }
-function openTutorial(){
+function lockTutorialScroll(on){
+  document.documentElement.classList.toggle("tut-lock", on);
+  document.body.classList.toggle("tut-lock", on);
+}
+function openTutorialSteps(steps, phase, onFinish){
+  activeTutorialSteps = steps;
+  tutorialPhase = phase;
+  tutorialOnFinish = onFinish || null;
   tutorialOpen = true;
   /* freeze the page for the whole tour: with scrolling locked, nothing
      can move the stage between steps — no scrollbar appearing or
      disappearing, no horizontal pan on narrow screens, no scroll jump */
-  document.documentElement.classList.add("tut-lock");
-  document.body.classList.add("tut-lock");
+  lockTutorialScroll(true);
   $("tutorialBackdrop").hidden = false;
   $("tutorialCard").hidden = false;
   showTutorialStep(0);
 }
+/* the main 3-step tour. With chainToChoice (a first game, or a ?
+   replay) finishing or skipping it opens the control picker next,
+   instead of dropping the player back on the start screen. */
+function openTutorial(chainToChoice){
+  openTutorialSteps(TUTORIAL_STEPS, "main", chainToChoice ? showControlChoice : null);
+}
 function closeTutorial(){
+  var onFinish = tutorialOnFinish;
+  tutorialOnFinish = null;
   tutorialOpen = false;
   clearTutorialHighlight();
-  document.documentElement.classList.remove("tut-lock");
-  document.body.classList.remove("tut-lock");
   $("tutorialBackdrop").hidden = true;
   $("tutorialCard").hidden = true;
-  tutorialMarkSeen();
+  if (tutorialPhase === "main") tutorialMarkSeen();
+  tutorialPhase = "main";
+  activeTutorialSteps = TUTORIAL_STEPS;
+  if (onFinish){ onFinish(); return; }
+  lockTutorialScroll(false);
 }
+/* ---------- control-choice onboarding ----------
+   First game only: gated by LS_CONTROL_ONBOARDING, so once a player
+   has picked a scheme (or kept their current one) it never
+   auto-shows again. Picking a scheme applies it at once — Touch
+   hides the button bar, Buttons shows it — remembers it on the
+   device, runs that scheme's spotlight tutorial, and when that
+   tutorial ends the game starts immediately with the chosen scheme:
+   no return to the "Ready to play?" screen, no extra Start tap. */
+function controlOnboardingSeen(){
+  try{ return localStorage.getItem(LS_CONTROL_ONBOARDING) === "1"; }catch(e){ return false; }
+}
+function controlOnboardingMarkSeen(){
+  try{ localStorage.setItem(LS_CONTROL_ONBOARDING, "1"); }catch(e){ /* in-memory only this session */ }
+}
+function showControlChoice(){
+  controlChoiceOpen = true;
+  lockTutorialScroll(true);
+  /* "Keep my current controls" only makes sense when a scheme was
+     already picked on this device (a ? replay) */
+  var hasScheme = false;
+  try{ hasScheme = !!localStorage.getItem(LS_CONTROL_CHOICE); }catch(e){}
+  $("controlChoiceKeep").hidden = !hasScheme;
+  $("controlChoiceBackdrop").hidden = false;
+  $("controlChoiceCard").hidden = false;
+}
+function hideControlChoice(){
+  controlChoiceOpen = false;
+  $("controlChoiceBackdrop").hidden = true;
+  $("controlChoiceCard").hidden = true;
+}
+function startGameAfterOnboarding(){
+  lockTutorialScroll(false);
+  /* straight into a running game with the chosen scheme already
+     applied — unless a game is somehow already running (a ? replay
+     paused one), in which case just hand it back unpaused */
+  if (state === "playing" || state === "paused") togglePause(false);
+  else startGame();
+}
+function finishControlOnboarding(){
+  controlOnboardingMarkSeen();
+  startGameAfterOnboarding();
+}
+function pickControlScheme(scheme){
+  if (soundOn) sfx.ui();
+  setControlScheme(scheme); /* applies + remembers the scheme at once */
+  hideControlChoice();
+  openTutorialSteps(scheme === "touch" ? TOUCH_STEPS : BUTTON_STEPS, scheme === "touch" ? "touch" : "buttons", finishControlOnboarding);
+}
+$("chooseTouchBtn").addEventListener("click", function(){ pickControlScheme("touch"); });
+$("chooseButtonsBtn").addEventListener("click", function(){ pickControlScheme("buttons"); });
+$("controlChoiceKeep").addEventListener("click", function(){
+  if (soundOn) sfx.ui();
+  hideControlChoice();
+  finishControlOnboarding();
+});
 $("tutorialNext").addEventListener("click", function(){
   if (soundOn) sfx.ui();
-  if (tutorialIdx >= TUTORIAL_STEPS.length - 1) closeTutorial();
+  if (tutorialIdx >= activeTutorialSteps.length - 1) closeTutorial();
   else showTutorialStep(tutorialIdx + 1);
 });
 $("tutorialBack").addEventListener("click", function(){
@@ -2600,22 +3784,52 @@ $("tutorialBack").addEventListener("click", function(){
   showTutorialStep(tutorialIdx - 1);
 });
 $("tutorialSkip").addEventListener("click", function(){ closeTutorial(); });
+/* ONE keyboard handler for every overlay that can sit above the game —
+   the control picker, the tour, the wardrobe and the leaderboard.
+   It is registered after the game-keys handler on purpose: that
+   handler checks these same open flags and ignores the key while any
+   overlay is up, so an Escape that closes a panel here can never fall
+   through and also resume the game the panel had paused. (The
+   wardrobe and leaderboard used to each register their own Escape
+   listener earlier in the script; the wardrobe's ran BEFORE the game
+   handler, so closing the wardrobe with Escape also unpaused the
+   game behind it.) */
 document.addEventListener("keydown", function(e){
-  if (!tutorialOpen) return;
-  if (e.key === "Escape"){ e.preventDefault(); closeTutorial(); }
-  else if (e.key === "Enter"){ e.preventDefault(); if (tutorialIdx >= TUTORIAL_STEPS.length - 1) closeTutorial(); else showTutorialStep(tutorialIdx + 1); }
+  if (controlChoiceOpen){
+    if (e.key === "Escape"){ e.preventDefault(); hideControlChoice(); finishControlOnboarding(); }
+    return;
+  }
+  if (tutorialOpen){
+    if (e.key === "Escape"){ e.preventDefault(); closeTutorial(); }
+    else if (e.key === "Enter"){ e.preventDefault(); if (tutorialIdx >= activeTutorialSteps.length - 1) closeTutorial(); else showTutorialStep(tutorialIdx + 1); }
+    return;
+  }
+  if (wdOpen && e.key === "Escape"){ e.preventDefault(); closeWardrobe(); return; }
+  if (lbOpen && e.key === "Escape"){ e.preventDefault(); closeLeaderboard(); }
 });
 
 /* ================= init ================= */
 loadScores();
+loadStats();   /* lifetime stats — the wardrobe unlock progress */
+loadStyle();   /* unlocked items + the style currently worn */
+applyStyle();  /* paint the background overlay and board frame */
+refreshCrowns(); /* crowns already visible in the cached winners count silently */
 fetchGlobal(); /* pull the shared champion from the stores */
+loadControlScheme(); /* start with the control scheme this device picked last time */
 resetGame();
 drawSide();
 updateHUD();
 updateHapticsBtn();
-/* first-time players get the guided tour — shown once, then remembered on this device */
+/* first-time players get the guided tour — shown once, then remembered
+   on this device — followed on a first game by the control picker and
+   its scheme tutorial, which drops straight into a running game.
+   A player who already saw the tour before the picker existed gets
+   the picker once, on its own; after that the onboarding flag keeps
+   it from ever auto-showing again. */
 if (!tutorialWasSeen()){
-  setTimeout(function(){ if (!tutorialOpen && state === "ready") openTutorial(); }, 400);
+  setTimeout(function(){ if (!tutorialOpen && !controlChoiceOpen && state === "ready") openTutorial(true); }, 400);
+} else if (!controlOnboardingSeen()){
+  setTimeout(function(){ if (!tutorialOpen && !controlChoiceOpen && state === "ready") showControlChoice(); }, 400);
 }
 </script>
   </body>
