@@ -593,11 +593,11 @@
       .duel-status.live{ background:rgba(240,100,35,.16); border-color:#f06423; color:#c24a12; }
       @media (prefers-color-scheme: dark){ .duel-status.live{ color:#ffb287; } }
       .duel-note{ font-size:.84rem; font-weight:700; color:var(--muted); line-height:1.45; margin:0 0 10px; }
-      /* live countdown to the next duel, directly under the
-         "Next duel: …" line — d:hh:mm:ss, ticking every second */
+      /* live countdown to the next duel — d:hh:mm:ss,
+         ticking every second */
       .duel-countdown{
         text-align:center; border:2px solid var(--panel-edge); background:var(--chip);
-        border-radius:14px; padding:9px 12px 11px; margin:-2px 0 12px;
+        border-radius:14px; padding:9px 12px 11px; margin:0 0 12px;
       }
       .duel-countdown-label{
         font-size:.62rem; font-weight:900; letter-spacing:.13em; text-transform:uppercase;
@@ -1294,6 +1294,14 @@ function nextDuelFriday(){
   else f.setDate(f.getDate() + 7); /* Mon–Thu: fridayOf is last week's Friday, so +7 is the coming one */
   return f;
 }
+/* when the current duel's battle ends: the window is Fri 00:00 –
+   Sun 23:59, so it closes at the Monday 00:00 right after this
+   weekend's Friday */
+function currentDuelEnd(){
+  var end = duelFridayOf(new Date());
+  end.setDate(end.getDate() + 3); /* Friday 00:00 + 3 days = Monday 00:00 */
+  return end;
+}
 function duelWeekendLabel(w){
   var p = String(w || "").split("-");
   if (p.length !== 3) return "";
@@ -1324,6 +1332,8 @@ function normalizeDuel(list){
     var o = { w:w, name:n, score:s, team:team };
     var av = cleanAnimal(e.a);
     if (av) o.a = av;
+    var rts = Number(e.ts); /* when the run was recorded, if the entry carries it */
+    if (isFinite(rts) && rts > 0) o.ts = rts;
     byKey[key] = o;
   });
   var all = Object.keys(byKey).map(function(k){ return byKey[k]; });
@@ -1353,7 +1363,11 @@ function myDuelRun(w){
   if (myName){
     var found = null;
     duelEntries.forEach(function(e){ if (e.w === w && e.name === myName) found = e; });
-    if (found) return { w:w, team:found.team, score:found.score, name:found.name };
+    if (found){
+      var fr = { w:w, team:found.team, score:found.score, name:found.name };
+      if (found.ts) fr.ts = found.ts;
+      return fr;
+    }
   }
   return null;
 }
@@ -1362,6 +1376,8 @@ function loadDuelMy(){
     var d = JSON.parse(localStorage.getItem(LS_DUEL_MY) || "null");
     if (d && /^\d{4}-\d{2}-\d{2}$/.test(d.w || "") && (d.team === "A" || d.team === "B")){
       duelMy = { w:d.w, team:d.team, score:cleanScore(d.score), name:cleanChampionName(d.name) };
+      var dts = Number(d.ts);
+      if (isFinite(dts) && dts > 0) duelMy.ts = dts;
     }
   }catch(e){ /* no local record — the shared entries still count */ }
 }
@@ -1709,6 +1725,7 @@ function pushBoard(boardToPush, allTimeToPush){
   var duelPayload = duelEntries.map(function(e){
     var o = { w:e.w, n:e.name, s:e.score, t:e.team };
     if (e.a) o.a = e.a;
+    if (e.ts) o.ts = e.ts;
     return o;
   });
   var wk = currentWeekId();
@@ -3671,9 +3688,10 @@ function gameOver(){
     duelMode = false; duelRng = null;
     var dw = currentDuelWeekendId();
     var dName = duelRunName || myName || "Anonymous";
-    var dEntry = { w:dw, name:dName, score:score, team:duelRunTeam === "B" ? "B" : "A" };
+    var dTs = Date.now(); /* the moment this run was recorded — shown back on the duel panel */
+    var dEntry = { w:dw, name:dName, score:score, team:duelRunTeam === "B" ? "B" : "A", ts:dTs };
     if (styleSel.animal) dEntry.a = styleSel.animal;
-    duelMy = { w:dw, team:dEntry.team, score:score, name:dName };
+    duelMy = { w:dw, team:dEntry.team, score:score, name:dName, ts:dTs };
     saveDuelMy();
     duelEntries = normalizeDuel(duelEntries.concat([dEntry]));
     saveGlobalCache();
@@ -4394,7 +4412,7 @@ $("lbWeekNewer").addEventListener("click", function(){
 /* ================= weekend duel panel =================
    Opened from the crossed-swords button in the left rail. Three
    faces, decided by the device clock and this player's record:
-   • live + no run yet — pick Team A or Team B (names only, no
+   • live + no run yet — pick Team Cong Cong or Team Bearly Fit (names only, no
      counts or averages), then one seeded run;
    • live + run recorded — "already recorded", with only this
      player's own score. No standings at all while the duel is
@@ -4407,10 +4425,11 @@ $("lbWeekNewer").addEventListener("click", function(){
    not punished against a 3-player team. Nobody plays at the same
    time: runs land whenever each player gets to them inside the
    window. */
-/* ---------- next-duel countdown ----------
-   A live d:hh:mm:ss countdown to the next duel's Friday 00:00,
-   shown under the "Next duel: …" line in the panel's outside-the-
-   window face. One 1-second timer at a time: every renderDuel()
+/* ---------- duel countdowns ----------
+   A live d:hh:mm:ss countdown, ticking every second: to the next
+   duel's Friday 00:00 on the panel's outside-the-window face, and
+   to the battle's end (Sunday 23:59) on the live pick and
+   recorded faces. One 1-second timer at a time: every renderDuel()
    and every closeDuel() stops the previous one, so re-renders
    (the panel re-renders when the shared board refresh lands)
    never stack timers. When it reaches zero the duel has gone
@@ -4477,6 +4496,64 @@ function duelEl(tag, cls, text){
   if (text != null) el.textContent = text;
   return el;
 }
+/* display names for the two teams — the stored values stay "A"/"B"
+   everywhere (shared record, on-device run), only the words shown
+   to players use the names */
+function duelTeamName(team){
+  return team === "B" ? "Team Bearly Fit" : "Team Cong Cong";
+}
+/* when a recorded run happened, for the recorded face's meta line:
+   "Sat 28 Nov, 9:41 pm" in the device's own local time */
+function duelRecordedWhen(ts){
+  var d = new Date(ts);
+  var days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  var h = d.getHours(), ap = h < 12 ? "am" : "pm", h12 = h % 12;
+  if (h12 === 0) h12 = 12;
+  var m = d.getMinutes();
+  return days[d.getDay()] + " " + d.getDate() + " " + MONTHS_SHORT[d.getMonth()] + ", " +
+    h12 + ":" + (m < 10 ? "0" : "") + m + " " + ap;
+}
+/* the one line under a recorded score: who played it, and when
+   the run was recorded (older runs carry no time — the line
+   simply leaves it off) */
+function duelRecordedMeta(run){
+  var meta = (run.name || "You");
+  if (run.ts) meta += " · Recorded " + duelRecordedWhen(run.ts);
+  return meta;
+}
+/* the results face's winner section: just the winning team's
+   name and its winning score (the team average) — no dates, no
+   versus line. A draw shows "Draw" and the shared average. */
+function duelWinnerBox(body, entries){
+  var avgA = duelTeamAvg(entries, "A"), avgB = duelTeamAvg(entries, "B");
+  var box = duelEl("div", "duel-recorded");
+  if (avgA !== null && avgB !== null && avgA === avgB){
+    box.appendChild(duelEl("div", "dr-big", "🤝 Draw"));
+    box.appendChild(duelEl("div", "dr-score", avgA.toLocaleString("en-US")));
+  } else {
+    var winTeam = (avgB === null || (avgA !== null && avgA > avgB)) ? "A" : "B";
+    var winAvg = winTeam === "A" ? avgA : avgB;
+    box.appendChild(duelEl("div", "dr-big", "🏆 " + duelTeamName(winTeam)));
+    box.appendChild(duelEl("div", "dr-score", winAvg.toLocaleString("en-US")));
+  }
+  body.appendChild(box);
+}
+/* the "Battle ends in" countdown block for the live faces (team
+   pick + recorded): same framed block as
+   the next-duel countdown, ticking every second in d:hh:mm:ss
+   via the shared one-timer machinery — when it reaches zero the
+   panel re-renders into the results face on its own */
+function duelEndsCountdown(body, target){
+  var cd = duelEl("div", "duel-countdown");
+  cd.appendChild(duelEl("div", "duel-countdown-label", "Battle ends in"));
+  var cdValue = duelEl("div", "duel-countdown-value", formatDuelCountdown(target.getTime() - Date.now()));
+  cdValue.setAttribute("role", "timer");
+  cdValue.setAttribute("aria-label", "Countdown to the end of this duel");
+  cd.appendChild(cdValue);
+  cd.appendChild(duelEl("div", "duel-countdown-units", "days : hours : minutes : seconds"));
+  body.appendChild(cd);
+  startDuelCountdown(cdValue, target);
+}
 /* one team's block in the standings: header with its average (and a
    WINNER tag when the weekend is finished and it won), then every
    player's score, best first — rows built with textContent only,
@@ -4486,7 +4563,7 @@ function duelTeamBlock(body, entries, team, finished){
     .sort(function(a, b){ return b.score - a.score; });
   var avg = duelTeamAvg(entries, team);
   var head = duelEl("div", "duel-team-head");
-  var nm = duelEl("span", null, "Team " + team);
+  var nm = duelEl("span", null, duelTeamName(team));
   head.appendChild(nm);
   if (finished && mine.length){
     var other = duelTeamAvg(entries, team === "A" ? "B" : "A");
@@ -4499,7 +4576,7 @@ function duelTeamBlock(body, entries, team, finished){
   head.appendChild(av);
   body.appendChild(head);
   if (!mine.length){
-    body.appendChild(duelEl("div", "duel-none", "Nobody has played for Team " + team + " yet."));
+    body.appendChild(duelEl("div", "duel-none", "Nobody has played for " + duelTeamName(team) + " yet."));
     return;
   }
   var list = duelEl("ul", "duel-list");
@@ -4534,31 +4611,25 @@ function renderDuel(){
   var live = isDuelLive();
   if (live){
     var w = currentDuelWeekendId();
-    var entries = duelEntriesFor(w);
-    var status = duelEl("div", "duel-status live", "⚔ LIVE — the battle is on!");
-    body.appendChild(status);
-    body.appendChild(duelEl("p", "duel-note",
-      duelWeekendLabel(w) + " · Ends Sunday 23:59. Everyone plays the exact same pieces this weekend, " +
-      "and each player gets ONE scored run. Your team's score is the average of its players' runs — " +
-      "but no standings are shown until the duel ends, to keep the suspense."));
     var mine = myDuelRun(w);
     if (mine){
+      /* recorded — just the recorded section: the score, who
+         played it, and when it was recorded. Nothing else. */
       var rec = duelEl("div", "duel-recorded");
       rec.appendChild(duelEl("div", "dr-big", "✓ Your run is already recorded"));
       rec.appendChild(duelEl("div", "dr-score", mine.score.toLocaleString("en-US")));
-      rec.appendChild(duelEl("div", "duel-note", "Team " + mine.team + " · " + (mine.name || "You") +
-        " — one run per player each weekend, so this score stands."));
+      rec.appendChild(duelEl("div", "duel-note", duelRecordedMeta(mine)));
       body.appendChild(rec);
-      body.appendChild(duelEl("p", "duel-note",
-        "That's all you get to see for now — no team standings, no other scores. " +
-        "The result is revealed after the duel closes on Sunday 23:59."));
+      duelEndsCountdown(body, currentDuelEnd());
       return;
     }
-    /* not played yet — name (if we don't know it) + team pick + start */
+    /* not played yet — one short instruction line, the two team
+       buttons, and Start Duel (plus a name field, but only when
+       we don't know the player's name yet) */
+    body.appendChild(duelEl("p", "duel-note",
+      "Everyone plays the same pieces — score this run once. Normal runs don't count."));
     var nameInput = null;
-    if (myName){
-      body.appendChild(duelEl("p", "duel-as", "Playing as " + (styleSel.animal ? styleSel.animal + " " : "") + myName));
-    } else {
+    if (!myName){
       var row = duelEl("div", "duel-name-row");
       nameInput = document.createElement("input");
       nameInput.type = "text";
@@ -4571,11 +4642,11 @@ function renderDuel(){
     var teams = duelEl("div", "duel-teams");
     /* team pick shows the names only — no player counts and no
        running averages while the duel is live (suspense rule) */
-    var btnA = duelEl("button", "duel-team-btn", "Team A");
+    var btnA = duelEl("button", "duel-team-btn", duelTeamName("A"));
     btnA.type = "button";
-    var btnB = duelEl("button", "duel-team-btn", "Team B");
+    var btnB = duelEl("button", "duel-team-btn", duelTeamName("B"));
     btnB.type = "button";
-    var startBtn = duelEl("button", "duel-start", "Pick a team to start");
+    var startBtn = duelEl("button", "duel-start", "⚔ Start Duel");
     startBtn.type = "button";
     startBtn.disabled = true;
     function pick(team){
@@ -4583,7 +4654,6 @@ function renderDuel(){
       btnA.classList.toggle("on", team === "A");
       btnB.classList.toggle("on", team === "B");
       startBtn.disabled = false;
-      startBtn.textContent = "⚔ Start my duel run — Team " + team;
       if (soundOn) sfx.ui();
     }
     btnA.addEventListener("click", function(){ pick("A"); });
@@ -4597,20 +4667,15 @@ function renderDuel(){
       startDuelRun(duelTeamPick, nm);
     });
     body.appendChild(startBtn);
-    body.appendChild(duelEl("p", "duel-note", "Normal games don't count — only this run does. You can play it any time before Sunday 23:59."));
-    body.appendChild(duelEl("p", "duel-note", "Standings stay hidden while the duel is live — you'll only see your own recorded score. Everything is revealed after Sunday 23:59."));
+    duelEndsCountdown(body, currentDuelEnd());
     return;
   }
   /* outside the window — the last finished duel's result */
   var lw = lastDuelWeekendId();
   var lEntries = duelEntriesFor(lw);
-  var status2 = duelEl("div", "duel-status", "The duel returns Friday 00:00");
-  body.appendChild(status2);
   var nf = nextDuelFriday();
-  body.appendChild(duelEl("p", "duel-note",
-    "Next duel: " + duelWeekendLabel(duelDateStr(nf)) + ". Pick a team, play one run on that weekend's shared pieces, " +
-    "and your team's average decides it."));
-  /* live countdown to that Friday 00:00, directly under the date */
+  /* live countdown to that Friday 00:00 — the only next-duel
+     indicator here; the countdown label and value say it all */
   var cd = duelEl("div", "duel-countdown");
   cd.appendChild(duelEl("div", "duel-countdown-label", "Next duel starts in"));
   var cdValue = duelEl("div", "duel-countdown-value", formatDuelCountdown(nf.getTime() - Date.now()));
@@ -4624,21 +4689,7 @@ function renderDuel(){
     body.appendChild(duelEl("p", "duel-note", "No duel was recorded last weekend (" + duelWeekendLabel(lw) + ") — be there for the next one!"));
     return;
   }
-  var avgA = duelTeamAvg(lEntries, "A"), avgB = duelTeamAvg(lEntries, "B");
-  var verdict;
-  if (avgA !== null && avgB !== null){
-    verdict = avgA === avgB ? "🤝 Last weekend was a draw — both teams averaged " + avgA.toLocaleString("en-US") + "!"
-      : "🏆 Team " + (avgA > avgB ? "A" : "B") + " won last weekend — average " +
-        Math.max(avgA, avgB).toLocaleString("en-US") + " vs " + Math.min(avgA, avgB).toLocaleString("en-US") + ".";
-  } else {
-    var onlyTeam = avgA !== null ? "A" : "B";
-    verdict = "🏆 Team " + onlyTeam + " won last weekend — the only team that played, averaging " +
-      (avgA !== null ? avgA : avgB).toLocaleString("en-US") + ".";
-  }
-  var rec2 = duelEl("div", "duel-recorded");
-  rec2.appendChild(duelEl("div", "dr-big", verdict));
-  rec2.appendChild(duelEl("div", "duel-note", duelWeekendLabel(lw) + " · Every player's score:"));
-  body.appendChild(rec2);
+  duelWinnerBox(body, lEntries);
   duelTeamBlock(body, lEntries, "A", true);
   duelTeamBlock(body, lEntries, "B", true);
 }
