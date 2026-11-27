@@ -10,7 +10,7 @@
          below pins scripts/styles to this page, fonts to Google Fonts, and
          network calls to those two stores, so injected markup or a
          tampered score record cannot load or phone out anywhere else. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self'; connect-src https://api.restful-api.dev https://extendsclass.com; manifest-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src https://api.restful-api.dev https://extendsclass.com; manifest-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'" />
     <meta name="referrer" content="no-referrer" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -174,10 +174,17 @@
       .icon-sound-btn{
         width:42px; height:42px; min-height:42px; border-radius:50%; cursor:pointer;
         border:2px solid var(--accent-deep); background:var(--accent); color:#fff;
-        box-shadow:var(--shadow); padding:0;
+        box-shadow:var(--shadow); padding:0; position:relative;
         display:flex; align-items:center; justify-content:center;
         font-size:1.15rem; line-height:1; touch-action:none;
       }
+      /* an invisible halo a few px wider than the pink circle: on
+         phones the circles are 36px with only 6px gaps, so a fast
+         tap landing just off the rim used to hit dead gap and do
+         nothing. The halo reaches 5px out — enough to cover the
+         gap, not enough to reach the neighbour's circle, so it
+         never steals a tap meant for the button next door. */
+      .icon-sound-btn::after{ content:""; position:absolute; inset:-5px; border-radius:50%; }
       /* profile avatar — a bigger circle at the very top of the rail,
          showing the animal picked in the wardrobe's Profile tab.
          Tapping it opens the wardrobe straight on that tab. It is a
@@ -222,7 +229,8 @@
       #tutorialBtn{
         font-family:"Baloo 2",sans-serif; font-weight:800; font-size:1.3rem; line-height:1;
       }
-      /* controller bar hidden by the 🎮 toggle — swipe & tap play instead */
+      /* controller bar hidden by the Controller toggle in the
+         Settings panel — swipe & tap play instead */
       .controller[hidden]{ display:none; }
       /* tappable Hold grid */
       .hold-tap{ cursor:pointer; }
@@ -308,23 +316,41 @@
       /* ---------- sticky dock: controller bar ----------
          The dock carries the sticky positioning for the controller bar,
          so it stays pinned to the bottom of the screen. Hiding the
-         controller with the 🎮 toggle hides #controllerBar inside it. */
+         controller (Settings panel) hides #controllerBar inside it. */
       .controls-dock{
         position:sticky; bottom:8px; z-index:30;
-        max-width:660px; margin:14px auto 0;
+        max-width:880px; margin:14px auto 0;
       }
-      /* ---------- controller-style controls — BIG touch targets ---------- */
+      /* ---------- controller-style controls — BIG touch targets ----------
+         ONE positioning model at every screen size, so the bar looks
+         and feels the same on any phone: the D-pad is anchored under
+         the left thumb and the A / B cluster under the right thumb
+         (space-between), each inset from its edge of the bar by the
+         SAME proportion — the 10% side padding below resolves against
+         the bar's own width, so the inset scales with the screen
+         instead of being a fixed 14px on a wide bar and a different
+         fixed value on a narrow one. The flex gap is only a floor so
+         the groups can never touch on the narrowest screens; the
+         visible middle gap is simply whatever bar width is left,
+         which is the part that is SUPPOSED to change with screen
+         size — the anchors, insets and proportions do not. (This
+         replaces the old split model — space-between on wide
+         screens, a centred pair with a fixed pixel gap under 760px —
+         which put the groups in wildly different places on
+         different-sized phones.) */
       .controller{
-        display:flex; align-items:center; justify-content:center; gap:14px;
+        display:flex; align-items:center; justify-content:space-between; gap:16px;
         touch-action:none;
         background:var(--panel);
         border:2px solid var(--panel-edge); border-radius:24px; box-shadow:var(--shadow);
-        padding:16px 14px;
+        padding:16px 10%;
       }
-      /* D-pad — left, scaled up for thumbs. Shifted 10% left
-         (a further 5% out from the earlier 5% shift — the first
-         shift was too subtle on Alson's screen) so the three
-         controller groups are not crowded together. The buttons
+      /* D-pad — left group, anchored under the left thumb (see the
+         positioning-model note on .controller above). Note the
+         D-pad circles overflow their grid box by ~9px a side, so
+         the visible gap between the circles is a little less than
+         the layout gap on paper.
+         The buttons
          sit on a grid whose tracks (88px) are narrower than the
          buttons themselves (106px), each button centred on its
          cell, so the cross pulls in tight: neighbouring circles
@@ -335,7 +361,7 @@
          square cells: their edges sat ~43px apart diagonally.) */
       .dpad{
         display:grid; grid-template-columns:repeat(3,88px); grid-template-rows:repeat(3,88px);
-        gap:0; flex:0 0 auto; transform:translateX(-10%);
+        gap:0; flex:0 0 auto;
         justify-items:center; align-items:center;
       }
       .dpad-btn{
@@ -346,30 +372,42 @@
         user-select:none; -webkit-user-select:none; touch-action:none; padding:0;
       }
       .dpad-btn:active, .dpad-btn.pressed{ transform:translateY(2px); border-bottom-width:2px; filter:brightness(1.3); }
-      /* start/pause + reset — a small column of pills in the middle
-         of the controller bar, stacked vertically between the D-pad
-         and the A / B buttons and centred top-to-bottom. The pills
-         sit in the space between the two button groups, which are
-         shifted 10% outward (D-pad left, A / B right) so the three
-         groups keep a comfortable gap. */
-      .mid-controls{ display:flex; flex-direction:column; gap:9px; align-items:center; justify-content:center; flex:0 1 auto; min-width:0; }
-      /* the column's own display:flex would beat the UA [hidden]
-         rule, so pin it — the 🎮 toggle hides the pills with the bar */
-      .mid-controls[hidden]{ display:none; }
-      .mid-btn{
-        font-family:"Baloo 2",sans-serif; font-weight:800; font-size:.70rem; letter-spacing:.06em;
-        cursor:pointer; border:2px solid var(--panel-edge); background:var(--chip); color:var(--ink);
-        border-radius:999px; padding:9px 11px; min-height:40px; box-shadow:none;
-        white-space:nowrap;
-        user-select:none; -webkit-user-select:none; touch-action:manipulation;
+      /* reset + start/pause — on the LEFT RAIL now, below the
+         other round buttons and split off by a divider, so no thumb
+         resting on the D-pad or A / B can hit them by accident
+         mid-game. They are the SAME pink circles as every other rail
+         button (.icon-sound-btn) — a circular-arrow reset glyph and
+         a play/pause glyph that swaps with the game state, no word
+         labels. They are deliberately NOT part of the controller
+         bar: they stay visible even when the bar is hidden for
+         swipe & tap play. Both keep the permanent "on" class like
+         the ? help button, so they never dim like a toggle. */
+      .rail-actions{
+        display:flex; flex-direction:column; gap:8px; align-items:center;
+        margin-top:2px; padding-top:10px; border-top:2px solid var(--panel-edge);
       }
-      .mid-btn.primary{ background:var(--accent); border-color:var(--accent-deep); color:#fff; }
-      .mid-btn:active{ transform:translateY(1px) scale(.97); }
-      /* A / B — right, scaled up for thumbs. Shifted 10% right,
-         mirroring the D-pad's 10% left shift (a further 5% out
-         from the earlier shift, which read as too subtle on
-         screen), to reopen the gap around the middle pills. */
-      .ab-cluster{ position:relative; width:206px; height:162px; flex:0 0 auto; transform:translateX(10%); }
+      /* ---------- settings panel ----------
+         The gear in the left rail opens this small top-left panel;
+         the Music, Sound, Haptics and Controller toggles live inside
+         it as labelled rows — the same buttons, ids and behaviour
+         they always had, just no longer crowding the rail. */
+      .lb-panel.settings-panel{ left:12px; transform:none; width:min(320px, calc(100vw - 24px)); }
+      .settings-row{ display:flex; align-items:center; gap:12px; padding:9px 2px; }
+      .settings-row + .settings-row{ border-top:1.5px solid var(--panel-edge); }
+      .settings-row .icon-sound-btn{ flex:0 0 auto; }
+      .settings-label{ flex:1 1 auto; min-width:0; font-weight:800; font-size:.95rem; text-align:left; line-height:1.25; }
+      .settings-sub{ display:block; font-size:.72rem; font-weight:700; color:var(--muted); margin-top:1px; }
+      .settings-state{ flex:0 0 auto; min-width:34px; text-align:right; font-family:"Baloo 2",sans-serif; font-weight:800; font-size:.82rem; color:var(--muted); }
+      .settings-state.on{ color:var(--good); }
+      /* A / B — right group, anchored under the right thumb. The
+         cluster keeps FIXED proportions at every breakpoint: its
+         width is always ~2.02x the button size and its height
+         ~1.59x, so A (top-right) and B (bottom-left) always sit on
+         the same diagonal — A offset ~1.02 button-widths right and
+         ~0.59 up from B. (The old per-breakpoint cluster sizes
+         drifted from that ratio — near-square on small phones — so
+         A ended up almost directly above B there.) */
+      .ab-cluster{ position:relative; width:206px; height:162px; flex:0 0 auto; }
       .ab-btn{
         position:absolute; width:102px; height:102px; min-height:102px; border-radius:50%; cursor:pointer;
         font-family:"Baloo 2",sans-serif; color:#fff;
@@ -444,16 +482,15 @@
         font-family:"Baloo 2",sans-serif; font-weight:800; font-size:.82rem; text-align:center;
       }
       /* rail-matching icons in the tour: the same white silhouettes on
-         pink circles as the left rail buttons themselves (music note,
-         speaker, gamepad, vibrate glyph, ?), so the tutorial shows the
-         buttons exactly as the player sees them beside the board */
+         pink circles as the left rail buttons themselves (gear, tree,
+         ?, crossed swords), so the tutorial shows the buttons exactly
+         as the player sees them beside the board */
       .tutorial-list .tut-icon.rail-icon{
         width:30px; height:30px; min-width:30px; border-radius:50%;
         background:var(--accent); border:2px solid var(--accent-deep); color:#fff;
         padding:0;
       }
       .tutorial-list .tut-icon.rail-icon svg{ display:block; }
-      .tutorial-list .tut-icon.rail-icon.music{ font-size:1.3rem; line-height:1; }
       .tutorial-list .tut-icon.rail-icon.help{ font-size:1.05rem; line-height:1; }
       .tutorial-list b{ font-weight:900; }
       .tutorial-actions{ display:flex; align-items:center; gap:8px; margin-top:12px; flex-wrap:wrap; }
@@ -1062,6 +1099,87 @@
 
       /* the player's animal, next to their name on the leaderboard */
       .lb-animal{ margin-right:6px; }
+      /* ---------- profile photos ----------
+         A player's uploaded photo (a tiny JPEG carried as a data URL
+         in the shared record) replaces their animal everywhere: the
+         rail circle, the Me hub header and the leaderboard rows. */
+      .avatar-photo{ width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; }
+      .avatar-photo[hidden]{ display:none; }
+      .wd-id-avatar .avatar-photo{ flex:0 0 auto; }
+      .lb-photo{ width:26px; height:26px; border-radius:50%; object-fit:cover; vertical-align:-7px; margin-right:6px; border:1.5px solid var(--panel-edge); }
+      /* the photo block at the top of the wardrobe's Profile tab */
+      .wd-photo-row{ display:flex; align-items:center; gap:12px; margin:0 0 6px; }
+      .wd-photo-preview{
+        width:64px; height:64px; min-height:64px; border-radius:50%; flex:0 0 auto; overflow:hidden;
+        border:2.5px solid var(--accent); background:var(--chip);
+        display:flex; align-items:center; justify-content:center; font-size:1.9rem; line-height:1;
+      }
+      .wd-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
+      .wd-photo-btns{ display:flex; flex-direction:column; gap:6px; flex:1 1 auto; }
+      .wd-photo-btn{
+        font-family:"Baloo 2",sans-serif; font-weight:800; font-size:.85rem; cursor:pointer;
+        border:2px solid var(--accent-deep); background:var(--accent); color:#fff;
+        border-radius:999px; padding:7px 12px; min-height:38px;
+      }
+      .wd-photo-btn.ghost{ background:var(--chip); border-color:var(--panel-edge); color:var(--ink); }
+      .wd-photo-btn:active{ transform:scale(.97); }
+      .wd-photo-status{ margin:2px 0 10px; font-size:.8rem; font-weight:700; color:var(--muted); line-height:1.45; }
+      .wd-photo-status:empty{ display:none; }
+      /* ---------- photo crop editor ----------
+         The picked image sits inside a circular window: drag to move
+         it, slide (or pinch) to zoom, then Use This Photo renders the
+         circle to a tiny JPEG for the shared record. */
+      .photo-stage-wrap{ display:flex; justify-content:center; margin:4px 0 12px; }
+      .photo-stage{
+        position:relative; width:248px; height:248px; border-radius:50%; overflow:hidden;
+        border:3px solid var(--accent); background:var(--chip); touch-action:none; cursor:grab;
+        flex:0 0 auto;
+      }
+      .photo-stage:active{ cursor:grabbing; }
+      .photo-stage img{ position:absolute; left:0; top:0; max-width:none; user-select:none; -webkit-user-select:none; -webkit-user-drag:none; pointer-events:none; }
+      .photo-zoom-row{ display:flex; align-items:center; gap:10px; margin:0 0 6px; }
+      .photo-zoom-row label{ font-size:.8rem; font-weight:800; color:var(--muted); flex:0 0 auto; }
+      .photo-zoom-row input[type="range"]{ flex:1 1 auto; accent-color:var(--accent); min-height:32px; }
+      .photo-name-row{ margin:0 0 10px; }
+      .photo-name-row label{ display:block; font-size:.8rem; font-weight:800; color:var(--muted); margin-bottom:5px; }
+      .photo-name-row input{
+        width:100%; box-sizing:border-box; font:inherit; font-weight:700; color:var(--ink);
+        background:var(--chip); border:2px solid var(--panel-edge); border-radius:12px; padding:9px 12px; min-height:44px;
+      }
+      .photo-actions{ display:flex; gap:8px; margin-top:10px; }
+      .photo-actions .wd-photo-btn{ flex:1 1 0; }
+      /* the crop editor opens FROM the Me page, so it must layer
+         ABOVE it: the shared .lb-backdrop / .lb-panel layers
+         (z-index 99 / 100) sit below the Me page's .wd-backdrop /
+         .wd-panel (109 / 110), which left the editor hidden behind
+         the Me page. The editor's backdrop and panel get their own
+         higher layer here — above the Me page and the confetti,
+         below only the unlock toast (130). */
+      #photoBackdrop{ z-index:119; }
+      .lb-panel.photo-panel{ z-index:121; }
+      /* ---------- photo loading spinner ----------
+         Reading a picked photo and saving it to the shared board
+         both take a moment (a file read + decode, then a store
+         write + read-back). This pill sits at the bottom centre,
+         above every panel, for either pause — so the wait reads
+         as loading, not as a hang. */
+      .photo-busy{
+        position:fixed; left:50%; bottom:calc(18px + env(safe-area-inset-bottom)); z-index:125;
+        transform:translateX(-50%);
+        display:flex; align-items:center; gap:9px;
+        background:var(--panel); color:var(--ink); border:2px solid var(--panel-edge);
+        border-radius:999px; padding:9px 16px 9px 12px;
+        font-weight:800; font-size:.85rem; white-space:nowrap;
+        box-shadow:0 12px 30px rgba(0,0,0,.30);
+      }
+      .photo-busy[hidden]{ display:none; }
+      .photo-spinner{
+        width:18px; height:18px; flex:0 0 auto; border-radius:50%;
+        border:3px solid var(--panel-edge); border-top-color:var(--accent-deep);
+        animation:photoSpin .7s linear infinite;
+      }
+      @keyframes photoSpin{ to{ transform:rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce){ .photo-spinner{ animation-duration:1.8s; } }
 
       /* ---------- responsive ---------- */
       @media (max-width:760px){
@@ -1094,49 +1212,55 @@
         .season-garland{ height:26px; top:-9px; }
         .stage{ padding-top:44px; }
         .overlay .big{ font-size:1.45rem; }
-        .controller{ padding:12px 10px; gap:8px; border-radius:20px; }
+        /* phones: SAME positioning model as the wide bar (see the
+           note on .controller above) — thumb-anchored space-between
+           with the same proportional 10% edge inset, NOT a centred
+           pair. Only the sizes step down here; the anchors and the
+           A / B proportions (cluster = ~2.02 x ~1.59 button sizes)
+           stay identical, so the layout is the same composition at
+           every width. */
+        .controller{ padding:12px 10%; gap:16px; border-radius:20px; }
         .dpad{ grid-template-columns:repeat(3,72px); grid-template-rows:repeat(3,72px); gap:0; }
         .dpad-btn{ width:86px; height:86px; min-height:86px; font-size:1.75rem; border-radius:50%; }
-        .ab-cluster{ width:178px; height:140px; }
+        .ab-cluster{ width:182px; height:143px; }
         .ab-btn{ width:90px; height:90px; min-height:90px; }
         .ab-btn .ab-letter{ font-size:1.65rem; }
-        .mid-btn{ font-size:.60rem; padding:8px 9px; }
       }
-      /* mid-size phones: the three groups still share one row, with
-         the pills stacked in the middle — the pill labels wrap onto
-         two lines rather than squeeze the D-pad or A / B buttons */
+      /* mid-size phones: the D-pad and A / B buttons still share
+         one row, shrunk a step so neither gets squeezed */
       @media (max-width:560px){
-        .controller{ gap:8px; }
-        .dpad{ grid-template-columns:repeat(3,66px); grid-template-rows:repeat(3,66px); }
+        .dpad{ grid-template-columns:repeat(3,62px); grid-template-rows:repeat(3,62px); }
         .dpad-btn{ width:80px; height:80px; min-height:80px; font-size:1.65rem; }
-        .ab-cluster{ width:158px; height:146px; }
+        .ab-cluster{ width:170px; height:134px; }
         .ab-btn{ width:84px; height:84px; min-height:84px; }
         .ab-btn .ab-letter{ font-size:1.5rem; }
-        .mid-btn{ font-size:.56rem; padding:7px 8px; white-space:normal; text-align:center; line-height:1.25; }
       }
-      @media (max-width:420px){
+      @media (max-width:440px){
         .panel{ width:84px; }
         #board{ width:54vw; }
-        .controller{ padding:10px 8px; gap:6px; }
-        .dpad{ grid-template-columns:repeat(3,62px); grid-template-rows:repeat(3,62px); }
+        /* the wider 10% edge inset leaves less room on narrow
+           phones, so the flex gap and the A / B cluster (same
+           ~1.28 width-to-height ratio) trim a few px here to keep
+           the cluster inside the bar instead of spilling past the
+           screen edge */
+        .controller{ padding:10px 10%; gap:10px; }
+        .dpad{ grid-template-columns:repeat(3,54px); grid-template-rows:repeat(3,54px); }
         .dpad-btn{ width:76px; height:76px; min-height:76px; font-size:1.55rem; }
-        .ab-cluster{ width:148px; height:140px; }
+        .ab-cluster{ width:156px; height:122px; }
         .ab-btn{ width:80px; height:80px; min-height:80px; }
         .ab-btn .ab-letter{ font-size:1.4rem; }
         .ab-btn small{ font-size:.54rem; }
-        .mid-btn{ font-size:.55rem; padding:7px 6px; letter-spacing:.02em; }
       }
       /* the narrowest phones: everything shrinks a step so the
-         D-pad, the middle pills and the A / B buttons still share
-         the one row without pushing anything off the bar */
+         D-pad and the A / B buttons still share the one row
+         without pushing anything off the bar */
       @media (max-width:380px){
-        .controller{ padding:10px 7px; gap:5px; }
-        .dpad{ grid-template-columns:repeat(3,58px); grid-template-rows:repeat(3,58px); }
-        .dpad-btn{ width:72px; height:72px; min-height:72px; font-size:1.5rem; }
-        .ab-cluster{ width:138px; height:132px; }
-        .ab-btn{ width:74px; height:74px; min-height:74px; }
+        .controller{ padding:10px 10%; }
+        .dpad{ grid-template-columns:repeat(3,50px); grid-template-rows:repeat(3,50px); }
+        .dpad-btn{ width:70px; height:70px; min-height:70px; font-size:1.5rem; }
+        .ab-cluster{ width:139px; height:109px; }
+        .ab-btn{ width:72px; height:72px; min-height:72px; }
         .ab-btn .ab-letter{ font-size:1.3rem; }
-        .mid-btn{ font-size:.52rem; padding:6px 5px; letter-spacing:0; }
       }
     </style>
   </head>
@@ -1211,14 +1335,22 @@
       <div class="stage">
         <!-- sound icon buttons — top left, beside the playing field -->
         <div class="sound-rail">
-          <button class="profile-avatar-btn is-empty" id="profileAvatarBtn" type="button" aria-label="No profile animal picked yet — open Me to pick one" title="Pick your profile animal"><span id="profileAvatarEmoji" aria-hidden="true">👤</span></button>
-          <button class="icon-sound-btn on" id="bgmBtn" type="button" aria-pressed="true" aria-label="Toggle background music" title="Background music">♪</button>
-          <button class="icon-sound-btn on" id="sideSoundBtn" type="button" aria-pressed="true" aria-label="Toggle sound effects" title="Sound effects"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></button>
-          <button class="icon-sound-btn on" id="ctrlToggleBtn" type="button" aria-pressed="true" aria-label="Hide on-screen controls" title="Hide controls — play with swipes &amp; taps"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true" focusable="false"><path d="M7.6 5.5h8.8c3.1 0 5.6 2.6 5.6 5.9 0 .9-.2 1.7-.5 2.5l-1.1 3.4c-.4 1.2-1.9 1.6-2.9.8l-2.3-1.9c-.3-.3-.7-.4-1.1-.4h-4.2c-.4 0-.8.1-1.1.4l-2.3 1.9c-1 .8-2.5.4-2.9-.8L2.5 13.9C2.2 13.1 2 12.3 2 11.4 2 8.1 4.5 5.5 7.6 5.5zM6.9 8.2h1.8v1.9h1.4v1.8H8.7v1.9H6.9v-1.9H5.5v-1.8h1.4V8.2zm9.3.35a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1zm2.1 2.3a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1z"/></svg></button>
-          <button class="icon-sound-btn on" id="hapticsBtn" type="button" aria-pressed="true" aria-label="Toggle haptics" title="Haptics"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="10.2" y="6.5" width="3.6" height="11" rx="0.9" fill="currentColor" stroke="none"/><path d="M6.6 5 L4.2 8.5 L6.6 12 L4.2 15.5 L6.6 19"/><path d="M17.4 5 L19.8 8.5 L17.4 12 L19.8 15.5 L17.4 19"/></svg></button>
+          <button class="profile-avatar-btn is-empty" id="profileAvatarBtn" type="button" aria-label="No profile animal picked yet — open Me to pick one" title="Pick your profile animal"><img class="avatar-photo" id="profileAvatarImg" alt="" hidden /><span id="profileAvatarEmoji" aria-hidden="true">👤</span></button>
+          <button class="icon-sound-btn on" id="settingsBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Open settings" title="Settings — music, sound, haptics &amp; controller"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.52-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.48.48 0 0 0-.47-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.52.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.52.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .52-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button>
           <button class="icon-sound-btn on" id="seasonBtn" type="button" aria-pressed="true" aria-label="Toggle festive decorations" title="Festive decorations on"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 2l2.6 3.6h-1.8l3.4 4.7h-2.4l3.6 5h-4.2V21h-2.4v-5.7H6.6l3.6-5H7.8l3.4-4.7H9.4z"/></svg></button>
           <button class="icon-sound-btn on" id="tutorialBtn" type="button" aria-label="Show how to play tutorial" title="How to play — show tutorial">?</button>
           <button class="icon-sound-btn on duel-btn" id="duelBtn" type="button" aria-label="Weekend duel" title="Weekend duel"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M5 3 L14.5 12.5"/><path d="M13 14 L17 10"/><path d="M15.5 13.5 L19 17"/><circle cx="20" cy="18" r="1.1" fill="currentColor" stroke="none"/><path d="M19 3 L9.5 12.5"/><path d="M7 10 L11 14"/><path d="M8.5 13.5 L5 17"/><circle cx="4" cy="18" r="1.1" fill="currentColor" stroke="none"/></svg></button>
+          <!-- Reset + Start/Pause live on the rail now, below the
+               round buttons — out of thumb range during play, and
+               still reachable when the controller bar is hidden.
+               Same pink circles as the rest of the rail, icons only:
+               a circular arrow for Reset, and a play/pause glyph for
+               Start/Pause that JS swaps with the game state (play
+               when ready / paused / over, pause while playing). -->
+          <div class="rail-actions">
+            <button class="icon-sound-btn on" id="restartBtn" type="button" aria-label="Reset — start a fresh game" title="Reset — start a fresh game"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M17.65 6.35A8 8 0 1 0 19.73 14h-2.08a6 6 0 1 1-1.41-6.65L13 11h7V4z"/></svg></button>
+            <button class="icon-sound-btn on" id="pauseBtn" type="button" aria-label="Start game" title="Start"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M8 5v14l11-7z"/></svg></button>
+          </div>
         </div>
         <!-- board -->
         <div class="board-wrap">
@@ -1386,10 +1518,9 @@
       <!-- sticky dock: the controller bar, pinned to the bottom of
            the screen. -->
       <div class="controls-dock" id="controlsDock">
-      <!-- controller-style controls — the Reset / Start-Pause pills
-           sit in the middle of the bar, stacked vertically between
-           the D-pad and the A / B buttons. Same buttons, same ids,
-           same behaviour as when they had a row of their own. -->
+      <!-- controller-style controls — just the D-pad and the A / B
+           buttons now: Reset / Start-Pause moved to the left rail
+           as icon circles, out of accidental-thumb range. -->
       <div class="controller" id="controllerBar" aria-label="Game controls">
         <div class="dpad" aria-label="D-pad">
           <div aria-hidden="true"></div>
@@ -1401,10 +1532,6 @@
           <div aria-hidden="true"></div>
           <button class="dpad-btn" id="tcDown" type="button" aria-label="Soft drop">▼</button>
           <div aria-hidden="true"></div>
-        </div>
-        <div class="mid-controls" id="midControls">
-          <button class="mid-btn" id="restartBtn" type="button">RESET</button>
-          <button class="mid-btn primary" id="pauseBtn" type="button">START / PAUSE</button>
         </div>
         <div class="ab-cluster" aria-label="Action buttons">
           <button class="ab-btn b-btn" id="tcHold" type="button" aria-label="Hold or swap piece"><span class="ab-letter">B</span><small>Hold</small></button>
@@ -1438,7 +1565,7 @@
         <button class="lb-close" id="wdClose" type="button" aria-label="Close Me">✕</button>
       </div>
       <div class="wd-id">
-        <button class="wd-id-avatar" id="wdIdAvatar" type="button" aria-label="Change your profile animal" title="Change your profile animal">👤</button>
+        <button class="wd-id-avatar" id="wdIdAvatar" type="button" aria-label="Change your profile animal" title="Change your profile animal"><img class="avatar-photo" id="wdIdImg" alt="" hidden /><span id="wdIdEmoji">👤</span></button>
         <div class="wd-id-main">
           <div class="wd-id-name" id="wdIdName">You</div>
           <div class="wd-id-look" id="wdIdLook"></div>
@@ -1535,6 +1662,70 @@
       </div>
     </section>
 
+    <!-- settings panel — opened by the gear in the left rail. The
+         Music, Sound, Haptics and Controller toggles live here now
+         (the same buttons, ids and behaviour they had on the rail),
+         each as a labelled row with its on/off state spelled out. -->
+    <div class="lb-backdrop" id="settingsBackdrop" hidden></div>
+    <section class="lb-panel settings-panel" id="settingsPanel" hidden role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="lb-head">
+        <h2 id="settingsTitle">Settings</h2>
+        <button class="lb-close" id="settingsClose" type="button" aria-label="Close settings">✕</button>
+      </div>
+      <div class="settings-row">
+        <button class="icon-sound-btn on" id="bgmBtn" type="button" aria-pressed="true" aria-label="Toggle background music" title="Background music">♪</button>
+        <span class="settings-label">Music<span class="settings-sub">Background music</span></span>
+        <span class="settings-state on" id="bgmState">On</span>
+      </div>
+      <div class="settings-row">
+        <button class="icon-sound-btn on" id="sideSoundBtn" type="button" aria-pressed="true" aria-label="Toggle sound effects" title="Sound effects"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></button>
+        <span class="settings-label">Sound<span class="settings-sub">Sound effects</span></span>
+        <span class="settings-state on" id="sfxState">On</span>
+      </div>
+      <div class="settings-row">
+        <button class="icon-sound-btn on" id="hapticsBtn" type="button" aria-pressed="true" aria-label="Toggle haptics" title="Haptics"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="10.2" y="6.5" width="3.6" height="11" rx="0.9" fill="currentColor" stroke="none"/><path d="M6.6 5 L4.2 8.5 L6.6 12 L4.2 15.5 L6.6 19"/><path d="M17.4 5 L19.8 8.5 L17.4 12 L19.8 15.5 L17.4 19"/></svg></button>
+        <span class="settings-label">Haptics<span class="settings-sub">Vibration on lock &amp; line clear</span></span>
+        <span class="settings-state on" id="hapticsState">On</span>
+      </div>
+      <div class="settings-row">
+        <button class="icon-sound-btn on" id="ctrlToggleBtn" type="button" aria-pressed="true" aria-label="Hide on-screen controls" title="Hide controls — play with swipes &amp; taps"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true" focusable="false"><path d="M7.6 5.5h8.8c3.1 0 5.6 2.6 5.6 5.9 0 .9-.2 1.7-.5 2.5l-1.1 3.4c-.4 1.2-1.9 1.6-2.9.8l-2.3-1.9c-.3-.3-.7-.4-1.1-.4h-4.2c-.4 0-.8.1-1.1.4l-2.3 1.9c-1 .8-2.5.4-2.9-.8L2.5 13.9C2.2 13.1 2 12.3 2 11.4 2 8.1 4.5 5.5 7.6 5.5zM6.9 8.2h1.8v1.9h1.4v1.8H8.7v1.9H6.9v-1.9H5.5v-1.8h1.4V8.2zm9.3.35a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1zm2.1 2.3a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1z"/></svg></button>
+        <span class="settings-label">Controller<span class="settings-sub">On-screen button bar — off means swipe &amp; tap play</span></span>
+        <span class="settings-state on" id="ctrlState">On</span>
+      </div>
+    </section>
+
+    <!-- profile photo crop editor — the picked image inside a
+         circular window: drag to move, slider or pinch to zoom.
+         Confirming shrinks the circle to a tiny JPEG that rides in
+         the shared score record, so every device sees the photo. -->
+    <div class="lb-backdrop" id="photoBackdrop" hidden></div>
+    <section class="lb-panel photo-panel" id="photoPanel" hidden role="dialog" aria-modal="true" aria-labelledby="photoTitle">
+      <div class="lb-head">
+        <h2 id="photoTitle">Your photo</h2>
+        <button class="lb-close" id="photoClose" type="button" aria-label="Cancel photo upload">✕</button>
+      </div>
+      <div class="photo-stage-wrap">
+        <div class="photo-stage" id="photoStage"><img id="photoImg" alt="" /></div>
+      </div>
+      <div class="photo-zoom-row">
+        <label for="photoZoom">Zoom</label>
+        <input type="range" id="photoZoom" min="100" max="300" value="100" step="1" aria-label="Photo zoom" />
+      </div>
+      <div class="photo-name-row" id="photoNameRow" hidden>
+        <label for="photoName">Your leaderboard name</label>
+        <input type="text" id="photoName" maxlength="16" autocomplete="off" placeholder="e.g. Ghost." />
+      </div>
+      <p class="wd-photo-status" id="photoStatus"></p>
+      <div class="photo-actions">
+        <button class="wd-photo-btn ghost" id="photoCancel" type="button">Cancel</button>
+        <button class="wd-photo-btn" id="photoUse" type="button">Use this photo</button>
+      </div>
+    </section>
+    <input type="file" id="photoFile" accept="image/*" hidden />
+    <!-- photo loading pill: shown while a picked photo is being
+         read, and again while it saves to the shared board -->
+    <div class="photo-busy" id="photoBusy" hidden role="status"><span class="photo-spinner" aria-hidden="true"></span><span id="photoBusyText">Loading photo…</span></div>
+
     <!-- first-time tutorial -->
     <div class="tutorial-backdrop" id="tutorialBackdrop" hidden></div>
     <section class="tutorial-card" id="tutorialCard" hidden role="dialog" aria-modal="true" aria-labelledby="tutorialTitle" aria-describedby="tutorialBody">
@@ -1627,6 +1818,7 @@ var tetrisRun = 0, tetrisRunBest = 0, lateLinesGame = 0; /* per-game trackers fo
 var state = "ready"; /* ready | playing | paused | over */
 var dropCounter, lockCounter, lockResets, lastMoveWasRotate, lastKickIndex;
 var clearingRows = null, clearTimer = 0;
+var pendingInputs = []; /* one-shot actions tapped during the clear window, replayed on the next piece */
 var softDropping = false;
 
 /* ---------- hi-score storage ----------
@@ -1680,6 +1872,119 @@ function cleanChampionName(v){
 }
 function cleanWeekId(v){
   return (typeof v === "string" && /^\d{4}-W\d{2}$/.test(v)) ? v : "";
+}
+/* ---------- profile photos in the shared record ----------
+   A player can replace their animal with a photo of their own. The
+   photo is cropped to a circle in the game, shrunk to a tiny JPEG
+   (96px across at most) and carried in the SAME shared record as
+   the scores, as a "photos" list of {n, p, ts, id}: the player's
+   leaderboard name, the JPEG as a data URL, when it was saved, and
+   a random id. Every device already reads that record, so every
+   device sees the photo — no image host, no account, nothing to
+   upload anywhere else. One photo per player: saving a new one
+   writes it alongside the old, the write is read back to prove the
+   new photo landed, and only then is the old one dropped — so the
+   list briefly holds both during a swap (the cap of 10 leaves room
+   for that across the family) and settles back to one per player.
+   Photos read back are untrusted like everything else in the
+   record: the data URL must be exactly a small base64 JPEG or
+   PNG the game itself could have written, or it is dropped.
+   (PNG is accepted because some browsers hand back a PNG data
+   URL from the canvas even when JPEG was asked for — without it
+   in the check, a PNG-sourced photo was silently rejected.) */
+var PHOTO_MAX_CHARS = 24000; /* data-URL length cap — a 96px JPEG sits far below it */
+var PHOTOS_CAP = 10;         /* one per family member, plus swap headroom */
+var LS_MYPHOTO = "tetoris_my_photo";
+var sharedPhotos = [];       /* every photo this device knows of: [{name, p, ts, id}] */
+var myLocalPhoto = null;     /* this device's own photo entry, kept on-device so it shows instantly and re-syncs if a write was missed */
+var photoStatusMsg = "";     /* last upload/remove outcome, shown in the Profile tab */
+function cleanPhotoData(v){
+  if (typeof v !== "string") return "";
+  if (v.length < 32 || v.length > PHOTO_MAX_CHARS) return "";
+  return /^data:image\/(?:jpeg|png);base64,[A-Za-z0-9+/]+={0,2}$/.test(v) ? v : "";
+}
+function cleanPhotoId(v){
+  return (typeof v === "string" && /^[A-Za-z0-9-]{4,32}$/.test(v)) ? v : "";
+}
+function normalizePhotos(list){
+  var byId = {};
+  if (Array.isArray(list)) list.forEach(function(e){
+    if (!e) return;
+    var p = cleanPhotoData(e.p);
+    var n = cleanChampionName(e.n != null ? e.n : e.name);
+    var id = cleanPhotoId(e.id);
+    if (!p || !n || !id) return;
+    var ts = Number(e.ts);
+    byId[id] = { name:n, p:p, ts:(isFinite(ts) && ts > 0) ? ts : 0, id:id };
+  });
+  return Object.keys(byId).map(function(k){ return byId[k]; })
+    .sort(function(a, b){ return b.ts - a.ts; })
+    .slice(0, PHOTOS_CAP);
+}
+/* the newest photo saved under a leaderboard name, or "" */
+function photoFor(name){
+  if (!name) return "";
+  for (var i = 0; i < sharedPhotos.length; i++){
+    if (sharedPhotos[i].name === name) return sharedPhotos[i].p;
+  }
+  return "";
+}
+/* this device's own photo: the shared copy under their name when it
+   has landed, otherwise the on-device copy from their last upload */
+function currentMyPhoto(){
+  var shared = photoFor(myName);
+  if (shared) return shared;
+  if (myLocalPhoto && (!myName || myLocalPhoto.name === myName)) return myLocalPhoto.p;
+  return "";
+}
+function loadMyLocalPhoto(){
+  try{
+    var d = JSON.parse(localStorage.getItem(LS_MYPHOTO) || "null");
+    var ok = normalizePhotos(d ? [d] : []);
+    myLocalPhoto = ok.length ? ok[0] : null;
+  }catch(e){ myLocalPhoto = null; }
+}
+function saveMyLocalPhoto(){
+  try{
+    if (myLocalPhoto) localStorage.setItem(LS_MYPHOTO, JSON.stringify(myLocalPhoto));
+    else localStorage.removeItem(LS_MYPHOTO);
+  }catch(e){ /* storage full/unavailable — the shared copy still carries the photo */ }
+}
+function photoNewId(){
+  return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+}
+/* a photo replaces the animal entirely, never alongside it: this
+   device's own animal pick reverts to None while it has a photo,
+   and any animal still riding on a photo-holder's shared board or
+   duel entries is stripped, so no surface (or later write) can
+   show — or re-send — the two together */
+function applyPhotoReplacesAnimal(){
+  var changed = false;
+  if (currentMyPhoto() && styleSel.animal){
+    styleSel.animal = "";
+    saveStyle();
+    changed = true;
+  }
+  function strip(list){
+    if (!Array.isArray(list)) return;
+    list.forEach(function(e){
+      if (e && e.a && photoFor(e.name)){ delete e.a; changed = true; }
+    });
+  }
+  strip(globalBoard);
+  strip(allTimeTop);
+  strip(duelEntries);
+  if (Array.isArray(weeklyWinners)) weeklyWinners.forEach(function(w){ strip(w && w.top); });
+  if (changed) saveGlobalCache();
+  return changed;
+}
+/* repaint every surface a photo can appear on */
+function refreshPhotoDisplays(){
+  applyPhotoReplacesAnimal();
+  updateProfileAvatar();
+  renderWdId();
+  if (lbOpen) renderBoard();
+  if (duelOpen) renderDuel();
 }
 /* ---------- weekend duel helpers ----------
    The duel runs every Friday 00:00 to Sunday 23:59, device local
@@ -1936,6 +2241,7 @@ function loadScores(){
       weeklyWinners = normalizeWinners(cache.winners);
       allTimeTop = normalizeTopList(cache.alltime, 3);
       duelEntries = normalizeDuel(cache.duel);
+      sharedPhotos = normalizePhotos(cache.photos);
     } else {
       /* one-time migration from the old on-device-only record */
       globalBest = cleanScore(localStorage.getItem("tetoris_global_hi"));
@@ -1943,6 +2249,13 @@ function loadScores(){
       globalBoard = normalizeBoard(null, globalBest, globalName);
     }
     myName = cleanChampionName(localStorage.getItem(LS_MYNAME));
+    loadMyLocalPhoto();
+    /* this device's own photo joins the known set at once, so it
+       shows before the stores answer and rides the next write back
+       up if an earlier upload never landed */
+    if (myLocalPhoto && !sharedPhotos.some(function(e){ return e.id === myLocalPhoto.id; })){
+      sharedPhotos = normalizePhotos(sharedPhotos.concat([myLocalPhoto]));
+    }
   }catch(e){ /* storage unavailable — scores still work for this session */ }
   settleWeekLocal();
   backfillChampionAnimal(); /* the champion's bear shows even from the on-device cache, before the stores answer */
@@ -1951,7 +2264,7 @@ function saveLocalScore(){
   try{ localStorage.setItem(LS_LOCAL, String(localBest)); }catch(e){}
 }
 function saveGlobalCache(){
-  try{ localStorage.setItem(LS_GCACHE, JSON.stringify({ score:globalBest, name:globalName, board:globalBoard, week:boardWeek, winners:weeklyWinners, alltime:allTimeTop, duel:duelEntries })); }catch(e){}
+  try{ localStorage.setItem(LS_GCACHE, JSON.stringify({ score:globalBest, name:globalName, board:globalBoard, week:boardWeek, winners:weeklyWinners, alltime:allTimeTop, duel:duelEntries, photos:sharedPhotos })); }catch(e){}
 }
 /* the mirror appends junk markup after its JSON — pull out the first
    balanced {...} object (string-aware) and parse just that */
@@ -2012,7 +2325,7 @@ function readGlobalPrimary(){
     return r.json();
   }).then(function(j){
     if (!j || !j.data) return null;
-    return { score: cleanScore(j.data.score), name: cleanChampionName(j.data.player), board: normalizeBoard(j.data.board, j.data.score, j.data.player), week: cleanWeekId(j.data.week), winners: normalizeWinners(j.data.winners), alltime: normalizeTopList(j.data.alltime, 3), duel: normalizeDuel(j.data.duel) };
+    return { score: cleanScore(j.data.score), name: cleanChampionName(j.data.player), board: normalizeBoard(j.data.board, j.data.score, j.data.player), week: cleanWeekId(j.data.week), winners: normalizeWinners(j.data.winners), alltime: normalizeTopList(j.data.alltime, 3), duel: normalizeDuel(j.data.duel), photos: normalizePhotos(j.data.photos) };
   }).catch(function(){ return null; });
 }
 function readGlobalMirror(){
@@ -2023,11 +2336,11 @@ function readGlobalMirror(){
   }).then(function(text){
     var j = extractJsonObject(text);
     if (!j) return null;
-    return { score: cleanScore(j.score), name: cleanChampionName(j.name), board: normalizeBoard(j.board, j.score, j.name), week: cleanWeekId(j.week), winners: normalizeWinners(j.winners), alltime: normalizeTopList(j.alltime, 3), duel: normalizeDuel(j.duel) };
+    return { score: cleanScore(j.score), name: cleanChampionName(j.name), board: normalizeBoard(j.board, j.score, j.name), week: cleanWeekId(j.week), winners: normalizeWinners(j.winners), alltime: normalizeTopList(j.alltime, 3), duel: normalizeDuel(j.duel), photos: normalizePhotos(j.photos) };
   }).catch(function(){ return null; });
 }
 function stateAsRecord(){
-  return { score:globalBest, name:globalName, board:globalBoard, week:boardWeek, winners:weeklyWinners, alltime:allTimeTop, duel:duelEntries };
+  return { score:globalBest, name:globalName, board:globalBoard, week:boardWeek, winners:weeklyWinners, alltime:allTimeTop, duel:duelEntries, photos:sharedPhotos };
 }
 /* One-time backfill, at the champion's own request: his 27,906 crown
    was claimed before profile animals existed, so every shared copy of
@@ -2040,6 +2353,7 @@ function stateAsRecord(){
    the game screen's hi-score cell is name-only and stays that way. */
 var CHAMP_BACKFILL = { name:"Ghost.", score:27906, animal:"🐻" };
 function backfillChampionAnimal(){
+  if (photoFor(CHAMP_BACKFILL.name)) return false; /* a photo replaces the animal entirely — never stamp one back on */
   var changed = false;
   function stamp(list){
     if (!Array.isArray(list)) return;
@@ -2089,6 +2403,14 @@ function fetchGlobal(){
     duelEntries = normalizeDuel(duelPool); /* duel runs from every store, unioned — nobody's run is lost */
     updateDuelBtn();
     if (duelOpen) renderDuel();
+    /* profile photos union the same way — and remember which ones
+       the STORES already hold, so a photo uploaded on this device
+       that never landed can be written back below */
+    var photoPool = [];
+    var storePhotoIds = {};
+    records.forEach(function(r){ if (r) (r.photos || []).forEach(function(e){ storePhotoIds[e.id] = 1; }); });
+    candidates.forEach(function(r){ photoPool = photoPool.concat(r.photos || []); });
+    sharedPhotos = normalizePhotos(photoPool);
     var live = [], liveSeen = {};
     var dirty = false; /* a legacy record or a week rollover — write the merged record back */
     candidates.forEach(function(r){
@@ -2130,7 +2452,9 @@ function fetchGlobal(){
       saveStats();
     }
     refreshCrowns(); /* a week rollover may have crowned this player — count it toward the wardrobe unlocks */
+    refreshPhotoDisplays(); /* a photo may have arrived (or changed) with this record */
     if (dirty) pushBoard(globalBoard, allTimeTop); /* converge the stores — best effort */
+    else if (myLocalPhoto && !storePhotoIds[myLocalPhoto.id]) pushBoard(globalBoard, allTimeTop); /* the stores haven't seen this device's photo yet — write it up */
     if (lbOpen) renderBoard();
     return true;
   });
@@ -2160,14 +2484,19 @@ function pushBoard(boardToPush, allTimeToPush){
     if (e.ts) o.ts = e.ts;
     return o;
   });
+  /* profile photos ride in the same record, so a score write can
+     never wipe them (and a photo write never wipes the boards) */
+  var photosPayload = sharedPhotos.map(function(e){
+    return { n:e.name, p:e.p, ts:e.ts, id:e.id };
+  });
   var wk = currentWeekId();
   var primary = fetch(GLOBAL_PRIMARY_URL, {
     method:"PUT", headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ name:"tetoris-global", data:{ score:champ.score, player:champ.name, board:payload, week:wk, winners:winnersPayload, alltime:allPayload, duel:duelPayload } })
+    body: JSON.stringify({ name:"tetoris-global", data:{ score:champ.score, player:champ.name, board:payload, week:wk, winners:winnersPayload, alltime:allPayload, duel:duelPayload, photos:photosPayload } })
   }).then(function(r){ return !!r.ok; }).catch(function(){ return false; });
   var mirror = fetch(GLOBAL_MIRROR_URL, {
     method:"PUT", headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ score:champ.score, name:champ.name, board:payload, week:wk, winners:winnersPayload, alltime:allPayload, duel:duelPayload })
+    body: JSON.stringify({ score:champ.score, name:champ.name, board:payload, week:wk, winners:winnersPayload, alltime:allPayload, duel:duelPayload, photos:photosPayload })
   }).then(function(r){ return !!r.ok; }).catch(function(){ return false; });
   return Promise.all([primary, mirror]).then(function(res){ return !!(res[0] || res[1]); });
 }
@@ -2178,6 +2507,51 @@ var keysHeld = { left:false, right:false };
 
 /* ---------- dom ---------- */
 function $(id){ return document.getElementById(id); }
+/* ---------- fast tap — fire on the press, not the release ----------
+   A plain click only counts when the press AND the release land on
+   the same element, and the round rail buttons shrink to scale(.93)
+   while pressed — so a fast tap released near the rim landed
+   outside the shrunken button and the click never fired at all:
+   the "tapping the left rail quickly sometimes does nothing" bug.
+   Firing on pointerdown makes every tap count, and it answers on
+   the way down instead of waiting for the release, so it feels
+   instant too.
+   The click that trails a handled press must be swallowed so the
+   action never runs twice — but ONLY that one click. The previous
+   guard swallowed every click within a flat 1000ms of the last
+   press, and that turned out to be the bigger half of the bug: on
+   the phone webview a rapid tap's pointerdown is sometimes
+   coalesced away entirely (the same device behaviour the game
+   controls' stale-pointer force-release guards against), and then
+   that tap's own click — the one event that could have rescued
+   it — landed inside the PREVIOUS tap's 1000ms shadow and was
+   swallowed too. A run of fast taps therefore registered about
+   one tap a second: "clicked the tree multiple times, only a
+   handful registered". The swallow is now a one-shot token: the
+   press arms it, the first trailing click consumes it, and any
+   click with no live token behind it (a dropped press, keyboard
+   Enter/Space, a screen reader) runs the action itself — so a
+   tap whose press was dropped still counts on its release.
+   No pointer capture is taken either: a tap button never tracks
+   the release, and a capture still held from the previous tap is
+   one more thing that can interfere with the next rapid press. */
+function bindFastTap(el, fn){
+  if (!el) return;
+  var swallowArmedAt = -10000;
+  el.addEventListener("pointerdown", function(e){
+    e.preventDefault();
+    swallowArmedAt = performance.now();
+    fn(e);
+  });
+  el.addEventListener("click", function(e){
+    if (performance.now() - swallowArmedAt < 1500){
+      swallowArmedAt = -10000; /* one-shot: only the handled press's own trailing click is swallowed */
+      return;
+    }
+    fn(e);
+  });
+  el.addEventListener("contextmenu", function(e){ e.preventDefault(); });
+}
 var boardCv = $("board"), bctx = boardCv.getContext("2d");
 var holdCv = $("holdCanvas"), hctx = holdCv.getContext("2d");
 var nextCv = $("nextCanvas"), nctx = nextCv.getContext("2d");
@@ -2230,8 +2604,8 @@ var sfx = {
    Tetrises, and a double-pulse on level up. Android browsers expose
    navigator.vibrate; iOS Safari gives web pages no vibration API at
    all, so every call there simply does nothing. On by default where
-   the device supports it; the rail toggle remembers its setting on
-   this device, like the other preferences. */
+   the device supports it; the toggle in the Settings panel
+   remembers its setting on this device, like the other preferences. */
 var LS_HAPTICS = "tetoris_haptics";
 var hapticsSupported = typeof navigator !== "undefined" && typeof navigator.vibrate === "function";
 var hapticsOn = hapticsSupported;
@@ -2249,6 +2623,7 @@ function updateHapticsBtn(){
   b.classList.toggle("on", hapticsOn);
   b.setAttribute("aria-pressed", hapticsOn ? "true" : "false");
   b.title = "Haptics " + (hapticsOn ? "on" : "off") + (hapticsSupported ? "" : " — not supported on this device");
+  syncSettingsStates();
 }
 
 /* ---------- seasonal decorations ----------
@@ -2548,6 +2923,7 @@ function loadStyle(){
     }
   }catch(e){ /* corrupted style record — fall back to the base look */ }
   curMaterial = styleSel.material;
+  applyPhotoReplacesAnimal(); /* a photo saved on an earlier build still retires the animal pick to None */
   updateProfileAvatar();
 }
 /* keep the big circle at the top of the rail in step with the
@@ -2556,11 +2932,19 @@ function loadStyle(){
 function updateProfileAvatar(){
   var btn = $("profileAvatarBtn"), span = $("profileAvatarEmoji");
   if (!btn || !span) return;
+  var img = $("profileAvatarImg");
+  var ph = currentMyPhoto();
   var a = styleSel.animal || "";
+  if (img){
+    if (ph){ img.src = ph; img.hidden = false; span.hidden = true; }
+    else { img.hidden = true; img.removeAttribute("src"); span.hidden = false; }
+  }
   span.textContent = a || "👤";
-  btn.classList.toggle("is-empty", !a);
-  btn.title = a ? "Your profile animal — tap to change it" : "Pick your profile animal";
-  btn.setAttribute("aria-label", a
+  btn.classList.toggle("is-empty", !a && !ph);
+  btn.title = ph ? "Your profile photo — tap to change it" : a ? "Your profile animal — tap to change it" : "Pick your profile animal";
+  btn.setAttribute("aria-label", ph
+    ? "Your profile photo — open Me"
+    : a
     ? "Your profile animal " + a + " — open Me"
     : "No profile animal picked yet — open Me to pick one");
 }
@@ -3111,6 +3495,19 @@ function equipFrame(id){
   if (soundOn) sfx.ui();
 }
 function equipAnimal(a){
+  /* picking an animal while a photo is set swaps back to the
+     animal: the two never sit alongside each other, so the photo
+     goes — the same removal Remove photo does, just without its
+     status line (the pick itself is the feedback) */
+  if (a && currentMyPhoto()){
+    var nm = myName || (myLocalPhoto ? myLocalPhoto.name : "");
+    if (nm) sharedPhotos = sharedPhotos.filter(function(e){ return e.name !== nm; });
+    myLocalPhoto = null;
+    saveMyLocalPhoto();
+    saveGlobalCache();
+    photoStatusMsg = "";
+    pushBoard(globalBoard, allTimeTop);
+  }
   styleSel.animal = a;
   saveStyle();
   updateProfileAvatar();
@@ -3121,7 +3518,17 @@ function equipAnimal(a){
    best score and board rank (this week first, all-time alongside) */
 function renderWdId(){
   var av = $("wdIdAvatar");
-  if (av) av.textContent = styleSel.animal || "👤";
+  if (av){
+    var ph = currentMyPhoto();
+    var wimg = $("wdIdImg"), wem = $("wdIdEmoji");
+    if (wimg && wem){
+      if (ph){ wimg.src = ph; wimg.hidden = false; wem.hidden = true; }
+      else { wimg.hidden = true; wimg.removeAttribute("src"); wem.hidden = false; }
+    }
+    if (wem) wem.textContent = styleSel.animal || "👤";
+    av.setAttribute("aria-label", ph ? "Change your profile photo" : "Change your profile animal");
+    av.title = ph ? "Change your profile photo" : "Change your profile animal";
+  }
   var nm = $("wdIdName");
   if (nm) nm.textContent = myName || "You";
   var look = $("wdIdLook");
@@ -3273,6 +3680,48 @@ function renderWdFrames(body){
   });
 }
 function renderWdProfile(body){
+  /* your own photo — replaces the animal everywhere once saved */
+  var ph = currentMyPhoto();
+  var prow = document.createElement("div");
+  prow.className = "wd-photo-row";
+  var pprev = document.createElement("div");
+  pprev.className = "wd-photo-preview";
+  if (ph){
+    var pimg = document.createElement("img");
+    pimg.src = ph;
+    pimg.alt = "";
+    pprev.appendChild(pimg);
+  } else {
+    pprev.textContent = styleSel.animal || "👤";
+  }
+  prow.appendChild(pprev);
+  var pbtns = document.createElement("div");
+  pbtns.className = "wd-photo-btns";
+  var upBtn = document.createElement("button");
+  upBtn.type = "button";
+  upBtn.className = "wd-photo-btn";
+  upBtn.textContent = ph ? "Change photo" : "Upload a photo";
+  upBtn.addEventListener("click", function(){
+    var f = $("photoFile");
+    if (f){ f.value = ""; f.click(); }
+  });
+  pbtns.appendChild(upBtn);
+  if (ph){
+    var rmBtn = document.createElement("button");
+    rmBtn.type = "button";
+    rmBtn.className = "wd-photo-btn ghost";
+    rmBtn.textContent = "Remove photo";
+    rmBtn.addEventListener("click", removeMyPhoto);
+    pbtns.appendChild(rmBtn);
+  }
+  prow.appendChild(pbtns);
+  body.appendChild(prow);
+  if (photoStatusMsg){
+    var pst = document.createElement("p");
+    pst.className = "wd-photo-status";
+    pst.textContent = photoStatusMsg;
+    body.appendChild(pst);
+  }
   var note = document.createElement("p");
   note.className = "wd-note";
   note.textContent = "Your animal sits next to your name on the shared leaderboard. All sixteen are yours from the start — pick a favourite, change it any time.";
@@ -3295,6 +3744,343 @@ function renderWdProfile(body){
     grid.appendChild(card);
   });
 }
+/* ---------- profile photo: crop editor + shared save ----------
+   Picking a file opens the editor: the image inside a circular
+   window, dragged to move and zoomed with the slider, a pinch or
+   the mouse wheel. "Use this photo" renders the circle to a 96px
+   JPEG (stepping down in size/quality until it fits the shared
+   record's cap) and saves it: the new entry is written ALONGSIDE
+   the old one, the stores are read back to prove the new photo
+   landed, and only then is the old entry dropped and written out.
+   If the read-back can't confirm it, the old photo stays untouched
+   and the new one still shows on this device, re-syncing on the
+   next successful write. */
+var cropState = null; /* { img, url, natW, natH, zoom, x, y, pointers, pinchD } */
+var CROP_STAGE = 248; /* the stage's CSS size in px */
+function cropBaseScale(){
+  return Math.max(CROP_STAGE / cropState.natW, CROP_STAGE / cropState.natH);
+}
+function cropClamp(){
+  var s = cropBaseScale() * cropState.zoom;
+  var w = cropState.natW * s, h = cropState.natH * s;
+  if (cropState.x > 0) cropState.x = 0;
+  if (cropState.y > 0) cropState.y = 0;
+  if (cropState.x < CROP_STAGE - w) cropState.x = CROP_STAGE - w;
+  if (cropState.y < CROP_STAGE - h) cropState.y = CROP_STAGE - h;
+}
+function cropRender(){
+  if (!cropState) return;
+  cropClamp();
+  var s = cropBaseScale() * cropState.zoom;
+  var img = $("photoImg");
+  img.style.width = (cropState.natW * s) + "px";
+  img.style.height = (cropState.natH * s) + "px";
+  img.style.transform = "translate(" + cropState.x + "px," + cropState.y + "px)";
+}
+function cropSetZoom(z, cx, cy){
+  if (!cropState) return;
+  var s0 = cropBaseScale() * cropState.zoom;
+  var z1 = Math.min(3, Math.max(1, z));
+  var s1 = cropBaseScale() * z1;
+  if (s0 > 0){
+    /* keep the image point under (cx, cy) — default the centre — still */
+    if (cx == null){ cx = CROP_STAGE / 2; cy = CROP_STAGE / 2; }
+    var ix = (cx - cropState.x) / s0, iy = (cy - cropState.y) / s0;
+    cropState.x = cx - ix * s1;
+    cropState.y = cy - iy * s1;
+  }
+  cropState.zoom = z1;
+  var slider = $("photoZoom");
+  if (slider) slider.value = String(Math.round(z1 * 100));
+  cropRender();
+}
+/* the loading pill: shown while a picked photo is being read and
+   while it saves to the shared board; hidden the moment either
+   one finishes, fails, or the editor closes */
+function showPhotoBusy(text){
+  var el = $("photoBusy");
+  if (!el) return;
+  var t = $("photoBusyText");
+  if (t) t.textContent = text;
+  el.hidden = false;
+}
+function hidePhotoBusy(){
+  var el = $("photoBusy");
+  if (el) el.hidden = true;
+}
+function openPhotoEditor(url, natW, natH){
+  var img = $("photoImg");
+  img.src = url;
+  cropState = { url:url, natW:natW, natH:natH, zoom:1, x:0, y:0, pointers:{} , pinchD:0 };
+  /* start centred at cover size */
+  var s = cropBaseScale();
+  cropState.x = (CROP_STAGE - natW * s) / 2;
+  cropState.y = (CROP_STAGE - natH * s) / 2;
+  var slider = $("photoZoom");
+  if (slider) slider.value = "100";
+  var nameRow = $("photoNameRow");
+  if (nameRow) nameRow.hidden = !!myName;
+  var status = $("photoStatus");
+  if (status) status.textContent = "";
+  var useBtn = $("photoUse");
+  if (useBtn){ useBtn.disabled = false; useBtn.textContent = "Use this photo"; }
+  $("photoBackdrop").hidden = false;
+  $("photoPanel").hidden = false;
+  hidePhotoBusy(); /* the read is done — the editor is the feedback now */
+  cropRender();
+  if (soundOn) sfx.ui();
+}
+function closePhotoEditor(){
+  $("photoBackdrop").hidden = true;
+  $("photoPanel").hidden = true;
+  hidePhotoBusy(); /* every save path ends by closing the editor */
+  if (cropState && cropState.url){ try{ URL.revokeObjectURL(cropState.url); }catch(e){} }
+  cropState = null;
+}
+/* sniff the real image format from the file's magic bytes — the
+   name and the reported type can't be trusted: a file called .png
+   can actually hold JPEG data (chat apps re-encode photos and keep
+   the old name), and some browsers pick an image decoder from the
+   declared type, fail on the mismatch, and report the photo as
+   unreadable even though the bytes are a perfectly good image */
+function sniffImageType(buf){
+  var b = new Uint8Array(buf);
+  if (b.length >= 3 && b[0] === 0xFF && b[1] === 0xD8 && b[2] === 0xFF) return "image/jpeg";
+  if (b.length >= 8 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47 &&
+      b[4] === 0x0D && b[5] === 0x0A && b[6] === 0x1A && b[7] === 0x0A) return "image/png";
+  if (b.length >= 6 && b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x38) return "image/gif";
+  if (b.length >= 12 && b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 &&
+      b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return "image/webp";
+  if (b.length >= 2 && b[0] === 0x42 && b[1] === 0x4D) return "image/bmp";
+  if (b.length >= 12 && b[4] === 0x66 && b[5] === 0x74 && b[6] === 0x79 && b[7] === 0x70){
+    var brand = String.fromCharCode(b[8], b[9], b[10], b[11]);
+    if (brand === "avif" || brand === "avis") return "image/avif";
+    return "image/heic";
+  }
+  return "";
+}
+function startPhotoPick(file){
+  if (!file) return;
+  var ftype = file.type || "";
+  if (!/^image\//.test(ftype) && !/\.(?:png|jpe?g|gif|webp|bmp|heic|heif)$/i.test(file.name || "")){
+    photoStatusMsg = "That file isn't an image — pick a photo instead.";
+    if (wdOpen) renderWardrobe();
+    return;
+  }
+  if (file.size > 15 * 1024 * 1024){
+    photoStatusMsg = "That photo is too big — pick one under 15 MB.";
+    if (wdOpen) renderWardrobe();
+    return;
+  }
+  var readFailed = function(){
+    hidePhotoBusy();
+    photoStatusMsg = "Couldn't read that photo — try another one.";
+    if (wdOpen) renderWardrobe();
+  };
+  showPhotoBusy("Reading your photo…");
+  var probeWith = function(src, isDataURL){
+    var probe = new Image();
+    probe.onload = function(){
+      if (!probe.naturalWidth || !probe.naturalHeight){
+        if (!isDataURL){ try{ URL.revokeObjectURL(src); }catch(e){} }
+        readFailed();
+        return;
+      }
+      openPhotoEditor(src, probe.naturalWidth, probe.naturalHeight);
+    };
+    probe.onerror = function(){
+      if (!isDataURL){ try{ URL.revokeObjectURL(src); }catch(e){} }
+      readFailed();
+    };
+    probe.src = src;
+  };
+  var gotBuffer = function(buf){
+    if (!buf){ readFailed(); return; }
+    var sniffed = sniffImageType(buf);
+    /* rebuild the blob labelled with the format the bytes actually
+       are, so the decoder is chosen from the content, not the name */
+    var blob = file;
+    try{ blob = new Blob([buf], { type: sniffed || file.type || "" }); }catch(e){}
+    var url = URL.createObjectURL(blob);
+    var probe = new Image();
+    probe.onload = function(){
+      if (!probe.naturalWidth || !probe.naturalHeight){
+        try{ URL.revokeObjectURL(url); }catch(e){}
+        readFailed();
+        return;
+      }
+      openPhotoEditor(url, probe.naturalWidth, probe.naturalHeight);
+    };
+    probe.onerror = function(){
+      try{ URL.revokeObjectURL(url); }catch(e){}
+      /* one retry as a data URL: the image data itself carries no
+         declared type at all, so nothing can disagree with it */
+      var fr = new FileReader();
+      fr.onload = function(){ probeWith(String(fr.result), true); };
+      fr.onerror = readFailed;
+      try{ fr.readAsDataURL(blob); }catch(e){ readFailed(); }
+    };
+    probe.src = url;
+  };
+  if (file.arrayBuffer){
+    file.arrayBuffer().then(gotBuffer, readFailed);
+  } else if (window.FileReader){
+    var reader = new FileReader();
+    reader.onload = function(){ gotBuffer(reader.result); };
+    reader.onerror = readFailed;
+    try{ reader.readAsArrayBuffer(file); }catch(e){ readFailed(); }
+  } else {
+    probeWith(URL.createObjectURL(file), false);
+  }
+}
+/* render the framed circle to a data URL that fits the record cap,
+   stepping down in size and quality until it does */
+function cropToDataURL(){
+  var s = cropBaseScale() * cropState.zoom;
+  var sx = -cropState.x / s, sy = -cropState.y / s, sw = CROP_STAGE / s;
+  var img = $("photoImg");
+  var attempts = [ { px:96, q:.72 }, { px:80, q:.62 }, { px:64, q:.55 }, { px:48, q:.5 } ];
+  for (var i = 0; i < attempts.length; i++){
+    var cv = document.createElement("canvas");
+    cv.width = attempts[i].px; cv.height = attempts[i].px;
+    var ctx = cv.getContext("2d");
+    if (!ctx) return "";
+    ctx.drawImage(img, sx, sy, sw, sw, 0, 0, attempts[i].px, attempts[i].px);
+    var out = "";
+    try{ out = cv.toDataURL("image/jpeg", attempts[i].q); }catch(e){ return ""; }
+    if (cleanPhotoData(out)) return out;
+  }
+  return "";
+}
+function useCroppedPhoto(){
+  if (!cropState) return;
+  var name = myName;
+  if (!name){
+    name = cleanChampionName($("photoName").value);
+    if (!name){
+      $("photoStatus").textContent = "Add your leaderboard name first.";
+      return;
+    }
+    myName = name;
+    try{ localStorage.setItem(LS_MYNAME, name); }catch(e){}
+  }
+  var data = cropToDataURL();
+  if (!data){
+    $("photoStatus").textContent = "Couldn't shrink that photo small enough — try a simpler one.";
+    return;
+  }
+  var useBtn = $("photoUse");
+  useBtn.disabled = true;
+  useBtn.textContent = "Saving…";
+  showPhotoBusy("Saving your photo…");
+  $("photoStatus").textContent = "Saving your photo to the shared board…";
+  var entry = { name:name, p:data, ts:Date.now(), id:photoNewId() };
+  /* the new photo goes in ALONGSIDE the old one; the old one is
+     only dropped after the read-back below proves the new landed */
+  sharedPhotos = normalizePhotos(sharedPhotos.concat([entry]));
+  myLocalPhoto = entry;
+  saveMyLocalPhoto();
+  applyPhotoReplacesAnimal(); /* the photo replaces the animal entirely — the pick reverts to None before anything is written */
+  saveGlobalCache();
+  refreshPhotoDisplays();
+  pushBoard(globalBoard, allTimeTop).then(function(ok){
+    if (!ok){
+      photoStatusMsg = "Couldn't reach the shared board — your photo shows on this device and will sync on the next save. Your old photo is still the shared one.";
+      closePhotoEditor();
+      if (wdOpen) renderWardrobe();
+      return;
+    }
+    Promise.all([readGlobalPrimary(), readGlobalMirror()]).then(function(recs){
+      var landed = recs.some(function(r){
+        return r && (r.photos || []).some(function(e){ return e.id === entry.id; });
+      });
+      if (landed){
+        /* confirmed live — now the old photo can go */
+        sharedPhotos = sharedPhotos.filter(function(e){ return !(e.name === name && e.id !== entry.id); });
+        if (myLocalPhoto && myLocalPhoto.id !== entry.id) myLocalPhoto = entry;
+        saveGlobalCache();
+        refreshPhotoDisplays();
+        pushBoard(globalBoard, allTimeTop); /* write the old one out — best effort */
+        photoStatusMsg = "Photo saved — the whole family can see it now.";
+      } else {
+        photoStatusMsg = "Saved on this device, but the shared copy didn't confirm — your old photo is untouched, and this one will sync on the next save.";
+      }
+      closePhotoEditor();
+      if (wdOpen) renderWardrobe();
+    });
+  });
+}
+function removeMyPhoto(){
+  var nm = myName || (myLocalPhoto ? myLocalPhoto.name : "");
+  if (!nm) return;
+  sharedPhotos = sharedPhotos.filter(function(e){ return e.name !== nm; });
+  myLocalPhoto = null;
+  saveMyLocalPhoto();
+  saveGlobalCache();
+  refreshPhotoDisplays();
+  photoStatusMsg = "Photo removed."; /* the animal stayed None — uploading retired it, removing the photo does not bring it back */
+  pushBoard(globalBoard, allTimeTop);
+  if (wdOpen) renderWardrobe();
+  if (soundOn) sfx.ui();
+}
+/* editor wiring — drag to move, slider / wheel / pinch to zoom */
+(function(){
+  var stage = $("photoStage");
+  if (!stage) return;
+  stage.addEventListener("pointerdown", function(e){
+    if (!cropState) return;
+    cropState.pointers[e.pointerId] = { x:e.clientX, y:e.clientY };
+    try{ stage.setPointerCapture(e.pointerId); }catch(err){}
+    var pts = Object.keys(cropState.pointers).map(function(k){ return cropState.pointers[k]; });
+    if (pts.length === 2) cropState.pinchD = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+  });
+  stage.addEventListener("pointermove", function(e){
+    if (!cropState || !cropState.pointers[e.pointerId]) return;
+    var prev = cropState.pointers[e.pointerId];
+    var dx = e.clientX - prev.x, dy = e.clientY - prev.y;
+    cropState.pointers[e.pointerId] = { x:e.clientX, y:e.clientY };
+    var pts = Object.keys(cropState.pointers).map(function(k){ return cropState.pointers[k]; });
+    if (pts.length === 2){
+      var d = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      if (cropState.pinchD > 0 && d > 0){
+        var rect = stage.getBoundingClientRect();
+        cropSetZoom(cropState.zoom * d / cropState.pinchD,
+          (pts[0].x + pts[1].x) / 2 - rect.left, (pts[0].y + pts[1].y) / 2 - rect.top);
+      }
+      cropState.pinchD = d;
+    } else {
+      cropState.x += dx;
+      cropState.y += dy;
+      cropRender();
+    }
+  });
+  function cropPointerEnd(e){
+    if (!cropState) return;
+    delete cropState.pointers[e.pointerId];
+    cropState.pinchD = 0;
+  }
+  stage.addEventListener("pointerup", cropPointerEnd);
+  stage.addEventListener("pointercancel", cropPointerEnd);
+  stage.addEventListener("wheel", function(e){
+    if (!cropState) return;
+    e.preventDefault();
+    var rect = stage.getBoundingClientRect();
+    cropSetZoom(cropState.zoom * (e.deltaY < 0 ? 1.08 : 0.92), e.clientX - rect.left, e.clientY - rect.top);
+  }, { passive:false });
+  $("photoZoom").addEventListener("input", function(){
+    if (!cropState) return;
+    cropSetZoom(parseInt(this.value, 10) / 100);
+  });
+  $("photoFile").addEventListener("change", function(){
+    if (this.files && this.files[0]) startPhotoPick(this.files[0]);
+    this.value = "";
+  });
+  $("photoUse").addEventListener("click", useCroppedPhoto);
+  $("photoCancel").addEventListener("click", closePhotoEditor);
+  $("photoClose").addEventListener("click", closePhotoEditor);
+  $("photoBackdrop").addEventListener("click", closePhotoEditor);
+})();
+
 /* the Achievements section — a grid of badge cards, each with its
    medal, name, progress bar and reward. Unearned cards are greyed
    and sorted closest-to-done first, so the next unlock is always
@@ -3409,7 +4195,7 @@ function fmtTotalTime(ms){
   return Math.floor(mins / 60) + "h " + ("0" + (mins % 60)).slice(-2) + "m";
 }
 var profileAvatarBtnEl = $("profileAvatarBtn");
-if (profileAvatarBtnEl) profileAvatarBtnEl.addEventListener("click", function(){ openWardrobe("profile"); });
+if (profileAvatarBtnEl) bindFastTap(profileAvatarBtnEl, function(){ openWardrobe("profile"); });
 var wdCloseEl = $("wdClose");
 if (wdCloseEl) wdCloseEl.addEventListener("click", closeWardrobe);
 var wdBackdropEl = $("wdBackdrop");
@@ -3550,8 +4336,8 @@ function stopBGM(){
 }
 /* white speaker silhouettes for the sound-effects toggle — waves
    when effects are on, the crossed-out speaker when they are off.
-   The speaker controls sound effects ONLY; the ♪ button beside it
-   is the music, and the two toggles are fully independent. */
+   The speaker controls sound effects ONLY; the ♪ button above it
+   in the Settings panel is the music, and the two are independent. */
 var SPEAKER_ON_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
 var SPEAKER_OFF_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3 3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4 9.91 6.09 12 8.18V4z"/></svg>';
 function updateAudioPills(){
@@ -3559,6 +4345,7 @@ function updateAudioPills(){
   if (b){ b.classList.toggle("on", bgmOn); b.setAttribute("aria-pressed", bgmOn ? "true" : "false"); b.textContent = "♪"; b.title = "Background music " + (bgmOn ? "on" : "off"); }
   var side = $("sideSoundBtn");
   if (side){ side.classList.toggle("on", soundOn); side.setAttribute("aria-pressed", soundOn ? "true" : "false"); side.innerHTML = soundOn ? SPEAKER_ON_SVG : SPEAKER_OFF_SVG; side.title = "Sound effects " + (soundOn ? "on" : "off"); }
+  syncSettingsStates();
 }
 
 /* ---------- action flash (TETRIS!, T-SPIN!, combos…) ---------- */
@@ -3669,7 +4456,8 @@ function onSuccessfulShift(){
   if (collides(current, 0, 1) && lockResets < 15){ lockCounter = 0; lockResets++; }
 }
 function tryRotate(dir){
-  if (state !== "playing" || !current || clearingRows) return;
+  if (state !== "playing" || !current) return;
+  if (clearingRows){ queueInput(function(){ tryRotate(dir); }); return; }
   if (current.type === "O"){ sfx.rotate(); return; }
   var from = current.rot, to = (from + dir + 4) % 4;
   var rotated = rotateMatrix(current.shape, dir);
@@ -3694,7 +4482,8 @@ function softDropStep(){
   return false;
 }
 function hardDrop(){
-  if (state !== "playing" || !current || clearingRows) return;
+  if (state !== "playing" || !current) return;
+  if (clearingRows){ queueInput(function(){ hardDrop(); }); return; }
   var gy = ghostY();
   score += (gy - current.y) * 2;
   current.y = gy;
@@ -3702,7 +4491,8 @@ function hardDrop(){
   lockPiece();
 }
 function doHold(){
-  if (state !== "playing" || !current || clearingRows) return;
+  if (state !== "playing" || !current) return;
+  if (clearingRows){ queueInput(function(){ doHold(); }); return; }
   /* Once-per-piece lockout: after one hold/swap, Hold is locked until
      the current piece locks and the next new piece spawns. This blocks
      swapping the same two pieces back and forth repeatedly. Every entry
@@ -3841,6 +4631,26 @@ function scoreClear(n, tspin){
   }
   updateHUD();
 }
+/* ---------- input buffer for the line-clear window ----------
+   While cleared rows flash (150 ms) the locked piece is gone but
+   the next one has not spawned, and taps in that window used to be
+   silently thrown away — at high levels, where clears come back to
+   back, a large share of Hold / rotate / drop taps landed there
+   and did nothing. One-shot actions tapped during the window are
+   now remembered (a short queue) and replayed on the fresh piece
+   the moment it spawns. An action replayed into a fresh clear
+   window simply re-queues itself. */
+function queueInput(fn){
+  if (pendingInputs.length < 6) pendingInputs.push(fn);
+}
+function flushPendingInputs(){
+  if (!pendingInputs.length) return;
+  var q = pendingInputs; pendingInputs = [];
+  for (var i = 0; i < q.length; i++){
+    if (state !== "playing" || !current) break;
+    q[i]();
+  }
+}
 function finishLock(){
   if (clearingRows){
     var n = clearingRows.length;
@@ -3858,6 +4668,7 @@ function finishLock(){
   }
   if (state === "playing") spawn(null);
   updateHUD();
+  flushPendingInputs();
 }
 function emptyRow(){ var r = []; for (var c = 0; c < COLS; c++) r.push(null); return r; }
 
@@ -4131,12 +4942,36 @@ function resetGame(){
   score = 0; lines = 0; level = 1;
   combo = -1; b2b = false;
   clearingRows = null; clearTimer = 0;
+  pendingInputs = [];
   dropCounter = 0; lockCounter = 0; lockResets = 0;
   applyLevelTheme(1);
   pendingBoardScore = 0; pendingIsChampion = false;
   maxCombo = 0; tspinCount = 0; piecesPlaced = 0; playMs = 0; tetrisGame = 0; perfectClearGame = 0;
   tetrisRun = 0; tetrisRunBest = 0; lateLinesGame = 0;
   dasDir = 0; dasActive = false; softDropping = false;
+}
+/* the Start/Pause rail circle carries no words — its glyph swaps
+   with the game state: pause bars while a game is running, a play
+   triangle when ready, paused or over (where tapping it starts or
+   resumes). The accessible name and tooltip swap along with it. */
+var PAUSE_GLYPH_PLAY = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M8 5v14l11-7z"/></svg>';
+var PAUSE_GLYPH_PAUSE = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+function updatePauseBtn(){
+  var b = $("pauseBtn");
+  if (!b) return;
+  if (state === "playing"){
+    b.innerHTML = PAUSE_GLYPH_PAUSE;
+    b.setAttribute("aria-label", "Pause game");
+    b.title = "Pause";
+  } else if (state === "paused"){
+    b.innerHTML = PAUSE_GLYPH_PLAY;
+    b.setAttribute("aria-label", "Resume game");
+    b.title = "Resume";
+  } else {
+    b.innerHTML = PAUSE_GLYPH_PLAY;
+    b.setAttribute("aria-label", "Start game");
+    b.title = "Start";
+  }
 }
 function startGame(){
   /* a duel start (startDuelRun) arms duelMode + the seeded RNG just
@@ -4155,7 +4990,7 @@ function startGame(){
   $("startOverlay").hidden = true;
   $("overOverlay").hidden = true;
   $("pauseOverlay").hidden = true;
-  $("pauseBtn").textContent = "PAUSE";
+  updatePauseBtn();
   if (bgmOn) startBGM();
   spawn(null);
   updateHUD();
@@ -4175,7 +5010,7 @@ function gameOver(){
     var dName = duelRunName || myName || "Anonymous";
     var dTs = Date.now(); /* the moment this run was recorded — shown back on the duel panel */
     var dEntry = { w:dw, name:dName, score:score, team:duelRunTeam === "B" ? "B" : "A", ts:dTs };
-    if (styleSel.animal) dEntry.a = styleSel.animal;
+    if (styleSel.animal && !currentMyPhoto()) dEntry.a = styleSel.animal; /* never alongside a photo — a photo replaces the animal entirely */
     duelMy = { w:dw, team:dEntry.team, score:score, name:dName, ts:dTs };
     saveDuelMy();
     duelEntries = normalizeDuel(duelEntries.concat([dEntry]));
@@ -4189,7 +5024,7 @@ function gameOver(){
     updateDuelBtn();
   }
   updateModeUI(); /* a finished duel run hands the Mode section back to Normal */
-  $("pauseBtn").textContent = "START / PAUSE";
+  updatePauseBtn();
   /* this device's own hi score always updates silently */
   if (score > localBest){ localBest = score; saveLocalScore(); }
   /* lifetime stats feed the wardrobe unlocks — anything this game
@@ -4287,7 +5122,7 @@ function claimGlobal(){
   var name = cleanChampionName($("championName").value);
   if (!name) name = "Anonymous";
   var entry = { name:name, score:pendingBoardScore };
-  if (styleSel.animal) entry.a = styleSel.animal; /* the chosen profile animal rides along to the shared board */
+  if (styleSel.animal && !currentMyPhoto()) entry.a = styleSel.animal; /* the chosen profile animal rides along to the shared board — never alongside a photo, which replaces it entirely */
   var wasChampion = pendingIsChampion;
   var newBoard = globalBoard.slice();
   newBoard.push(entry);
@@ -4350,11 +5185,11 @@ function togglePause(force){
     state = "paused";
     stopBGM();
     $("pauseOverlay").hidden = false;
-    $("pauseBtn").textContent = "RESUME";
+    updatePauseBtn();
   } else if (!toPause && state === "paused"){
     state = "playing";
     $("pauseOverlay").hidden = true;
-    $("pauseBtn").textContent = "PAUSE";
+    updatePauseBtn();
     if (bgmOn) startBGM();
   }
 }
@@ -4490,7 +5325,7 @@ function releaseAllInputs(){
   setDas(0);
 }
 function bindHoldButton(id, onTap, repeatable, onRelease, isDir){
-  var el = $(id), t1 = null, t2 = null, activePointer = null;
+  var el = $(id), t1 = null, t2 = null, activePointer = null, swallowArmedAt = -10000;
   function release(){
     if (activePointer === null) return;
     activePointer = null;
@@ -4503,7 +5338,17 @@ function bindHoldButton(id, onTap, repeatable, onRelease, isDir){
   if (isDir) dirHoldReleasers.push(release);
   function start(e){
     e.preventDefault();
-    if (activePointer !== null) return; /* one finger per button — ignore the rest */
+    swallowArmedAt = performance.now();
+    if (activePointer !== null){
+      /* one finger per button — a repeat press from the SAME finger
+         is ignored. But a press from a NEW pointer while the tracked
+         one never released means that pointerup was swallowed
+         before capture was set: without this, the button would stay
+         "active" and mute every later tap. Force-release the stale
+         press and let this tap through. */
+      if (e.pointerId !== undefined && e.pointerId === activePointer) return;
+      release();
+    }
     activePointer = (e.pointerId !== undefined) ? e.pointerId : -1;
     if (isDir) dirHoldReleasers.forEach(function(fn){ if (fn !== release) fn(); });
     try{ if (e.pointerId !== undefined && el.setPointerCapture) el.setPointerCapture(e.pointerId); }catch(err){}
@@ -4521,6 +5366,20 @@ function bindHoldButton(id, onTap, repeatable, onRelease, isDir){
   el.addEventListener("pointerup", end);
   el.addEventListener("pointercancel", end);
   el.addEventListener("lostpointercapture", function(){ release(); });
+  /* click rescue — the same dropped-press guard as bindFastTap:
+     if a rapid tap's pointerdown was coalesced away by the
+     webview, the press never starts, but the tap still ends in a
+     click on the button, so run ONE tap for it (press + release
+     together, so a rescued soft-drop tap can't stick on). The
+     click trailing a handled press is recognised by the one-shot
+     token the press armed and ignored, so a handled press never
+     double-fires — and a click with no token behind it (keyboard)
+     simply taps, like the rail buttons. */
+  el.addEventListener("click", function(){
+    if (performance.now() - swallowArmedAt < 1500){ swallowArmedAt = -10000; return; }
+    onTap();
+    if (onRelease) onRelease();
+  });
   el.addEventListener("contextmenu", function(e){ e.preventDefault(); });
 }
 bindHoldButton("tcLeft",  function(){ if (tryMove(-1)) sfx.move(); }, true, null, true);
@@ -4578,12 +5437,12 @@ $("championName").addEventListener("keydown", function(e){
   if (e.key === "Escape"){ skipGlobal(); }
 });
 $("resumeBtn").addEventListener("click", function(){ togglePause(false); });
-$("restartBtn").addEventListener("click", function(){ startGame(); });
-$("pauseBtn").addEventListener("click", function(){
+bindFastTap($("restartBtn"), function(){ startGame(); });
+bindFastTap($("pauseBtn"), function(){
   if (state === "ready" || state === "over") startGame(); else togglePause();
 });
 var bgmBtnEl = $("bgmBtn");
-if (bgmBtnEl) bgmBtnEl.addEventListener("click", function(){
+if (bgmBtnEl) bindFastTap(bgmBtnEl, function(){
   bgmOn = !bgmOn;
   updateAudioPills();
   if (bgmOn && state === "playing") startBGM();
@@ -4593,7 +5452,7 @@ if (bgmBtnEl) bgmBtnEl.addEventListener("click", function(){
 /* the speaker toggles sound effects ONLY — the music keeps playing
    (or stays off) exactly as the ♪ button left it */
 var sideSoundBtnEl = $("sideSoundBtn");
-if (sideSoundBtnEl) sideSoundBtnEl.addEventListener("click", function(){
+if (sideSoundBtnEl) bindFastTap(sideSoundBtnEl, function(){
   soundOn = !soundOn;
   updateAudioPills();
   if (soundOn) sfx.ui(); /* hear the effects you just switched back on */
@@ -4603,7 +5462,7 @@ if (sideSoundBtnEl) sideSoundBtnEl.addEventListener("click", function(){
    "touch" keeps the button bar hidden (swipe & tap play) and
    "buttons" keeps it shown, and the game starts with whichever
    scheme was picked last — in the first-game control onboarding,
-   or later with this 🎮 toggle. */
+   or later with the Controller toggle in the Settings panel. */
 var LS_CONTROL_CHOICE = "tetoris_control_choice";
 var LS_CONTROL_ONBOARDING = "tetoris_control_onboarding_seen_v1";
 var controlScheme = "buttons";
@@ -4611,11 +5470,10 @@ var controlsHidden = false;
 function syncControllerVisibility(){
   var bar = $("controllerBar");
   if (bar) bar.hidden = controlsHidden;
-  /* the Reset / Start-Pause pills sit in the middle of the bar,
-     between the D-pad and the A / B buttons — part of the same
-     controls, so they hide and show with the bar */
-  var mid = $("midControls");
-  if (mid) mid.hidden = controlsHidden;
+  /* the Reset / Start-Pause circles are NOT part of the bar any
+     more — they live on the left rail, so they stay visible (and
+     pausing stays reachable) even when the bar is hidden for
+     touch play */
   var b = $("ctrlToggleBtn");
   if (b){
     b.classList.toggle("on", !controlsHidden);
@@ -4623,6 +5481,7 @@ function syncControllerVisibility(){
     b.setAttribute("aria-label", controlsHidden ? "Show on-screen controls" : "Hide on-screen controls");
     b.title = controlsHidden ? "Show controls" : "Hide controls — play with swipes & taps";
   }
+  syncSettingsStates();
 }
 function setControlScheme(scheme, save){
   controlScheme = scheme === "touch" ? "touch" : "buttons";
@@ -4639,7 +5498,7 @@ function loadControlScheme(){
   else syncControllerVisibility();
 }
 var ctrlToggleBtnEl = $("ctrlToggleBtn");
-if (ctrlToggleBtnEl) ctrlToggleBtnEl.addEventListener("click", function(){
+if (ctrlToggleBtnEl) bindFastTap(ctrlToggleBtnEl, function(){
   setControlScheme(controlsHidden ? "buttons" : "touch");
   if (soundOn) sfx.ui();
 });
@@ -4647,18 +5506,64 @@ if (ctrlToggleBtnEl) ctrlToggleBtnEl.addEventListener("click", function(){
    On iPhone the button still flips and remembers, but Safari gives web
    pages no vibration to trigger, so nothing buzzes there. */
 var hapticsBtnEl = $("hapticsBtn");
-if (hapticsBtnEl) hapticsBtnEl.addEventListener("click", function(){
+if (hapticsBtnEl) bindFastTap(hapticsBtnEl, function(){
   hapticsOn = !hapticsOn;
   try{ localStorage.setItem(LS_HAPTICS, hapticsOn ? "1" : "0"); }catch(e){}
   updateHapticsBtn();
   if (hapticsOn) buzz(18); /* feel the setting you just switched on */
   else if (soundOn) sfx.ui();
 });
+/* ---------- settings panel ----------
+   The gear in the left rail opens a small panel holding the Music,
+   Sound, Haptics and Controller toggles (moved off the rail so it
+   stops crowding). The toggles themselves are untouched — same
+   buttons, same handlers — this is only the panel's open/close and
+   the On/Off words beside each row, refreshed from the live state
+   every time anything flips (the update functions above call
+   syncSettingsStates) and every time the panel opens. */
+var settingsOpen = false;
+function syncSettingsStates(){
+  var map = [
+    ["bgmState", typeof bgmOn !== "undefined" ? bgmOn : true],
+    ["sfxState", typeof soundOn !== "undefined" ? soundOn : true],
+    ["hapticsState", typeof hapticsOn !== "undefined" ? hapticsOn : true],
+    ["ctrlState", typeof controlsHidden !== "undefined" ? !controlsHidden : true]
+  ];
+  for (var i = 0; i < map.length; i++){
+    var el = $(map[i][0]);
+    if (el){ el.textContent = map[i][1] ? "On" : "Off"; el.classList.toggle("on", !!map[i][1]); }
+  }
+}
+function openSettings(){
+  syncSettingsStates();
+  settingsOpen = true;
+  $("settingsBackdrop").hidden = false;
+  $("settingsPanel").hidden = false;
+  var g = $("settingsBtn");
+  if (g) g.setAttribute("aria-expanded", "true");
+}
+function closeSettings(){
+  settingsOpen = false;
+  $("settingsBackdrop").hidden = true;
+  $("settingsPanel").hidden = true;
+  var g = $("settingsBtn");
+  if (g) g.setAttribute("aria-expanded", "false");
+}
+var settingsBtnEl = $("settingsBtn");
+if (settingsBtnEl) bindFastTap(settingsBtnEl, function(){
+  if (settingsOpen) closeSettings(); else openSettings();
+  if (soundOn) sfx.ui();
+});
+$("settingsClose").addEventListener("click", closeSettings);
+$("settingsBackdrop").addEventListener("click", closeSettings);
+document.addEventListener("keydown", function(e){
+  if (e.key === "Escape" && settingsOpen) closeSettings();
+});
 /* tree toggle — show / hide the seasonal decoration layer. The
    player's own material, background and frame are untouched either
    way; only the festive overlay comes and goes. */
 var seasonBtnEl = $("seasonBtn");
-if (seasonBtnEl) seasonBtnEl.addEventListener("click", function(){
+if (seasonBtnEl) bindFastTap(seasonBtnEl, function(){
   seasonOn = !seasonOn;
   try{ localStorage.setItem(LS_SEASON, seasonOn ? "1" : "0"); }catch(e){}
   applySeason();
@@ -4676,11 +5581,11 @@ function replayTutorial(){
   if (typeof openTutorial === "function") openTutorial(true);
 }
 var tutorialBtnEl = $("tutorialBtn");
-if (tutorialBtnEl) tutorialBtnEl.addEventListener("click", replayTutorial);
+if (tutorialBtnEl) bindFastTap(tutorialBtnEl, replayTutorial);
 /* tapping the Hold grid holds / swaps, same as the B button */
 var holdSectionEl = $("holdSection");
 if (holdSectionEl){
-  holdSectionEl.addEventListener("click", function(){ doHold(); });
+  bindFastTap(holdSectionEl, function(){ doHold(); });
   holdSectionEl.addEventListener("keydown", function(e){
     if (e.key === "Enter" || e.key === " "){ e.preventDefault(); doHold(); }
   });
@@ -4772,7 +5677,14 @@ function buildLbRow(e, i){
   rank.textContent = (i === 0 ? "👑 " : "") + (i + 1);
   var nm = document.createElement("span");
   nm.className = "lb-name";
-  if (e.a){
+  var ph = photoFor(e.name);
+  if (ph){
+    var pim = document.createElement("img");
+    pim.className = "lb-photo";
+    pim.src = ph;
+    pim.alt = "";
+    nm.appendChild(pim);
+  } else if (e.a){
     var an = document.createElement("span");
     an.className = "lb-animal";
     an.textContent = e.a;
@@ -5087,7 +5999,14 @@ function duelTeamBlock(body, entries, team, finished){
     li.className = "lb-row" + (i === 0 ? " r1" : "") + (isMine ? " mine" : "");
     var rank = duelEl("span", "lb-rank", String(i + 1));
     var name = duelEl("span", "lb-name");
-    if (e.a){
+    var dph = photoFor(e.name);
+    if (dph){
+      var dpim = document.createElement("img");
+      dpim.className = "lb-photo";
+      dpim.src = dph;
+      dpim.alt = "";
+      name.appendChild(dpim);
+    } else if (e.a){
       var an = duelEl("span", "lb-animal", e.a);
       name.appendChild(an);
     }
@@ -5211,7 +6130,7 @@ function startDuelRun(team, name){
   startGame();
 }
 var duelBtnEl = $("duelBtn");
-if (duelBtnEl) duelBtnEl.addEventListener("click", openDuel);
+if (duelBtnEl) bindFastTap(duelBtnEl, openDuel);
 var duelCloseEl = $("duelClose");
 if (duelCloseEl) duelCloseEl.addEventListener("click", closeDuel);
 var duelBackdropEl = $("duelBackdrop");
@@ -5301,10 +6220,9 @@ var TUTORIAL_STEPS = [
     atTop: false,
     html: '<ul class="tutorial-list">' +
       '<li><span class="tut-icon">🐻</span><span><b>Me</b> - Customise your profile &amp; look, view achievement &amp; stats.</span></li>' +
-      '<li><span class="tut-icon rail-icon music">♪</span><span><b>Music</b> - Toggle background music on/off.</span></li>' +
-      '<li><span class="tut-icon rail-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></span><span><b>Sound</b> - Toggle sound effect on/off.</span></li>' +
-      '<li><span class="tut-icon rail-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true" focusable="false"><path d="M7.6 5.5h8.8c3.1 0 5.6 2.6 5.6 5.9 0 .9-.2 1.7-.5 2.5l-1.1 3.4c-.4 1.2-1.9 1.6-2.9.8l-2.3-1.9c-.3-.3-.7-.4-1.1-.4h-4.2c-.4 0-.8.1-1.1.4l-2.3 1.9c-1 .8-2.5.4-2.9-.8L2.5 13.9C2.2 13.1 2 12.3 2 11.4 2 8.1 4.5 5.5 7.6 5.5zM6.9 8.2h1.8v1.9h1.4v1.8H8.7v1.9H6.9v-1.9H5.5v-1.8h1.4V8.2zm9.3.35a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1zm2.1 2.3a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1z"/></svg></span><span><b>Buttons</b> - Toggle button controller on/off.</span></li>' +
-      '<li><span class="tut-icon rail-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="10.2" y="6.5" width="3.6" height="11" rx="0.9" fill="currentColor" stroke="none"/><path d="M6.6 5 L4.2 8.5 L6.6 12 L4.2 15.5 L6.6 19"/><path d="M17.4 5 L19.8 8.5 L17.4 12 L19.8 15.5 L17.4 19"/></svg></span><span><b>Haptics</b> - Toggle vibration on/off.</span></li>' +
+      '<li><span class="tut-icon rail-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.52-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.48.48 0 0 0-.47-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.52.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.52.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .52-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></span><span><b>Settings</b> - Music, sound, haptics and the button controller all live in here now. Tap the gear to open it and flip any of them on or off.</span></li>' +
+      '<li><span class="tut-icon rail-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M17.65 6.35A8 8 0 1 0 19.73 14h-2.08a6 6 0 1 1-1.41-6.65L13 11h7V4z"/></svg></span><span><b>Reset</b> - The circular-arrow circle under the round buttons, split off by a line. Starts a fresh game.</span></li>' +
+      '<li><span class="tut-icon rail-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M8 5v14l11-7z"/></svg></span><span><b>Start / Pause</b> - The play circle under Reset. Starts the game; while you play it shows pause bars, and tapping it pauses or resumes.</span></li>' +
       '<li><span class="tut-icon rail-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 2l2.6 3.6h-1.8l3.4 4.7h-2.4l3.6 5h-4.2V21h-2.4v-5.7H6.6l3.6-5H7.8l3.4-4.7H9.4z"/></svg></span><span><b>Festive</b> - Toggle the seasonal decorations on/off.</span></li>' +
       '<li><span class="tut-icon rail-icon help">?</span><span><b>Help</b> - Replay this tour.</span></li>' +
       '<li><span class="tut-icon rail-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M5 3 L14.5 12.5"/><path d="M13 14 L17 10"/><path d="M15.5 13.5 L19 17"/><circle cx="20" cy="18" r="1.1" fill="currentColor" stroke="none"/><path d="M19 3 L9.5 12.5"/><path d="M7 10 L11 14"/><path d="M8.5 13.5 L5 17"/><circle cx="4" cy="18" r="1.1" fill="currentColor" stroke="none"/></svg></span><span><b>Battle</b> - Weekly weekend team duel.</span></li>' +
