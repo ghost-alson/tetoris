@@ -280,6 +280,24 @@
       .overlay[hidden]{ display:none; }
       .overlay .big{ font-family:"Baloo 2",sans-serif; font-size:1.9rem; font-weight:800; line-height:1.1; }
       .overlay .sub{ font-weight:700; font-size:.92rem; color:#ffd9e2; max-width:250px; line-height:1.45; }
+      /* ---------- resume a paused game (start overlay offer) ----------
+         Shown only when a valid Normal-mode paused snapshot is held
+         on this device. Duel runs are never snapshotted, so this
+         offer can never appear for one. */
+      .resume-offer{
+        display:flex; flex-direction:column; align-items:center; gap:8px; width:100%;
+        background:rgba(255,255,255,.10); border:2px solid rgba(255,217,226,.45);
+        border-radius:14px; padding:12px 12px 10px;
+      }
+      .resume-offer[hidden]{ display:none; }
+      .resume-offer .ro-title{ font-family:"Baloo 2",sans-serif; font-weight:800; font-size:1.02rem; color:#ffe27a; line-height:1.2; }
+      .resume-offer .ro-meta{ font-size:.78rem; font-weight:700; color:#ffd9e2; line-height:1.4; }
+      .resume-offer .bigbtn{ font-size:1rem; padding:10px 24px; min-height:46px; }
+      .resume-offer .ro-discard{
+        background:none; border:none; cursor:pointer; color:#ffd9e2;
+        font-family:"Nunito",sans-serif; font-weight:800; font-size:.74rem;
+        text-decoration:underline; min-height:30px; padding:2px 8px;
+      }
       /* ---------- game-over stats ---------- */
       .final-score{ display:flex; flex-direction:column; align-items:center; line-height:1; }
       .final-score .fs-k{ font-size:.62rem; font-weight:900; letter-spacing:.16em; text-transform:uppercase; color:#ffd9e2; }
@@ -351,8 +369,8 @@
          the visible gap between the circles is a little less than
          the layout gap on paper.
          The buttons
-         sit on a grid whose tracks (88px) are narrower than the
-         buttons themselves (106px), each button centred on its
+         sit on a grid whose tracks (83.6px) are narrower than the
+         buttons themselves (100.7px), each button centred on its
          cell, so the cross pulls in tight: neighbouring circles
          end up ~19px apart edge-to-edge — the same spacing the
          A / B circles have — instead of floating apart in wide
@@ -360,13 +378,13 @@
          the visible gap, because the buttons are circles in
          square cells: their edges sat ~43px apart diagonally.) */
       .dpad{
-        display:grid; grid-template-columns:repeat(3,88px); grid-template-rows:repeat(3,88px);
+        display:grid; grid-template-columns:repeat(3,83.6px); grid-template-rows:repeat(3,83.6px);
         gap:0; flex:0 0 auto;
         justify-items:center; align-items:center;
       }
       .dpad-btn{
-        width:106px; height:106px; min-height:106px; border-radius:50%; cursor:pointer;
-        font-size:1.95rem; line-height:1; background:var(--board); color:#fff; border:none;
+        width:100.7px; height:100.7px; min-height:100.7px; border-radius:50%; cursor:pointer;
+        font-size:1.85rem; line-height:1; background:var(--board); color:#fff; border:none;
         border-bottom:5px solid var(--board-edge);
         display:flex; align-items:center; justify-content:center;
         user-select:none; -webkit-user-select:none; touch-action:none; padding:0;
@@ -407,14 +425,14 @@
          ~0.59 up from B. (The old per-breakpoint cluster sizes
          drifted from that ratio — near-square on small phones — so
          A ended up almost directly above B there.) */
-      .ab-cluster{ position:relative; width:206px; height:162px; flex:0 0 auto; }
+      .ab-cluster{ position:relative; width:195.7px; height:153.9px; flex:0 0 auto; }
       .ab-btn{
-        position:absolute; width:102px; height:102px; min-height:102px; border-radius:50%; cursor:pointer;
+        position:absolute; width:96.9px; height:96.9px; min-height:96.9px; border-radius:50%; cursor:pointer;
         font-family:"Baloo 2",sans-serif; color:#fff;
         display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1;
         box-shadow:var(--shadow); user-select:none; -webkit-user-select:none; touch-action:none; padding:0;
       }
-      .ab-btn .ab-letter{ font-size:1.8rem; font-weight:800; }
+      .ab-btn .ab-letter{ font-size:1.71rem; font-weight:800; }
       .ab-btn small{ font-size:.60rem; letter-spacing:.06em; font-weight:900; text-transform:uppercase; opacity:.95; margin-top:3px; }
       .ab-btn:active, .ab-btn.pressed{ transform:translateY(3px) scale(.96); }
       .b-btn{ left:0; bottom:0; background:#5b8def; border:2px solid #3563c4; border-bottom:6px solid #3563c4; }
@@ -1181,6 +1199,50 @@
       @keyframes photoSpin{ to{ transform:rotate(360deg); } }
       @media (prefers-reduced-motion: reduce){ .photo-spinner{ animation-duration:1.8s; } }
 
+      /* ---------- version tag + changelog ("What's new") ----------
+         The version tag lives in the Settings panel, right below
+         the Music / Sound / Haptics / Controller toggle rows,
+         split off from them by the same hairline the rows use.
+         Plain left-aligned text — no pill, no background, no
+         border, no shadow. Tapping it closes Settings and
+         reopens the changelog for the current version. The
+         changelog panel reuses the shared .lb-backdrop /
+         .lb-panel shell, lifted to its own layer (above the Me
+         page and the photo editor) so the once-per-version
+         popup is never hidden behind another panel. */
+      .version-tag{
+        margin-top:9px; padding-top:12px; text-align:left;
+        border-top:1.5px solid var(--panel-edge);
+      }
+      .version-tag button{
+        background:none; border:none; box-shadow:none;
+        border-radius:0; cursor:pointer;
+        font-family:"Nunito",sans-serif; font-weight:800; font-size:.78rem;
+        letter-spacing:.08em; color:var(--ink); padding:2px 0;
+        text-align:left;
+      }
+      .lb-backdrop.cl-backdrop{ z-index:118; }
+      .lb-panel.cl-panel{ z-index:122; }
+      .cl-body{ overflow-y:auto; padding:2px; }
+      .cl-entry + .cl-entry{ margin-top:14px; }
+      .cl-ver{
+        display:inline-block; font-family:"Baloo 2",sans-serif; font-weight:800; font-size:.85rem;
+        background:var(--chip); border:1.5px solid var(--panel-edge); color:var(--accent-deep);
+        border-radius:999px; padding:2px 10px; margin-bottom:8px;
+      }
+      @media (prefers-color-scheme: dark){ .cl-ver{ color:var(--accent); } }
+      .cl-list{ list-style:none; margin:0; padding:0; display:grid; gap:7px; }
+      .cl-list li{
+        position:relative; padding-left:16px;
+        font-size:.9rem; font-weight:700; line-height:1.45; text-align:left;
+      }
+      .cl-list li::before{
+        content:"•"; position:absolute; left:3px; top:0;
+        color:var(--accent-deep); font-weight:900;
+      }
+      @media (prefers-color-scheme: dark){ .cl-list li::before{ color:var(--accent); } }
+      .cl-gotit{ width:100%; margin-top:14px; flex:0 0 auto; }
+
       /* ---------- responsive ---------- */
       @media (max-width:760px){
         body{ padding:8px 6px calc(10px + env(safe-area-inset-bottom)); }
@@ -1220,20 +1282,20 @@
            stay identical, so the layout is the same composition at
            every width. */
         .controller{ padding:12px 10%; gap:16px; border-radius:20px; }
-        .dpad{ grid-template-columns:repeat(3,72px); grid-template-rows:repeat(3,72px); gap:0; }
-        .dpad-btn{ width:86px; height:86px; min-height:86px; font-size:1.75rem; border-radius:50%; }
-        .ab-cluster{ width:182px; height:143px; }
-        .ab-btn{ width:90px; height:90px; min-height:90px; }
-        .ab-btn .ab-letter{ font-size:1.65rem; }
+        .dpad{ grid-template-columns:repeat(3,68.4px); grid-template-rows:repeat(3,68.4px); gap:0; }
+        .dpad-btn{ width:81.7px; height:81.7px; min-height:81.7px; font-size:1.66rem; border-radius:50%; }
+        .ab-cluster{ width:172.9px; height:135.9px; }
+        .ab-btn{ width:85.5px; height:85.5px; min-height:85.5px; }
+        .ab-btn .ab-letter{ font-size:1.57rem; }
       }
       /* mid-size phones: the D-pad and A / B buttons still share
          one row, shrunk a step so neither gets squeezed */
       @media (max-width:560px){
-        .dpad{ grid-template-columns:repeat(3,62px); grid-template-rows:repeat(3,62px); }
-        .dpad-btn{ width:80px; height:80px; min-height:80px; font-size:1.65rem; }
-        .ab-cluster{ width:170px; height:134px; }
-        .ab-btn{ width:84px; height:84px; min-height:84px; }
-        .ab-btn .ab-letter{ font-size:1.5rem; }
+        .dpad{ grid-template-columns:repeat(3,58.9px); grid-template-rows:repeat(3,58.9px); }
+        .dpad-btn{ width:76px; height:76px; min-height:76px; font-size:1.57rem; }
+        .ab-cluster{ width:161.5px; height:127.3px; }
+        .ab-btn{ width:79.8px; height:79.8px; min-height:79.8px; }
+        .ab-btn .ab-letter{ font-size:1.43rem; }
       }
       @media (max-width:440px){
         .panel{ width:84px; }
@@ -1244,23 +1306,23 @@
            the cluster inside the bar instead of spilling past the
            screen edge */
         .controller{ padding:10px 10%; gap:10px; }
-        .dpad{ grid-template-columns:repeat(3,54px); grid-template-rows:repeat(3,54px); }
-        .dpad-btn{ width:76px; height:76px; min-height:76px; font-size:1.55rem; }
-        .ab-cluster{ width:156px; height:122px; }
-        .ab-btn{ width:80px; height:80px; min-height:80px; }
-        .ab-btn .ab-letter{ font-size:1.4rem; }
-        .ab-btn small{ font-size:.54rem; }
+        .dpad{ grid-template-columns:repeat(3,51.3px); grid-template-rows:repeat(3,51.3px); }
+        .dpad-btn{ width:72.2px; height:72.2px; min-height:72.2px; font-size:1.47rem; }
+        .ab-cluster{ width:148.2px; height:115.9px; }
+        .ab-btn{ width:76px; height:76px; min-height:76px; }
+        .ab-btn .ab-letter{ font-size:1.33rem; }
+        .ab-btn small{ font-size:.51rem; }
       }
       /* the narrowest phones: everything shrinks a step so the
          D-pad and the A / B buttons still share the one row
          without pushing anything off the bar */
       @media (max-width:380px){
         .controller{ padding:10px 10%; }
-        .dpad{ grid-template-columns:repeat(3,50px); grid-template-rows:repeat(3,50px); }
-        .dpad-btn{ width:70px; height:70px; min-height:70px; font-size:1.5rem; }
-        .ab-cluster{ width:139px; height:109px; }
-        .ab-btn{ width:72px; height:72px; min-height:72px; }
-        .ab-btn .ab-letter{ font-size:1.3rem; }
+        .dpad{ grid-template-columns:repeat(3,47.5px); grid-template-rows:repeat(3,47.5px); }
+        .dpad-btn{ width:66.5px; height:66.5px; min-height:66.5px; font-size:1.43rem; }
+        .ab-cluster{ width:132.1px; height:103.6px; }
+        .ab-btn{ width:68.4px; height:68.4px; min-height:68.4px; }
+        .ab-btn .ab-letter{ font-size:1.24rem; }
       }
     </style>
   </head>
@@ -1359,6 +1421,12 @@
             <div class="action-flash" id="actionFlash"></div>
             <div class="overlay" id="startOverlay">
               <div class="big">Ready to play?</div>
+              <div class="resume-offer" id="resumeOffer" hidden>
+                <div class="ro-title">⏸ Paused game saved</div>
+                <div class="ro-meta" id="resumeOfferMeta"></div>
+                <button class="bigbtn" id="resumeSavedBtn" type="button">▶ Resume paused game</button>
+                <button class="ro-discard" id="discardSavedBtn" type="button">Discard saved game</button>
+              </div>
               <button class="bigbtn" id="startBtn" type="button">▶ Start</button>
               <button class="bigbtn alt" id="boardBtnStart" type="button">🏆 Leaderboard</button>
             </div>
@@ -1665,7 +1733,8 @@
     <!-- settings panel — opened by the gear in the left rail. The
          Music, Sound, Haptics and Controller toggles live here now
          (the same buttons, ids and behaviour they had on the rail),
-         each as a labelled row with its on/off state spelled out. -->
+         each as a labelled row with its on/off state spelled out.
+         The tiny version tag sits right below the toggles. -->
     <div class="lb-backdrop" id="settingsBackdrop" hidden></div>
     <section class="lb-panel settings-panel" id="settingsPanel" hidden role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
       <div class="lb-head">
@@ -1692,6 +1761,11 @@
         <span class="settings-label">Controller<span class="settings-sub">On-screen button bar — off means swipe &amp; tap play</span></span>
         <span class="settings-state on" id="ctrlState">On</span>
       </div>
+      <!-- tiny version tag — right below the toggles, at the foot
+           of the Settings panel. Tapping it closes Settings and
+           reopens this version's changelog (the "What's new"
+           popup). -->
+      <div class="version-tag"><button type="button" id="versionBtn" aria-label="Tetoris version 1.3.11 — see what's new">v1.3.11</button></div>
     </section>
 
     <!-- profile photo crop editor — the picked image inside a
@@ -1725,6 +1799,23 @@
     <!-- photo loading pill: shown while a picked photo is being
          read, and again while it saves to the shared board -->
     <div class="photo-busy" id="photoBusy" hidden role="status"><span class="photo-spinner" aria-hidden="true"></span><span id="photoBusyText">Loading photo…</span></div>
+
+    <!-- changelog — the "What's new" popup. It appears on its own
+         the first time a device opens a version it hasn't seen
+         (the seen version is remembered on the device), and can be
+         reopened any time by tapping the tiny version tag in the
+         Settings panel, right below the toggles. The entries are
+         rendered by renderChangelog() from CHANGELOG_ENTRIES in
+         the script. -->
+    <div class="lb-backdrop cl-backdrop" id="changelogBackdrop" hidden></div>
+    <section class="lb-panel cl-panel" id="changelogPanel" hidden role="dialog" aria-modal="true" aria-labelledby="changelogTitle">
+      <div class="lb-head">
+        <h2 id="changelogTitle">What&rsquo;s new</h2>
+        <button class="lb-close" id="changelogClose" type="button" aria-label="Close what's new">✕</button>
+      </div>
+      <div class="cl-body" id="changelogBody"></div>
+      <button class="bigbtn cl-gotit" id="changelogOk" type="button">Got it</button>
+    </section>
 
     <!-- first-time tutorial -->
     <div class="tutorial-backdrop" id="tutorialBackdrop" hidden></div>
@@ -1820,6 +1911,139 @@ var dropCounter, lockCounter, lockResets, lastMoveWasRotate, lastKickIndex;
 var clearingRows = null, clearTimer = 0;
 var pendingInputs = []; /* one-shot actions tapped during the clear window, replayed on the next piece */
 var softDropping = false;
+
+/* ---------- paused-game snapshot (Normal mode only) ----------
+   When a Normal game is paused, a device-local snapshot is held so
+   closing the browser (or hiding the tab) doesn't lose it. On the
+   next visit the start screen offers "Resume paused game" with a
+   Discard option; resuming restores the exact game, still paused,
+   until the player taps Resume on the pause overlay.
+   A Duel run can NEVER be restored — it is that session only — so
+   no snapshot is ever saved while duelMode is on, and any stored
+   record that isn't plainly a Normal game is discarded on read.
+   The snapshot is cleared on game over, on Reset / fresh start,
+   on Discard, and once it has been successfully restored. */
+var LS_PAUSED = "tetoris_paused_game";
+var pendingResumeSnapshot = null; /* a validated snapshot waiting on the start screen */
+function clearPausedSnapshot(){
+  pendingResumeSnapshot = null;
+  try{ localStorage.removeItem(LS_PAUSED); }catch(e){}
+  var offer = document.getElementById("resumeOffer");
+  if (offer) offer.hidden = true;
+}
+function savePausedSnapshot(){
+  if (duelMode) return; /* duels are session-only — never saved */
+  if (state !== "paused" || !board || !current) return;
+  try{
+    var snap = {
+      v:1, mode:"normal", savedAt:Date.now(),
+      board: board.map(function(row){ return row.slice(); }),
+      queue: queue ? queue.slice() : [],
+      holdType: holdType || null, holdUsed: !!holdUsed,
+      current: { type:current.type, shape:current.shape.map(function(r){ return r.slice(); }), rot:current.rot, x:current.x, y:current.y },
+      score:score, lines:lines, level:level, combo:combo, b2b:!!b2b,
+      maxCombo:maxCombo, tspinCount:tspinCount, piecesPlaced:piecesPlaced, playMs:playMs,
+      tetrisGame:tetrisGame, perfectClearGame:perfectClearGame,
+      tetrisRun:tetrisRun, tetrisRunBest:tetrisRunBest, lateLinesGame:lateLinesGame,
+      dropCounter:dropCounter || 0, lockCounter:lockCounter || 0, lockResets:lockResets || 0,
+      lastMoveWasRotate:!!lastMoveWasRotate, lastKickIndex:lastKickIndex || 0,
+      clearingRows: clearingRows ? clearingRows.slice() : null, clearTimer: clearTimer || 0
+    };
+    localStorage.setItem(LS_PAUSED, JSON.stringify(snap));
+  }catch(e){}
+}
+function validSnapshotShape(shape, type){
+  var def = PIECES[type]; if (!def) return false;
+  var base = def.shape;
+  if (!Array.isArray(shape) || shape.length !== base.length) return false;
+  var ones = 0;
+  for (var r = 0; r < shape.length; r++){
+    if (!Array.isArray(shape[r]) || shape[r].length !== base[r].length) return false;
+    for (var c = 0; c < shape[r].length; c++){
+      if (shape[r][c] !== 0 && shape[r][c] !== 1) return false;
+      if (shape[r][c]) ones++;
+    }
+  }
+  return ones === 4;
+}
+function loadPausedSnapshot(){
+  var raw = null;
+  try{ raw = localStorage.getItem(LS_PAUSED); }catch(e){ return null; }
+  if (!raw) return null;
+  var s = null;
+  try{ s = JSON.parse(raw); }catch(e){ clearPausedSnapshot(); return null; }
+  function bad(){ clearPausedSnapshot(); return null; }
+  if (!s || typeof s !== "object" || s.v !== 1 || s.mode !== "normal") return bad();
+  if (!isFinite(s.savedAt) || !(s.savedAt > 0)) return bad();
+  /* board: TOTAL rows x COLS, each cell null or a known piece type */
+  if (!Array.isArray(s.board) || s.board.length !== TOTAL) return bad();
+  for (var r = 0; r < TOTAL; r++){
+    if (!Array.isArray(s.board[r]) || s.board[r].length !== COLS) return bad();
+    for (var c = 0; c < COLS; c++){
+      var cell = s.board[r][c];
+      if (cell !== null && TYPES.indexOf(cell) === -1) return bad();
+    }
+  }
+  if (!Array.isArray(s.queue) || s.queue.length < 1 || s.queue.length > 64) return bad();
+  for (var q = 0; q < s.queue.length; q++) if (TYPES.indexOf(s.queue[q]) === -1) return bad();
+  if (s.holdType !== null && TYPES.indexOf(s.holdType) === -1) return bad();
+  if (typeof s.holdUsed !== "boolean" || typeof s.b2b !== "boolean") return bad();
+  var cur = s.current;
+  if (!cur || TYPES.indexOf(cur.type) === -1) return bad();
+  if (!validSnapshotShape(cur.shape, cur.type)) return bad();
+  if ([0,1,2,3].indexOf(cur.rot) === -1) return bad();
+  if (!isFinite(cur.x) || Math.floor(cur.x) !== cur.x || cur.x < -3 || cur.x > COLS) return bad();
+  if (!isFinite(cur.y) || Math.floor(cur.y) !== cur.y || cur.y < 0 || cur.y > TOTAL) return bad();
+  function num(v, min, max){ return isFinite(v) && v >= min && v <= max; }
+  if (!num(s.score, 0, 999999999) || Math.floor(s.score) !== s.score) return bad();
+  if (!num(s.lines, 0, 999999) || Math.floor(s.lines) !== s.lines) return bad();
+  if (!num(s.level, 1, 999) || Math.floor(s.level) !== s.level) return bad();
+  if (s.level !== Math.floor(s.lines / 10) + 1) return bad();
+  if (!num(s.combo, -1, 999999) || Math.floor(s.combo) !== s.combo) return bad();
+  if (!num(s.playMs, 0, 86400000)) return bad();
+  if (!num(s.maxCombo, 0, 999999) || !num(s.tspinCount, 0, 999999) || !num(s.piecesPlaced, 0, 999999)) return bad();
+  if (s.clearingRows !== null && !Array.isArray(s.clearingRows)) return bad();
+  if (Array.isArray(s.clearingRows)){
+    for (var cr = 0; cr < s.clearingRows.length; cr++){
+      if (!num(s.clearingRows[cr], 0, TOTAL - 1)) return bad();
+    }
+  }
+  return s;
+}
+function showResumeOffer(snap){
+  pendingResumeSnapshot = snap;
+  var offer = document.getElementById("resumeOffer");
+  var meta = document.getElementById("resumeOfferMeta");
+  if (!offer || !meta) return;
+  meta.textContent = "Score " + snap.score.toLocaleString("en-US") + " · Level " + snap.level + " · Lines " + snap.lines + " · " + formatPlayTime(snap.playMs);
+  offer.hidden = false;
+}
+function restorePausedSnapshot(){
+  var s = pendingResumeSnapshot || loadPausedSnapshot();
+  if (!s) return;
+  duelMode = false; duelRng = null; duelRunTeam = ""; duelRunName = ""; duelStartPending = false;
+  board = s.board.map(function(row){ return row.slice(); });
+  queue = s.queue.slice();
+  holdType = s.holdType; holdUsed = s.holdUsed;
+  current = { type:s.current.type, shape:s.current.shape.map(function(r){ return r.slice(); }), rot:s.current.rot, x:s.current.x, y:s.current.y };
+  score = s.score; lines = s.lines; level = s.level; combo = s.combo; b2b = s.b2b;
+  maxCombo = s.maxCombo || 0; tspinCount = s.tspinCount || 0; piecesPlaced = s.piecesPlaced || 0; playMs = s.playMs || 0;
+  tetrisGame = s.tetrisGame || 0; perfectClearGame = s.perfectClearGame || 0;
+  tetrisRun = s.tetrisRun || 0; tetrisRunBest = s.tetrisRunBest || 0; lateLinesGame = s.lateLinesGame || 0;
+  dropCounter = s.dropCounter || 0; lockCounter = s.lockCounter || 0; lockResets = s.lockResets || 0;
+  lastMoveWasRotate = !!s.lastMoveWasRotate; lastKickIndex = s.lastKickIndex || 0;
+  clearingRows = s.clearingRows ? s.clearingRows.slice() : null; clearTimer = s.clearTimer || 0;
+  pendingInputs = []; softDropping = false;
+  if (typeof dasDir !== "undefined"){ dasDir = 0; dasActive = false; }
+  state = "paused"; /* stays paused until the player taps Resume */
+  applyLevelTheme(level);
+  clearPausedSnapshot(); /* a successful restore consumes the snapshot */
+  var so = document.getElementById("startOverlay"); if (so) so.hidden = true;
+  var oo = document.getElementById("overOverlay"); if (oo) oo.hidden = true;
+  var po = document.getElementById("pauseOverlay"); if (po) po.hidden = false;
+  updateModeUI(); updatePauseBtn(); drawSide(); updateHUD();
+  if (typeof drawBoard === "function") drawBoard();
+}
 
 /* ---------- hi-score storage ----------
    Local hi score: this device only (localStorage).
@@ -4979,6 +5203,7 @@ function startGame(){
      clears any duel state, so a duel can never leak into free play */
   if (!duelStartPending){ duelMode = false; duelRng = null; duelRunTeam = ""; duelRunName = ""; }
   duelStartPending = false;
+  clearPausedSnapshot(); /* a fresh start discards any held paused game */
   resetGame();
   bgmStepIdx = 0; stopBGM();
   fetchGlobal(); /* refresh the shared crown for this run */
@@ -4997,6 +5222,7 @@ function startGame(){
 }
 function gameOver(){
   stopBGM();
+  clearPausedSnapshot(); /* a finished game is never resumable */
   state = "over";
   /* a finished duel run is recorded exactly once, the moment it
      ends: onto this device at once (so the duel icon immediately
@@ -5186,10 +5412,12 @@ function togglePause(force){
     stopBGM();
     $("pauseOverlay").hidden = false;
     updatePauseBtn();
+    savePausedSnapshot(); /* Normal only — savePausedSnapshot itself refuses duels */
   } else if (!toPause && state === "paused"){
     state = "playing";
     $("pauseOverlay").hidden = true;
     updatePauseBtn();
+    clearPausedSnapshot(); /* live again — no held paused game to restore */
     if (bgmOn) startBGM();
   }
 }
@@ -5301,7 +5529,16 @@ document.addEventListener("keyup", function(e){
   }
 });
 window.addEventListener("blur", function(){ releaseAllInputs(); if (state === "playing") togglePause(true); });
-document.addEventListener("visibilitychange", function(){ if (document.hidden){ releaseAllInputs(); if (state === "playing") togglePause(true); } });
+document.addEventListener("visibilitychange", function(){ if (document.hidden){ releaseAllInputs(); if (state === "playing") togglePause(true); else if (state === "paused") savePausedSnapshot(); } });
+/* closing the browser / tab: a paused Normal game is already held
+   by the snapshot taken when it paused; if the close catches the
+   game still playing, pause (and snapshot) it on the way out.
+   Duel runs get neither — session only. */
+window.addEventListener("pagehide", function(){
+  if (duelMode) return;
+  if (state === "playing") togglePause(true);
+  else if (state === "paused") savePausedSnapshot();
+});
 
 /* ================= input — touch buttons (with DAS repeat) =================
    Hardened against the runaway D-pad: a press that turns into a text
@@ -5394,6 +5631,12 @@ bindHoldButton("tcHold",  function(){ doHold(); }, false);
   var inner = $("boardInner");
   var sx = 0, sy = 0, st = 0, lastX = 0, lastY = 0, tracking = false, moved = false, hardDropped = false;
   inner.addEventListener("pointerdown", function(e){
+    /* a press on an overlay button (Start, Resume, Resume paused
+       game, Play again…) is a button tap, not a board gesture:
+       capturing the pointer to the board here retargets the whole
+       gesture to the board, so the button never receives its click
+       and looks dead. Leave those presses entirely alone. */
+    if (e.target && e.target.closest && e.target.closest("button, .overlay")) return;
     tracking = true; moved = false; hardDropped = false;
     sx = lastX = e.clientX; sy = lastY = e.clientY; st = performance.now();
     /* capture so the matching pointerup is seen even if the finger
@@ -5437,6 +5680,10 @@ $("championName").addEventListener("keydown", function(e){
   if (e.key === "Escape"){ skipGlobal(); }
 });
 $("resumeBtn").addEventListener("click", function(){ togglePause(false); });
+var resumeSavedBtnEl = $("resumeSavedBtn");
+if (resumeSavedBtnEl) resumeSavedBtnEl.addEventListener("click", function(){ if (soundOn) sfx.ui(); restorePausedSnapshot(); });
+var discardSavedBtnEl = $("discardSavedBtn");
+if (discardSavedBtnEl) discardSavedBtnEl.addEventListener("click", function(){ if (soundOn) sfx.ui(); clearPausedSnapshot(); });
 bindFastTap($("restartBtn"), function(){ startGame(); });
 bindFastTap($("pauseBtn"), function(){
   if (state === "ready" || state === "over") startGame(); else togglePause();
@@ -5885,9 +6132,23 @@ function updateDuelBtn(){
   b.title = live ? "Weekend duel — LIVE now! Tap to play your run" : "Weekend duel — see last weekend's result";
   b.setAttribute("aria-label", live ? "Weekend duel, live now" : "Weekend duel, last weekend's results");
 }
-function openDuel(){
+/* the press that opened the panel, when it opened on a press
+   (bindFastTap fires on pointerdown, finger still down): the
+   backdrop appears under that held finger the moment the panel
+   opens, so on some webviews the tap's own trailing click lands
+   on the backdrop instead of the button — and the backdrop's
+   dismiss handler closed the panel the instant the finger
+   lifted. The panel only stayed while the button was held:
+   the "weekend duel flashes for a second" bug. The backdrop
+   handler below ignores that one click — same spot as the
+   opening press, within the same gesture — and dismisses on
+   any later tap as usual. */
+var duelOpenPress = null;
+function openDuel(e){
   if (duelOpen) return;
   duelOpen = true;
+  duelOpenPress = (e && e.type === "pointerdown" && typeof e.clientX === "number")
+    ? { x:e.clientX, y:e.clientY, t:performance.now() } : null;
   duelTeamPick = "";
   if (state === "playing") togglePause(true);
   renderDuel();
@@ -5899,6 +6160,7 @@ function openDuel(){
 function closeDuel(){
   if (!duelOpen) return;
   duelOpen = false;
+  duelOpenPress = null;
   stopDuelCountdown();
   $("duelBackdrop").hidden = true;
   $("duelPanel").hidden = true;
@@ -6028,6 +6290,7 @@ function renderDuel(){
   body.innerHTML = "";
   var note = $("duelNote");
   if (note) note.hidden = !boardStale;
+  body.appendChild(duelEl("p", "duel-note", "Duels can't be paused and restored — this session only."));
   var live = isDuelLive();
   if (live){
     var w = currentDuelWeekendId();
@@ -6134,7 +6397,15 @@ if (duelBtnEl) bindFastTap(duelBtnEl, openDuel);
 var duelCloseEl = $("duelClose");
 if (duelCloseEl) duelCloseEl.addEventListener("click", closeDuel);
 var duelBackdropEl = $("duelBackdrop");
-if (duelBackdropEl) duelBackdropEl.addEventListener("click", closeDuel);
+if (duelBackdropEl) duelBackdropEl.addEventListener("click", function(e){
+  if (duelOpenPress){
+    var press = duelOpenPress;
+    duelOpenPress = null; /* one-shot: only the opening tap's own trailing click is ignored */
+    if (performance.now() - press.t < 600 &&
+        Math.abs(e.clientX - press.x) <= 24 && Math.abs(e.clientY - press.y) <= 24) return;
+  }
+  closeDuel();
+});
 /* the duel button's live look follows the clock — re-check every
    minute so a page left open over midnight Friday lights up (and
    one left open past Sunday midnight calms back down) on its own */
@@ -6512,6 +6783,10 @@ $("tutorialSkip").addEventListener("click", function(){ closeTutorial(); });
    handler, so closing the wardrobe with Escape also unpaused the
    game behind it.) */
 document.addEventListener("keydown", function(e){
+  if (changelogOpen){
+    if (e.key === "Escape"){ e.preventDefault(); closeChangelog(); }
+    return;
+  }
   if (controlChoiceOpen){
     if (e.key === "Escape"){ e.preventDefault(); hideControlChoice(); finishControlOnboarding(); }
     return;
@@ -6526,6 +6801,120 @@ document.addEventListener("keydown", function(e){
   if (modePickerOpen && e.key === "Escape"){ e.preventDefault(); closeModePicker(); return; }
   if (lbOpen && e.key === "Escape"){ e.preventDefault(); closeLeaderboard(); }
 });
+
+/* ================= version + changelog =================
+   Versioning: 1.3.X, where X is the GitHub push count — Alson says
+   when to advance to 1.4. To ship a new version: bump APP_VERSION's
+   X by one per push and add that push's entry at the TOP of
+   CHANGELOG_ENTRIES. On load, a device whose remembered version
+   (LS_SEEN_VERSION) differs from APP_VERSION gets the "What's new"
+   popup once — it waits politely until no other panel or tour is
+   open and no game is running — and dismissing it remembers the
+   version, so it stays away until the next push. A brand-new
+   install (no seen version AND the tutorial never seen) baselines
+   silently: nothing is "new" to a first-time player. The tiny
+   version tag in the Settings panel, right below the toggles,
+   reopens the popup on tap. */
+var APP_VERSION = "1.3.11";
+var LS_SEEN_VERSION = "tetoris_seen_version";
+var CHANGELOG_ENTRIES = [
+  { version:"1.3.11", notes:[
+    "Settings got tidier — the gear now opens one small panel with the Music, Sound, Haptics and Controller toggles inside.",
+    "Reset and Start/Pause moved to the left rail as round pink icon buttons, out of accidental-thumb range.",
+    "Custom profile photos — upload your own photo to replace your animal on the rail, in Me and on the leaderboard.",
+    "The controller layout is now the same on every screen size, with the D-pad and A / B buttons inset 10% from the edges.",
+    "Rapid-tap fixes — fast taps on Hold, rotate and the rail buttons now register reliably, even at high speed."
+  ] }
+];
+var changelogOpen = false;
+var changelogTimer = null;
+function seenVersion(){
+  try{ return localStorage.getItem(LS_SEEN_VERSION); }catch(e){ return null; }
+}
+function markVersionSeen(){
+  try{ localStorage.setItem(LS_SEEN_VERSION, APP_VERSION); }catch(e){ /* popup may re-show next visit — harmless */ }
+}
+/* the entries a player who last saw `seen` hasn't read yet: walk
+   the list (newest first) until their version turns up; an unknown
+   or missing version just gets the latest entry */
+function changelogEntriesToShow(seen){
+  if (!seen) return CHANGELOG_ENTRIES.slice(0, 1);
+  var out = [];
+  for (var i = 0; i < CHANGELOG_ENTRIES.length; i++){
+    if (CHANGELOG_ENTRIES[i].version === seen) break;
+    out.push(CHANGELOG_ENTRIES[i]);
+  }
+  return out.length ? out : CHANGELOG_ENTRIES.slice(0, 1);
+}
+function renderChangelog(seen){
+  var body = $("changelogBody");
+  body.innerHTML = "";
+  changelogEntriesToShow(seen).forEach(function(entry){
+    var wrap = document.createElement("div");
+    wrap.className = "cl-entry";
+    var ver = document.createElement("span");
+    ver.className = "cl-ver";
+    ver.textContent = "Version " + entry.version;
+    wrap.appendChild(ver);
+    var ul = document.createElement("ul");
+    ul.className = "cl-list";
+    entry.notes.forEach(function(note){
+      var li = document.createElement("li");
+      li.textContent = note;
+      ul.appendChild(li);
+    });
+    wrap.appendChild(ul);
+    body.appendChild(wrap);
+  });
+}
+function openChangelog(){
+  if (changelogOpen) return;
+  renderChangelog(seenVersion());
+  changelogOpen = true;
+  if (state === "playing") togglePause(true);
+  $("changelogBackdrop").hidden = false;
+  $("changelogPanel").hidden = false;
+}
+function closeChangelog(){
+  if (!changelogOpen) return;
+  changelogOpen = false;
+  $("changelogBackdrop").hidden = true;
+  $("changelogPanel").hidden = true;
+  markVersionSeen(); /* dismissed = read: not shown again until the next version */
+  if (soundOn) sfx.ui();
+}
+$("changelogClose").addEventListener("click", closeChangelog);
+$("changelogOk").addEventListener("click", closeChangelog);
+$("changelogBackdrop").addEventListener("click", closeChangelog);
+var versionBtnEl = $("versionBtn");
+if (versionBtnEl){
+  versionBtnEl.textContent = "v" + APP_VERSION;
+  versionBtnEl.setAttribute("aria-label", "Tetoris version " + APP_VERSION + " — see what's new");
+  versionBtnEl.addEventListener("click", function(){
+    if (soundOn) sfx.ui();
+    if (settingsOpen) closeSettings(); /* the tag lives in Settings — swap panels, don't stack them */
+    openChangelog();
+  });
+}
+function maybeShowChangelog(){
+  var seen = seenVersion();
+  if (seen === APP_VERSION) return;
+  if (!seen && !tutorialWasSeen()){
+    markVersionSeen(); /* fresh install — baseline silently, no popup */
+    return;
+  }
+  /* poll gently until the coast is clear: no tour, picker or panel
+     open, and no game in progress — then show it exactly once */
+  changelogTimer = setInterval(function(){
+    if (changelogOpen){ clearInterval(changelogTimer); changelogTimer = null; return; }
+    if (tutorialOpen || controlChoiceOpen) return;
+    if (wdOpen || lbOpen || duelOpen || modePickerOpen || settingsOpen) return;
+    if (!$("photoPanel").hidden) return;
+    if (state === "playing") return;
+    clearInterval(changelogTimer); changelogTimer = null;
+    openChangelog();
+  }, 900);
+}
 
 /* ================= init ================= */
 loadScores();
@@ -6544,6 +6933,11 @@ buildSnow(); /* build the falling-snow flakes once */
 applySeason(); /* festive decorations on, unless this device turned them off */
 updateDuelBtn(); /* the duel icon lights up + pulses while the weekend window is open */
 updateModeUI(); /* the Mode section starts on Normal (no duel run is live at load) */
+/* a held paused game (Normal only — duels are never saved) is
+   offered on the start screen; a corrupt record is discarded by
+   loadPausedSnapshot and no offer is shown */
+var savedSnap = loadPausedSnapshot();
+if (savedSnap) showResumeOffer(savedSnap);
 /* first-paint safeguard: on some phone webviews the first frame is
    painted before the layout has settled at the final viewport size,
    and the score board can stay unpainted until the first tap forces
@@ -6565,6 +6959,7 @@ if (!tutorialWasSeen()){
 } else if (!controlOnboardingSeen()){
   setTimeout(function(){ if (!tutorialOpen && !controlChoiceOpen && state === "ready") showControlChoice(); }, 400);
 }
+maybeShowChangelog(); /* the "What's new" popup — once per version, per device */
 </script>
   </body>
 </html>
